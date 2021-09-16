@@ -1,0 +1,164 @@
+---
+title: "Apiary_LRR_Analysis"
+author: "David Showalter"
+date: "8/2/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+##Study description
+
+
+In each of 5 reps 25 1/10 acre circular plots were planted with 34 1-0 (1 year old) Douglas fir seedlings. 5 plots per rep were  each assigned to a treatment: DF0Y, RA10Y, CW10Y, RA20Y, CW20Y. (plots = 125, tmt = 5, rep = 5, plots/tmt/rep = 5). 34 seedlings/plot = approx 4,250 trees.   
+
+## Importing data
+Two multi-sheet workboooks were provided by Anna Leon of Weyerhauser (Anna.Leon@weyerhaeuser.com). One with keys for metadata codes and one with coded data plus a dictionary for column names
+
+```{r, message=FALSE}
+library(readxl)
+library(readr)
+#reading in code sheets form metadata workbook
+Apiary_TMTs <- read_excel("C:/Users/showa/Documents/LeBoldus_Lab/Laminated_Root_Rot/Apiariy_LRR/raw_data/Apiary_2020_Path_Data_All_for_Jared_2.xlsx", sheet = "Treatments")
+colnames(Apiary_TMTs)<-c("TMT_code","TMT_short","TMT_name")
+
+Species_codes <- read_excel("C:/Users/showa/Documents/LeBoldus_Lab/Laminated_Root_Rot/Apiariy_LRR/raw_data/Apiary_Measurement_Codes.xls",sheet = "Species_Codes", range = "A5:B130", col_names = FALSE)
+colnames(Species_codes)<-c("Species_Code","Species_name")
+
+Origin_codes <- read_excel("C:/Users/showa/Documents/LeBoldus_Lab/Laminated_Root_Rot/Apiariy_LRR/raw_data/Apiary_Measurement_Codes.xls",sheet = "Origin_Codes", range = "A5:B10", col_names = FALSE)
+colnames(Origin_codes)<-c("Origin_Code","Origin")
+
+Status_codes <- read_excel("C:/Users/showa/Documents/LeBoldus_Lab/Laminated_Root_Rot/Apiariy_LRR/raw_data/Apiary_Measurement_Codes.xls",sheet = "Status_Codes", range = "A5:B19", col_names = FALSE)
+colnames(Status_codes)<-c("Status_Code","Status")
+
+Damage_codes <- read_excel("C:/Users/showa/Documents/LeBoldus_Lab/Laminated_Root_Rot/Apiariy_LRR/raw_data/Apiary_Measurement_Codes.xls",sheet = "Damage_Codes", range = "A5:B62", col_names = FALSE)
+colnames(Damage_codes)<-c("Damage_Code","Damage")
+
+Position_codes <- read_excel("C:/Users/showa/Documents/LeBoldus_Lab/Laminated_Root_Rot/Apiariy_LRR/raw_data/Apiary_Measurement_Codes.xls",sheet = "Position_Codes", range = "A7:B14", col_names = FALSE)
+colnames(Position_codes)<-c("Position_Code","Position")
+
+Damage_amount_codes <- read_excel("C:/Users/showa/Documents/LeBoldus_Lab/Laminated_Root_Rot/Apiariy_LRR/raw_data/Apiary_Measurement_Codes.xls",sheet = "Amount_Codes", range = "A5:B54", col_names = FALSE)
+colnames(Damage_amount_codes)<-c("Damage_Amount_Code","Damage_Amount")
+
+#reading in dictionary sheet from data workbook
+Data_dict <- read_excel("C:/Users/showa/Documents/LeBoldus_Lab/Laminated_Root_Rot/Apiariy_LRR/raw_data/Apiary_2020_Path_Data_All_for_Jared_2.xlsx",sheet = "Data_Dictionary", range = "A3:B23", col_names = FALSE)
+colnames(Data_dict)<-c("Column_Name","Description")
+
+#reading in data
+A_plots <- read_excel("C:/Users/showa/Documents/LeBoldus_Lab/Laminated_Root_Rot/Apiariy_LRR/raw_data/Apiary_2020_Path_Data_All_for_Jared_2.xlsx",sheet = "A-Plots", col_names = TRUE)
+#unique(A_plots$AMT1)
+A_plots$AMT1[A_plots$AMT1==0]<-NA
+
+B_plots <- read_excel("C:/Users/showa/Documents/LeBoldus_Lab/Laminated_Root_Rot/Apiariy_LRR/raw_data/Apiary_2020_Path_Data_All_for_Jared_2.xlsx",sheet = "B-Plots", col_names = TRUE)
+
+C_plots <- read_excel("C:/Users/showa/Documents/LeBoldus_Lab/Laminated_Root_Rot/Apiariy_LRR/raw_data/Apiary_2020_Path_Data_All_for_Jared_2.xlsx",sheet = "C-Plots", col_names = TRUE)
+#checking nonconforming trt entries with "y" instead of "Y"
+#unique(C_plots$TRT)
+C_plots$TRT[C_plots$TRT=="DF0y"]<-"DF0Y"
+
+D_plots <- read_excel("C:/Users/showa/Documents/LeBoldus_Lab/Laminated_Root_Rot/Apiariy_LRR/raw_data/Apiary_2020_Path_Data_All_for_Jared_2.xlsx",sheet = "D-Plots", col_names = TRUE)
+#checking nonconforming trt entries with "y" instead of "Y"
+#unique(D_plots$TRT)
+#unique(D_plots$DAM1)
+#unique(D_plots$AMT1)
+D_plots$TRT[D_plots$TRT=="RA20y"]<-"RA20Y"
+D_plots$DAM1[D_plots$DAM1=="Blank"]<-NA
+D_plots$AMT1[D_plots$AMT1=="Blank"]<-NA
+
+E_plots <- read_excel("C:/Users/showa/Documents/LeBoldus_Lab/Laminated_Root_Rot/Apiariy_LRR/raw_data/Apiary_2020_Path_Data_All_for_Jared_2.xlsx",sheet = "E-Plots", col_names = TRUE)
+
+#combine all treatments together into one dataset and change coded variables to factors rather than numbers
+combined_data<-rbind(A_plots,B_plots,C_plots,D_plots,E_plots)
+#unique(combined_data$TRT)
+combined_data$LOC<-as.factor(combined_data$LOC)
+combined_data$PLOT<-as.factor(combined_data$PLOT)
+combined_data$SUBPLOT<-as.factor(combined_data$SUBPLOT)
+combined_data$REP<-as.factor(combined_data$REP)
+combined_data$TRT<-as.factor(combined_data$TRT)
+combined_data$TREE<-as.factor(combined_data$TREE)
+combined_data$SP<-as.factor(combined_data$SP)
+combined_data$OR<-as.factor(combined_data$OR)
+combined_data$OSTS<-as.factor(combined_data$OSTS)
+combined_data$NSTS<-as.factor(combined_data$NSTS)
+combined_data$DAM1<-as.factor(combined_data$DAM1)
+combined_data$POS1<-as.factor(combined_data$POS1)
+combined_data$AMT1<-as.factor(combined_data$AMT1)
+
+#removing false zeros for DBH measurements
+combined_data$NDBH[combined_data$NDBH==0]<-NA
+combined_data$ODBH[combined_data$ODBH==0]<-NA
+
+#saveRDS(combined_data, file="C:/Users/showa/Documents/LeBoldus_Lab/Laminated_Root_Rot/Apiariy_LRR/raw_data/combined_trt_data.Rds")
+
+#write.csv(combined_data, file="C:/Users/showa/Documents/LeBoldus_Lab/Laminated_Root_Rot/Apiariy_LRR/raw_data/combined_trt_data.csv", row.names = FALSE)
+```
+
+## Data Summarization
+
+```{r, message=FALSE}
+library(tidyverse)
+library(ggplot2)
+#combined_data<- readRDS("C:/Users/showa/Documents/LeBoldus_Lab/Laminated_Root_Rot/Apiariy_LRR/raw_data/combined_trt_data.Rds")
+
+TRTxREP_summary<-combined_data %>% group_by(TRT, REP, .drop=FALSE) %>% summarise(count=n())
+TRTxREP_summary
+ggplot(TRTxREP_summary,aes(x=TRT,y=count,fill=REP ))+geom_col()+scale_fill_viridis_d()+ylab("Tree count")+xlab("Treatment")
+
+TRTxNSTS_summary<-combined_data %>% group_by(TRT, NSTS) %>% summarise(count=n())
+TRTxNSTS_summary
+ggplot(TRTxNSTS_summary,aes(x=TRT,y=count,fill=NSTS ))+geom_col()+scale_fill_viridis_d()+ylab("Tree count")+xlab("Treatment")
+
+TRTxOSTS_summary<-combined_data %>% group_by(TRT, OSTS) %>% summarise(count=n())
+TRTxOSTS_summary
+#ggplot(TRTxOSTS_summary,aes(x=TRT,y=count,fill=OSTS ))+geom_col()+scale_fill_viridis_d()+ylab("Tree count")+xlab("Treatment")
+
+#TRTxDAM_summary<-combined_data %>% group_by(TRT, DAM1) %>% summarise(count=n())
+#TRTxDAM_summary
+
+DAM_summary<-combined_data %>% group_by(DAM1) %>% summarise(count=n())
+DAM_summary
+#write.csv(DAM_summary, file="C:/Users/showa/Documents/LeBoldus_Lab/Laminated_Root_Rot/Apiariy_LRR/raw_data/DAM_summary.csv", row.names = FALSE)
+
+AMT_summary<-combined_data %>% group_by(AMT1) %>% summarise(count=n())
+AMT_summary
+
+DAMxAMT_summary<-combined_data %>% group_by(DAM1, AMT1) %>% summarise(count=n())
+DAMxAMT_summary
+
+POS_summary<-combined_data %>% group_by(POS1) %>% summarise(count=n())
+POS_summary
+
+OR_summary<-combined_data %>% group_by(OR) %>% summarise(count=n())
+OR_summary
+
+#returning the entries for which AMT1 is 808, an invalid code
+#AMT_808<-combined_data[which(combined_data$AMT1 == 808),]
+#write.csv(AMT_808, file="C:/Users/showa/Documents/LeBoldus_Lab/Laminated_Root_Rot/Apiariy_LRR/raw_data/amt_808_data.csv", row.names = FALSE)
+
+#fix
+combined_data$AMT1[combined_data$AMT1 == 808]<-NA
+
+#returning the entries for which NDBH is NA or 0 without explanation
+DBH_NA<-combined_data[is.na(combined_data$NDBH),]
+DBH_NA_no_explain<-DBH_NA[is.na(DBH_NA$AMT1),]
+#write.csv(DBH_NA_no_explain, file="C:/Users/showa/Documents/LeBoldus_Lab/Laminated_Root_Rot/Apiariy_LRR/raw_data/DBH_NA_no_explain_data.csv", row.names = FALSE)
+
+#returning the entries for which SP is NA
+#SP_0<-combined_data[is.na(combined_data$SP),]
+#fix
+combined_data$SP<-"DF"
+#write.csv(SP_0, file="C:/Users/showa/Documents/LeBoldus_Lab/Laminated_Root_Rot/Apiariy_LRR/raw_data/SP_0_data.csv", row.names = FALSE)
+```
+
+##Remaining questions
+In what year were plots established?  What exactly was the DF check treatment? How did 10-year TMT differ from the 20-year treatments. Were they started at the same time?
+
+To what year(s) do(es) the "old" measurements in the provided data refer?
+
+Are there any additional useful maps? Anna?
+
+11 trees without NDBH measurements. Are they duplicated in other plots? Remove them?
+
+Randomization/exp design.  RCB?
