@@ -9,7 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-##Study description
+## Study description
 
 
 In each of 5 reps 25 1/10 acre circular plots were planted with 34 1-0 (1 year old) Douglas fir seedlings. 5 plots per rep were  each assigned to a treatment: DF0Y, RA10Y, CW10Y, RA20Y, CW20Y. (plots = 125, tmt = 5, rep = 5, plots/tmt/rep = 5). 34 seedlings/plot = approx 4,250 trees.   
