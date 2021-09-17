@@ -13,4 +13,11 @@ Stump removal and fertilization of five Phellinus weirii-infested stands in Wash
 
 ## Study description
 
-In each of 5 reps 25 1/10 acre circular plots were planted with 34 1-0 (1 year old) Douglas fir seedlings. 5 plots per rep were  each assigned to a treatment: DF0Y, RA10Y, CW10Y, RA20Y, CW20Y. (plots = 125, tmt = 5, rep = 5, plots/tmt/rep = 5). 34 seedlings/plot = approx 4,250 trees. Plots were stem mapped after extablishment.
+### Description from datasheet
+Threre were five treatments (A,B,C,D,E) and five reps of each treatment. Treatment plots were appoximately 1.25 acres in size. In each treatment plot there were five  0.05 acre circular measurement subplots. 
+Most recent measurement was done in January, 2020. 
+Treatment C: Douglas-fir initially, was 45 years old in 2020 (so 1975 start?) Thies and Westlind Apiary site was planted in 1979.
+Lat & Long:   46.001997, -123.080655
+
+### Description from email with Mike McWilliams
+"all 1/10 acre plots were originally planted with 34 1-0 Douglas fir seedlings, and stem-mapped after establishment"
