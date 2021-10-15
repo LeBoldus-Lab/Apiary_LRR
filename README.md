@@ -23,10 +23,11 @@ Lat & Long:   46.001997, -123.080655
 "all 1/10 acre plots were originally planted with 34 1-0 Douglas fir seedlings, and stem-mapped after establishment"
 
 ### Genomic data
-Fifteen C. sulphurascens samples were collected from Apiary site on ___________ (insert date). DNA sequencing, and Illumina Hi-Seq data was collected and is currently being processed. Rough draft map of the location of the isolates is below. 
+Fifteen C. sulphurascens samples were collected from Apiary site on ___________ (insert date). DNA sequencing, and Illumina Hi-Seq data was collected and is currently being processed. Very rough draft map of the location of the isolates is below. Will continue to work on VCF files and maps. 
 <img width="407" alt="ApiaryMap" src="https://user-images.githubusercontent.com/49656044/137440453-ca085556-583a-4880-997f-803d6e5b59bf.PNG">
 
 ### Possible research questions
 - Are isolates from different plots genotypically similar (clones)?
-- If clones are dispersed across long distances how might have this occurred? (spores? humans? insects? animals?)
+- If clones are dispersed across long distances how might this have occurred? (spores? humans? insects? animals?)
 - Unique opportunity to look at plot data in combination with genomic data and look for levels of virulence or possible correlations.
+- See if Sky, Dave Shaw, Mee-Sook or anyone else has any aditional information or data from this site.
