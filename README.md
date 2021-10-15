@@ -23,7 +23,7 @@ Lat & Long:   46.001997, -123.080655
 "all 1/10 acre plots were originally planted with 34 1-0 Douglas fir seedlings, and stem-mapped after establishment"
 
 ### Genomic data
-Fifteen C. sulphurascens samples were collected from Apiary site on ___________ (insert date). DNA sequencing, and Illumina Hi-Seq data was collected and is currently being processed. Very rough draft map of the location of the isolates is below. Will continue to work on VCF files and maps. 
+Fifteen C. sulphurascens samples were collected from Apiary site on ___________ (insert date). DNA sequencing, and Illumina Hi-Seq data was conducted and is currently being processed. Very rough draft map of the location of the isolates is below. Will continue to work on VCF files and maps. 
 
 
 <img width="407" alt="ApiaryMap" src="https://user-images.githubusercontent.com/49656044/137440453-ca085556-583a-4880-997f-803d6e5b59bf.PNG">
