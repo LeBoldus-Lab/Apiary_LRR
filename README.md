@@ -32,4 +32,4 @@ Fifteen C. sulphurascens samples were collected from Apiary site on ___________ 
 - Are isolates from different plots genotypically similar (clones)?
 - If clones are dispersed across long distances how might this have occurred? (spores? humans? insects? animals?)
 - Unique opportunity to look at plot data in combination with genomic data and look for levels of virulence or possible correlations.
-- See if Sky, Dave Shaw, Mee-Sook or anyone else has any aditional information or data from this site.
+- See if Sky, Dave, Mee-Sook, Sarah, or anyone else has any aditional information, maps, or data from this site.
