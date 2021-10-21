@@ -163,13 +163,15 @@ ggsave("C:/Users/showa/Documents/GitHub/Apiary_LRR/Trees_per_subplot.pdf")
 ```
 
 ```{r}
-TRTxNSTS_summary<-combined_data %>% group_by(TRT, NSTS) %>% summarise(count=n())
+TRTxNSTS_summary<-combined_data %>% group_by(TRT, NSTS, .drop=FALSE) %>% summarise(count=n())
 TRTxNSTS_summary
 ggplot(TRTxNSTS_summary,aes(x=TRT,y=count,fill=NSTS ))+geom_col()+scale_fill_viridis_d()+ylab("Tree count")+xlab("Treatment")
 
-TRTxOSTS_summary<-combined_data %>% group_by(TRT, OSTS) %>% summarise(count=n())
+TRTxOSTS_summary<-combined_data %>% group_by(TRT, OSTS, .drop=FALSE) %>% summarise(count=n())
 TRTxOSTS_summary
 #ggplot(TRTxOSTS_summary,aes(x=TRT,y=count,fill=OSTS ))+geom_col()+scale_fill_viridis_d()+ylab("Tree count")+xlab("Treatment")
+ggplot(TRTxOSTS_summary,aes(x=TRT,y=count,fill=OSTS))+geom_col()+scale_fill_viridis_d()+ylab("Tree count")+xlab("Treatment")
+
 
 #TRTxDAM_summary<-combined_data %>% group_by(TRT, DAM1) %>% summarise(count=n())
 #TRTxDAM_summary
@@ -225,7 +227,9 @@ Is there a stem map and/or do the tree numbers refer to a position in the subplo
 
 ##Plotting old and new DBH histograms
 ```{r}
-#calculate live diameters
+#pivot to long data by old and new
+#create subplot and plot datasets and summary statistics
+#calculate summary statistics for live diameters
 #calculate basal area with mm DBH
 #calculate proportion surviving
 ```
