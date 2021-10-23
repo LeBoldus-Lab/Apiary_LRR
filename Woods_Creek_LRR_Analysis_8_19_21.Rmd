@@ -1,0 +1,528 @@
+---
+title: "Woods_Creek_LRR_Analysis_8_19_21"
+author: "David Showalter"
+date: "9/15/2021"
+output: html_document
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Step 1: Defining variables and General cleanup
+
+-   ***Note that all DBH measurements are in cm unless otherwise
+    stated!!!*** -tree conditions are coded 1-4: 1=healthy,
+    2=LRR-symptom 3=LRR-dead, 4=other dead -treamtents are coded 1-3:
+    1=unthinned, 2 and 3 are different thinning treatments with similar
+    basal area but may vary in demography. -all plots are 1/10 acre,
+    with 5 plots/stand = 0.5 acre inventoried/stand
+-   Also note that all changes are being made to the "WC Final 2020 -
+    08_05_20.xlsx" file. More specifically all changes are being made on
+    the "original from everett" sheet.
+-   Replaced all "x" with a blank space (made 1105 replacements).
+-   Replaced all "?" with a blank space (made 5 replacements).
+-   Changed 12D Tree #16 DBH from 2009 from 52.5 to 72.5 based upon
+    2000 and 2020 DBH measurements (assumed data entry error from 2009).
+-   Changed PLOT of 22B(ALT) to 22B (There were 25 replacements made).
+-   Changed 11c Tree #20 2009 measurement from 15.1 to 75.1 based upon
+    2000 and 2020 measurement (assumed data entry error).
+-   Changed 11c Tree #30 2009 measurement from 36.4 to 56.4.1 based
+    upon 2000 and 2020 measurement (assumed data entry error).
+-   Changed 15B Tree #5 and 32A Tree #32, from "GC" to "CH" for
+    Chinquapin
+-   Added DBH measurements and tree health condition codes (THCC) from
+    1990 "T2-B2" spreadsheet to "original from everett" sheet.
+-   Combined measurements from 33E Tree #23 and 33E Tree#23* based
+    upon context clues from notes and previous measurements matching
+    closely to current measurements.
+-   Removed tree 3 3 D 23 from dataset because no species code was ever
+    assigned.
+
+## Step 2: Check to Ensure that there are no measurements included within the data that have < 15.24cm DBH
+
+-   ***Note that all DBH measurements are in cm unless otherwise
+    stated!!!***
+-   In excel sort by DBH starting with 1985 through 2020 (deleted 77
+    trees).
+-   In excel sort by DBH from 1985-2020 and delete any individual
+    measurements from those years that were less < 15.24cm (edited 44
+    trees).
+-   Excel spreadsheet titled "edited_and_deleted_trees.xlsx" contains
+    the records of all trees that were edited or deleted.
+
+## Step 3: Removed trees with > 25 cm DBH if 2020 DBH was the only year where DBH was recorded
+
+-   In excel sort by 2020 DBH (Removed 42 trees from the raw dataset).
+-   Excel spreadsheet titled "edited_and_deleted_trees.xlsx" contains
+    the records of all trees that were edited or deleted.
+
+## Step 4: - Added condition codes for 2020 and double checked condition codes from other years.
+
+-   Condition codes of 3 and 4 were not repeated and if DBH was recorded
+    for the year where it was found to be 3 or 4 it was left but repeats
+    were deleted to not include dead/snags/stumps/rotted wood etc. for
+    more than one year.\
+-   Made best judgement call on whether to include tree health condition
+    code in 2020 for missing trees based upon notes from previous years.
+    (If trees were missing and no notes were given for condition from
+    previous years then condition code was left blank).
+-   13B Tree #19 repeated the health condition code of 4 for 2009 and 3
+    for 2020 since it was an eventual count for Laminated Root Root
+    (code 3).
+-   After consideration, there will be repeats of 3 and 4 codes but only
+    on ORIG, 1985, and 1990. This is because for most analysis we will
+    be using 1990 as the starting year since this is after the thinning
+    occurred. However we might be using 1985 as a starting year
+    therefore the repeats will be useful for the 1985 and or 1990
+    analysis.
+
+## Importing polished dataset to R for transposition, statistical analysis and visualization
+
+```{r, message=FALSE}
+library(readxl)
+library(tidyverse)
+library(ggplot2)
+#importing relevant sheet and columns from xlsx file and specifying variable types
+WC_clean <- read_excel("~/WC_Final_2020_08_05_20_CLEANED.xlsx", sheet = "original from everett", range = "A1:W1808", col_types = c("text", "text", "text", "text", "text", "numeric", "text", "numeric", "text", "numeric", "text", "numeric", "text", "numeric", "text", "numeric", "text", "numeric", "text", "text", "text", "text", "text"))
+#subsetting to remove "original" and "85" columns
+drop<-c("ORIG DIA","ORIG COND","85 DIA","85 COND")
+data_clean<-WC_clean[,!names(WC_clean) %in% drop]
+#taking out trees with no species designation
+data_clean<-subset(data_clean, is.na(data_clean$SPECIES)== FALSE)
+#first checking that there are no rows with all NA conditions that may have been measured only before thinning.
+data_clean_noNA<-data_clean[-(which(is.na(data_clean$`90 COND`)==TRUE & is.na(data_clean$`95 COND`)==TRUE& is.na(data_clean$`00 COND`)==TRUE&is.na(data_clean$`09 COND`)==TRUE&is.na(data_clean$`20 COND`)== TRUE)),]
+```
+
+```{r}
+#attempt to fix ghosts without killing 2020 recruits
+data_clean_noNA$`90 COND CUM`<-data_clean_noNA$`90 COND`
+data_clean_noNA$`95 COND CUM`<-ifelse(is.na(data_clean_noNA$`90 COND CUM`==TRUE), data_clean_noNA$`95 COND`, ifelse(data_clean_noNA$`90 COND CUM`=="3"|data_clean_noNA$`90 COND CUM`=="4"|data_clean_noNA$`90 COND CUM`=="0", "0", ifelse((data_clean_noNA$`90 COND CUM`=="1"|data_clean_noNA$`90 COND CUM`=="2")&is.na(data_clean_noNA$`95 COND`)==TRUE, "4", data_clean_noNA$`95 COND`)))
+data_clean_noNA$`00 COND CUM`<-ifelse(is.na(data_clean_noNA$`95 COND CUM`==TRUE), data_clean_noNA$`00 COND`, ifelse(data_clean_noNA$`95 COND CUM`=="3"|data_clean_noNA$`95 COND CUM`=="4"|data_clean_noNA$`95 COND CUM`=="0", "0", ifelse((data_clean_noNA$`95 COND CUM`=="1"|data_clean_noNA$`95 COND CUM`=="2")&is.na(data_clean_noNA$`00 COND`)==TRUE, "4", data_clean_noNA$`00 COND`)))
+data_clean_noNA$`09 COND CUM`<-ifelse(is.na(data_clean_noNA$`00 COND CUM`==TRUE), data_clean_noNA$`09 COND`, ifelse(data_clean_noNA$`00 COND CUM`=="3"|data_clean_noNA$`00 COND CUM`=="4"|data_clean_noNA$`00 COND CUM`=="0", "0", ifelse((data_clean_noNA$`00 COND CUM`=="1"|data_clean_noNA$`00 COND CUM`=="2")&is.na(data_clean_noNA$`09 COND`)==TRUE, "4", data_clean_noNA$`09 COND`)))
+data_clean_noNA$`20 COND CUM`<-ifelse(is.na(data_clean_noNA$`09 COND CUM`==TRUE), data_clean_noNA$`20 COND`, ifelse(data_clean_noNA$`09 COND CUM`=="3"|data_clean_noNA$`09 COND CUM`=="4"|data_clean_noNA$`09 COND CUM`=="0", "0", ifelse((data_clean_noNA$`09 COND CUM`=="1"|data_clean_noNA$`09 COND CUM`=="2")&is.na(data_clean_noNA$`20 COND`)==TRUE, "4", data_clean_noNA$`20 COND`)))
+#comparing diameter distributions of live and dead trees throughout the study. Asking, are bigger trees more likely to die than smaller?
+#first need to create a "terminal diameter" variable to capture the latest diameter measurement for each tree before/at death.
+data_clean_noNA$term_dia<- with(data_clean_noNA, ifelse(is.na(data_clean_noNA$`20 DIA`)==FALSE, data_clean_noNA$`20 DIA`, ifelse(is.na(data_clean_noNA$`09 DIA`)==FALSE, data_clean_noNA$`09 DIA`, ifelse(is.na(data_clean_noNA$`00 DIA`)==FALSE, data_clean_noNA$`00 DIA`, (ifelse(is.na(data_clean_noNA$`95 DIA`)==FALSE, data_clean_noNA$`95 DIA`, ifelse(is.na(data_clean_noNA$`90 DIA`)==FALSE, data_clean_noNA$`90 DIA`, NA)))))))
+#terminal diameter distribution of all trees, alive and dead
+ggplot(data = data_clean_noNA, aes(x = term_dia)) + 
+ geom_histogram(na.rm=TRUE)+ scale_color_viridis_d(na.translate = FALSE)+ xlab("Terminal DBH (cm)") + ylab("count")+ theme_classic()
+#creating a binary "living" variable based on `20 COND CUM`
+data_clean_noNA$living<-ifelse(data_clean_noNA$`20 COND CUM`==1|data_clean_noNA$`20 COND CUM`==2,"alive","dead")
+#plot of terminal diameters for all trees
+ggplot(data = data_clean_noNA, aes(x = term_dia, fill=living)) + 
+geom_histogram()+ scale_fill_viridis_d()+ xlab("Terminal DBH (cm)") + ylab("count")+ theme_classic()
+ggplot(data = data_clean_noNA, aes(x = term_dia)) + 
+ geom_histogram()+ xlab("Terminal DBH (cm)") + ylab("count")+ theme_classic()+ facet_grid(~living)
+#counts of living and dead trees
+live_dead<-data_clean_noNA %>% group_by(living) %>% summarise(n())
+live_dead
+#persistent NAs
+problem<-data_clean_noNA[which(is.na(data_clean_noNA$living)==TRUE),]
+#write.csv(data_clean_noNA, file="~/LeBoldus_Lab/Laminated_Root_Rot/data_clean_noNA.csv")
+#write_rds(data_clean_noNA, "~/LeBoldus_Lab/Laminated_Root_Rot/data_clean_noNA.Rds")
+```
+
+```{r}
+#pivoting data from wide to long format
+#for diameters
+long_data<- pivot_longer(data_clean_noNA, cols = c("90 DIA","95 DIA","00 DIA","09 DIA","20 DIA"), names_to = "YEAR", values_to = "DIA")
+#for conditions
+conds<-pivot_longer(data_clean_noNA, cols = c("90 COND","95 COND","00 COND","09 COND","20 COND"), names_to = "YEAR", values_to = "COND")
+#for cumulative conditions
+cum_conds<-pivot_longer(data_clean_noNA, cols = c("90 COND CUM","95 COND CUM","00 COND CUM","09 COND CUM","20 COND CUM"), names_to = "YEAR", values_to = "COND_CUM")
+#combining
+long_data$COND<-as.character(conds$COND)
+long_data$COND_CUM<-as.character(cum_conds$COND_CUM)
+#changing values to remove characters and then convert to numeric
+#example : C_plots$TRT[C_plots$TRT=="DF0y"]<-"DF0Y"
+long_data$YEAR[long_data$YEAR=="90 DIA"]<-1990
+long_data$YEAR[long_data$YEAR=="95 DIA"]<-1995
+long_data$YEAR[long_data$YEAR=="00 DIA"]<-2000
+long_data$YEAR[long_data$YEAR=="09 DIA"]<-2009
+long_data$YEAR[long_data$YEAR=="20 DIA"]<-2020
+long_data$YEAR<-as.numeric(long_data$YEAR)
+#subsetting to remove wide columns and irrelevant columns
+drop2<-c("90 DIA","90 COND","95 DIA","95 COND","00 DIA","00 COND","09 DIA","09 COND", "20 DIA","20 COND","90 COND CUM","95 COND CUM","00 COND CUM","09 COND CUM","20 COND CUM", "living","13 COND","NOTES 2013")
+long_data<-long_data[,!names(long_data) %in% drop2]
+#creating unique tree ID variable of format TRT_BLOCK_PLOT_TREE
+long_data$Tree_ID_TBP<-paste(long_data$TMT,long_data$BLOCK,long_data$PLOT,long_data$TREE, sep = "_")
+#creating unique plot ID factor varaible of format TRT_BLOCK_PLOT
+long_data$Plot_ID_TBP<-as.factor(paste(long_data$TMT,long_data$BLOCK,long_data$PLOT, sep = "_"))
+#making proper factors while leaving year as a numeric variable 
+long_data$TMT<-as.factor(long_data$TMT)
+long_data$BLOCK<-as.factor(long_data$BLOCK)
+long_data$PLOT<-as.factor(long_data$PLOT)
+long_data$SPECIES<-as.factor(long_data$SPECIES)
+long_data$YEAR_F<-as.factor(long_data$YEAR)
+long_data$YEAR<-as.numeric(long_data$YEAR)
+long_data$DIA<-as.numeric(long_data$DIA)
+#designating trees as alive or dead in a given year (or not yet recruited) and calculating basal area of each tree and making new variables of diameters and basal areas for only living trees (cond 1 and 2)
+#pasting either DIA for living or "0" for other cond values into live_DIA variable. function would not accept NA as "else" value. Then replacing "0" with NA
+long_data$alive<-as.factor(if_else(is.na(long_data$COND_CUM)==TRUE, "<15cm", if_else((long_data$COND_CUM=="1"|long_data$COND_CUM=="2"), "Alive", "Dead")))
+long_data$live_DIA<-if_else(long_data$alive=="Alive", long_data$DIA, 0)
+#replacing 0 with NA
+long_data$live_DIA[long_data$live_DIA==0]<-NA
+#BA calcs
+long_data$BA<-(long_data$DIA/200)^2*pi
+long_data$live_BA<-(long_data$live_DIA/200)^2*pi
+#making a more generic species lable of DF, HL, or other
+long_data$species_gen <- as.factor(ifelse(long_data$SPECIES == "DF", "DF", ifelse(long_data$SPECIES == "HL", "HL", "other" ))) 
+annual_live_count<-long_data %>% group_by(YEAR_F,alive, .drop = FALSE) %>% summarise(n())
+annual_live_count_sp<-long_data %>% group_by(YEAR_F,species_gen, alive, .drop = FALSE) %>% summarise(n())
+annual_live_count_plot<-long_data %>% group_by(Plot_ID_TBP,YEAR_F,alive, .drop = FALSE) %>% summarise(n())
+annual_live_count_sp_plot<-long_data %>% group_by(Plot_ID_TBP,YEAR_F,species_gen, alive, .drop = FALSE) %>% summarise(n())
+glimpse(long_data)
+#write.csv(annual_live_count, file="~/LeBoldus_Lab/Laminated_Root_Rot/annual_live_count.csv")
+#write.csv(annual_live_count_sp, file="~/LeBoldus_Lab/Laminated_Root_Rot/annual_live_count_sp.csv")
+#write.csv(annual_live_count_plot, file="~/LeBoldus_Lab/Laminated_Root_Rot/annual_live_count_plot.csv")
+#write.csv(annual_live_count_sp_plot, file="~/LeBoldus_Lab/Laminated_Root_Rot/annual_live_count_sp_plot.csv")
+#write.csv(long_data, file="~/LeBoldus_Lab/Laminated_Root_Rot/long_data.csv")
+#write_rds(long_data, "~/LeBoldus_Lab/Laminated_Root_Rot/long_data.Rds")
+```
+
+## Import Rds from results of above
+
+```{r}
+#long_data <- readRDS("C:/Users/shawn/Desktop/LAST_TIME/R_final/long_data_clean (1).Rds")
+#data_clean <- readRDS("C:/Users/shawn/Desktop/data_clean.Rds")
+```
+
+## descriptive statistics and plots
+
+```{r}
+#creating a histogram of diameter values across all years and plots
+ggplot(data = long_data, aes(x = live_DIA, fill= TMT)) + 
+ geom_histogram()+ facet_grid(~YEAR, 
+             scales = "fixed", # Let the x axis vary across facets.
+             space = "free_x",  # Let the width of facets vary and force all bars to have the same width.
+             switch = "x") + scale_fill_viridis_d()
+only_1990<-subset(long_data, long_data$YEAR==1990)
+glimpse(only_1990)
+only_1990_alive<-subset(only_1990, only_1990$alive=="Alive")
+glimpse(only_1990_alive)
+ggplot(data = only_1990, aes(x = live_DIA, fill= TMT)) + 
+ geom_histogram()+ scale_fill_viridis_d()+facet_grid(~species_gen, 
+             scales = "fixed", # Let the x axis vary across facets.
+             space = "free_x",  # Let the width of facets vary and force all bars to have the same width.
+             switch = "x") + xlab("1990 Live Diameter (cm)")
+ggplot(data = only_1990, aes(x = live_DIA, fill= TMT)) + 
+ geom_histogram()+ scale_fill_viridis_d()+ xlab("1990 Live Diameter (cm)")
+ggplot(data = only_1990, aes(x = live_DIA)) + 
+ geom_histogram()+ scale_fill_viridis_d()+facet_grid(~TMT, 
+             scales = "fixed", # Let the x axis vary across facets.
+             space = "free_x",  # Let the width of facets vary and force all bars to have the same width.
+             switch = "x") + xlab("1990 Live Diameter (cm)")
+ggplot(data = only_1990, aes(x = live_DIA)) + 
+ geom_histogram()+ scale_fill_viridis_d()+facet_grid(vars(TMT), vars(species_gen), 
+             scales = "fixed", # Let the x axis vary across facets.
+             space = "free_x",  # Let the width of facets vary and force all bars to have the same width.
+             switch = "x") + xlab("1990 Live Diameter (cm)")
+#ggplot(data = only_1990_alive, aes(x = DIA, color= TMT)) + 
+# geom_density(na.rm=TRUE)+ scale_color_viridis_d(na.translate = FALSE)+ xlab("1990 DBH (cm)") + ylab("kernel density estimate")+ theme_classic()
+#selection only 1990 and filterig out trees with no condition recorded (NA, not yet recruited into plots)
+# .drop=FALSE in group_by() returns a "0" for grouping combinations that have no cases, rather than excluding them from the summary df.
+#cond_cum_1990_summary<-only_1990_alive %>% group_by(TMT, COND_CUM, .drop=FALSE) %>% summarise(count=n())
+#glimpse(cond_cum_1990_summary)
+#cond_cum_1990_summary_noNA<-cond_cum_1990_summary[which(is.na(cond_cum_1990_summary$COND_CUM)==FALSE),]
+#colnames(cond_cum_1990_summary_noNA)<- c("TMT","COND_CUM","count")
+#ggplot(data = cond_cum_1990_summary_noNA, aes(x = TMT, y= count, fill= COND_CUM)) + 
+# geom_col()+ scale_fill_viridis_d()
+#including species
+#cond_cum_1990_summary_sp<-only_1990_alive %>% group_by(TMT, COND_CUM,species_gen, .drop=FALSE) %>% summarise(count=n())
+#glimpse(cond_cum_1990_summary_sp)
+#cond_cum_1990_summary_sp_noNA<-cond_cum_1990_summary_sp[which(is.na(cond_cum_1990_summary_sp$COND_CUM)==FALSE),]
+#glimpse(cond_cum_1990_summary_sp_noNA)
+#colnames(cond_cum_1990_summary_sp_noNA)<- c("TMT","COND_CUM","species_gen","count")
+#ggplot(data = cond_cum_1990_summary_sp_noNA, aes(x = COND_CUM, y= count, fill= species_gen)) + 
+# geom_col()+ scale_fill_viridis_d()+facet_grid(~TMT,
+#             scales = "free_x", 
+#             space = "free_x",  
+#             switch = "x")
+#generating 2020 summary
+#only_2020<-subset(long_data, long_data$YEAR==2020)
+#glimpse(only_2020)
+#ggplot(data = only_2020, aes(x = DIA,)) + 
+# geom_density(na.rm=TRUE)+ scale_color_viridis_d(na.translate = FALSE)+ xlab("2020 DBH (cm)") + ylab("kernel density estimate")+ theme_classic()
+#only_2020_alive<-subset(only_2020, only_2020$alive=="Alive")
+#glimpse(only_2020_alive)
+#(data = only_2020_alive, aes(x = DIA, color= TMT)) + 
+# geom_density(na.rm=TRUE)+ scale_color_viridis_d(na.translate = FALSE)+ xlab("living 2020 DBH (cm)") + ylab("kernel density estimate")+ theme_classic()
+#write.csv(cum_conds, file="C:/Users/shawn/Desktop/cum_conds.csv")
+```
+
+```{r}
+#summarizing mean live diameter over time by treatment
+mean_DIA_df <- long_data %>%   
+  group_by(TMT, YEAR_F, .drop = FALSE) %>%  
+  summarise(live_DIA_mean=mean(live_DIA, na.rm = TRUE), live_DIA_se=sd(live_DIA, na.rm = TRUE)/sqrt(n()), n_samples = n())%>% ungroup()
+glimpse(mean_DIA_df)
+#converting factor year back to numeric and restoring values for plotting
+mean_DIA_df$YEAR<-as.numeric(mean_DIA_df$YEAR_F)
+mean_DIA_df$YEAR[mean_DIA_df$YEAR==1]<-1990
+mean_DIA_df$YEAR[mean_DIA_df$YEAR==2]<-1995
+mean_DIA_df$YEAR[mean_DIA_df$YEAR==3]<-2000
+mean_DIA_df$YEAR[mean_DIA_df$YEAR==4]<-2009
+mean_DIA_df$YEAR[mean_DIA_df$YEAR==5]<-2020
+#plotting mean live diameter
+ggplot(data = mean_DIA_df, # add the data
+       aes(x = YEAR,  #set x, y coordinates
+           y = live_DIA_mean,
+           color = TMT)) +    # color by treatment
+  geom_point(size = 3) + # set size of the dots
+  geom_errorbar(aes(ymin= (live_DIA_mean - live_DIA_se), ymax= (live_DIA_mean + live_DIA_se)))
+```
+
+```{r}
+#summarizing total live basal area over time by treatment
+sum_BA_df <- long_data %>%   
+  group_by(TMT, YEAR_F, .drop = FALSE) %>%  
+  summarise(sum_live_BA=sum(live_BA, na.rm = TRUE), cells = n())%>%ungroup()
+#converting factor year back to numeric and restoring values for plotting
+sum_BA_df$YEAR<-as.numeric(sum_BA_df$YEAR_F)
+sum_BA_df$YEAR[sum_BA_df$YEAR==1]<-1990
+sum_BA_df$YEAR[sum_BA_df$YEAR==2]<-1995
+sum_BA_df$YEAR[sum_BA_df$YEAR==3]<-2000
+sum_BA_df$YEAR[sum_BA_df$YEAR==4]<-2009
+sum_BA_df$YEAR[sum_BA_df$YEAR==5]<-2020
+glimpse(sum_BA_df)
+#counting living trees (those with a numeric value for live basal area)
+BA_NA<-long_data %>% group_by(TMT, YEAR_F, .drop = FALSE) %>% count(is.na(live_BA))
+BA_NA_FALSE<-BA_NA[which(BA_NA$`is.na(live_BA)` ==FALSE),c(1,2,4)]
+names(BA_NA_FALSE)<-c("TMT","YEAR_F","n_live_trees")
+glimpse(BA_NA_FALSE)
+sum_BA_df$n_live_trees<-BA_NA_FALSE$n_live_trees
+sum_BA_df
+#split by species
+sum_BA_SP_df <- long_data %>%   
+  group_by(TMT, YEAR_F, species_gen, .drop = FALSE) %>%  
+  summarise(sum_live_BA=sum(live_BA, na.rm = TRUE), cells = n())%>%ungroup()
+#converting factor year back to numeric and restoring values for plotting
+sum_BA_SP_df$YEAR<-as.numeric(sum_BA_SP_df$YEAR_F)
+sum_BA_SP_df$YEAR[sum_BA_SP_df$YEAR==1]<-1990
+sum_BA_SP_df$YEAR[sum_BA_SP_df$YEAR==2]<-1995
+sum_BA_SP_df$YEAR[sum_BA_SP_df$YEAR==3]<-2000
+sum_BA_SP_df$YEAR[sum_BA_SP_df$YEAR==4]<-2009
+sum_BA_SP_df$YEAR[sum_BA_SP_df$YEAR==5]<-2020
+glimpse(sum_BA_SP_df)
+BA_NA_SP<-long_data %>% group_by(TMT, YEAR_F, species_gen, .drop = FALSE) %>% count(is.na(live_BA))
+BA_NA_SP_FALSE<-BA_NA_SP[which(BA_NA_SP$`is.na(live_BA)` ==FALSE),]
+names(BA_NA_SP_FALSE)<-c("TMT","YEAR_F","species_gen","logic", "n_live_trees")
+glimpse(BA_NA_SP_FALSE)
+sum_BA_SP_df$n_live_trees<-BA_NA_SP_FALSE$n_live_trees
+sum_BA_SP_df
+#plot total basal area
+ggplot(data = sum_BA_df, # add the data
+       aes(x = YEAR, y = sum_live_BA, color = TMT)) +
+  geom_point(size = 3)
+#plot tree count
+ggplot(data = sum_BA_df, # add the data
+       aes(x = YEAR, y = n_live_trees, color = TMT)) +
+  geom_point(size = 3)
+#proportion living total
+prop_living<-long_data %>% group_by(TMT, YEAR_F, alive, .drop = FALSE) %>% summarise(count=n())
+prop_living$YEAR<-as.numeric(prop_living$YEAR_F)
+prop_living$YEAR[prop_living$YEAR==1]<-1990
+prop_living$YEAR[prop_living$YEAR==2]<-1995
+prop_living$YEAR[prop_living$YEAR==3]<-2000
+prop_living$YEAR[prop_living$YEAR==4]<-2009
+prop_living$YEAR[prop_living$YEAR==5]<-2020
+glimpse(prop_living)
+prop_living_noNA<-prop_living[which(is.na(prop_living$alive)==FALSE),]
+glimpse(prop_living_noNA)
+prop_living_noNA
+ggplot(data = prop_living_noNA, # add the data
+       aes(x = YEAR, fill = alive, y=count, position="stack")) +    # color by treatment
+  geom_col(na.rm=TRUE)+ facet_grid(~TMT, 
+             scales = "free_x", # Let the x axis vary across facets.
+             space = "free_x",  # Let the width of facets vary and force all bars to have the same width.
+             switch = "x") + scale_fill_viridis_d(na.translate = FALSE)
+#proportion living by species
+prop_living_SP<-long_data %>% group_by(TMT, YEAR_F, alive, species_gen, .drop = FALSE) %>% summarise(count=n())
+prop_living_SP$YEAR<-as.numeric(prop_living_SP$YEAR_F)
+prop_living_SP$YEAR[prop_living_SP$YEAR==1]<-1990
+prop_living_SP$YEAR[prop_living_SP$YEAR==2]<-1995
+prop_living_SP$YEAR[prop_living_SP$YEAR==3]<-2000
+prop_living_SP$YEAR[prop_living_SP$YEAR==4]<-2009
+prop_living_SP$YEAR[prop_living_SP$YEAR==5]<-2020
+glimpse(prop_living_SP)
+prop_living_SP_noNA<-prop_living_SP[which(is.na(prop_living_SP$alive)==FALSE),]
+glimpse(prop_living_SP_noNA)
+prop_living_SP_noNA
+#ggplot(data = prop_living_SP_noNA, # add the data
+ #      aes(x = YEAR, fill = alive, y=count, position="stack")) +    # color by treatment
+  #geom_col(na.rm=TRUE)+ facet_grid(~TMT,
+   #          scales = "free_x", # Let the x axis vary across facets.
+    #         space = "free_x",  # Let the width of facets vary and force all bars to have the same width.
+     #        switch = "x") + scale_fill_viridis_d(na.translate = FALSE)
+#write.csv(sum_BA_df, file="~/LeBoldus_Lab/Laminated_Root_Rot/total_live_BA_by_TMT.csv")
+#write.csv(sum_BA_SP_df, "~/LeBoldus_Lab/Laminated_Root_Rot/total_live_BA_by_TMT_SP.csv")
+#write.csv(prop_living_noNA, "~/LeBoldus_Lab/Laminated_Root_Rot/alive_and_dead_counts_by_TMT.csv")
+#write.csv(prop_living_SP_noNA, "~/LeBoldus_Lab/Laminated_Root_Rot/alive_and_dead_counts_by_TMT_SP.csv")
+```
+
+## Generating plot summary and stand summary datasets
+
+```{r}
+#creating plot level DF for all species
+plot_level_df<-long_data %>% group_by(Plot_ID_TBP, YEAR_F, species_gen, COND_CUM) %>% summarise(count = n(), live_BA = sum(live_BA, na.rm=TRUE), mean_live_DIA= mean(live_DIA, na.rm=TRUE))
+
+#adding the separate TMT, BLOCK, and PLOT columns
+plot_level_df<-plot_level_df %>% separate(Plot_ID_TBP, c("TMT","BLOCK","PLOT"),"_",remove = FALSE)
+plot_level_df$TMT<-as.factor(plot_level_df$TMT)
+plot_level_df$BLOCK<-as.factor(plot_level_df$BLOCK)
+plot_level_df$PLOT<-as.factor(plot_level_df$PLOT)
+glimpse(plot_level_df)
+#creating unique stand ID factor varaible of format TRT_BLOCK
+plot_level_df$Stand_ID_TB<-as.factor(paste(plot_level_df$TMT,plot_level_df$BLOCK, sep = "_"))
+```
+
+```{r}
+stand_level_df<- plot_level_df %>% group_by(Stand_ID_TB, YEAR_F, species_gen, COND_CUM, .drop = FALSE)%>% summarise(count = sum(count, na.rm=TRUE), live_BA = sum(live_BA, na.rm=TRUE))
+glimpse(stand_level_df)
+#adding the separate TMT, and BLOCK columns
+stand_level_df<-stand_level_df %>% separate(Stand_ID_TB, c("TMT","BLOCK"),"_",remove = FALSE)
+stand_level_df$TMT<-as.factor(stand_level_df$TMT)
+stand_level_df$BLOCK<-as.factor(stand_level_df$BLOCK)
+glimpse(stand_level_df)
+#write_rds(data_clean, "C:/Users/shawn/Desktop/data_clean.Rds")
+#write_rds(long_data,"~/LeBoldus_Lab/Laminated_Root_Rot/long_data_clean.Rds")
+write_rds(plot_level_df,"plot_level_df.Rds")
+write_rds(stand_level_df,"stand_level_df.Rds")
+#write_csv(long_data,"~/LeBoldus_Lab/Laminated_Root_Rot/long_data_clean.csv")
+#write_csv(plot_level_df, "~/LeBoldus_Lab/Laminated_Root_Rot/plot_level_df.csv")
+#write_csv(stand_level_df, "~/LeBoldus_Lab/Laminated_Root_Rot/stand_level_df.csv")
+```
+
+
+## Step 5: Formating the Spreadsheet for FVS
+
+-   Using the spreadsheet titled "WC Final 2020 - 08_05_20_CLEANED"
+    which has been edited from the raw data file "WC Final 2020 -
+    08_05_20" by following the steps from above we will now use it to
+    format the datasheet for use within FVS.
+-   In excel the 90 DIA column was convereted from "cm" to "inch" using
+    the CONVERT function.
+-   All tree health condition codes were converted as follows to fit the
+    FVS model history parameters field:
+
+Current "History" coding conversion for 1990 is:
+
+| Our code | FVS conversion |
+|----------|----------------|
+| 1        | 1              |
+| 2        | 5              |
+| 3        | 6              |
+| 4        | 6              |
+
+-   Code 1 = 1 (Healthy = Live Tree)
+-   Code 2 = 5 (Symptomatic = Live tree)
+-   Code 3 = 6 (Recently dead)
+-   Code 4 = 6 (Recently dead)
+
+"Tree history codes of 0-5 are used to represent live tree records that
+are projected by FVS. FVS does not distinguish between the various live
+tree codes. Tree history codes 6, 7, 8, and 9 indicate types of tree
+records that are not projected."
+<https://www.fs.fed.us/fmsc/ftp/fvs/docs/gtr/EssentialFVS.pdf>
+
+## Step 6: Running the Raw Data from 1990 in FVS
+
+-   Individual stand files were each run with FVS (version\>) release
+    date 20201010 through the web based graphical user interface.
+-   Excel dattbase files were converted to Sqlite3 database files by
+    using the following website:
+    <https://forest.moscowfsl.wsu.edu/FVSDataConvert/>
+-   Area of stands was calculated in ArcGIS Pro 2.6.0 by using the map
+    found at C.-sulphurascens-Project/data/Stand size per acre (ArcGIS
+    Pro)/WC_map(1).aprx
+-   Stand age of 0 years was used.
+-   A new project was created, the downloaded Sqlite3 db files were
+    uploaded and installed under the "Import Data" tab in FVS
+-   The stands were added using the "Add Selected Stand" button under
+    that "Stands" tab
+-   The keyword RRTREIN was used to improve accuracy of root disease
+    infection
+    (<https://www.fs.fed.us/rm/pubs/rmrs_p054/rmrs_p054_055_067.pdf>)
+-   Under the "Time" tab: Common starting year\
+    1990\
+    Common ending year\
+    2020\
+    Growth and reporting interval (years)\
+    5\
+    Additional output reporting years\
+    2009
+-   Under "Select Outputs" tab the following boxes were checked:\
+    SVS, Plot shape Round, Tree lists (FVS_Treelist, FVS_CutList
+    (StdStk-stand and stock)), Inventory Statistics (FVS_Stats_Species,
+    FVS_Stats_Stand)
+-   The corresponding Table was downloaded and graphs were made using R
+    (insert version number here)
+-   There was no DBH data for 3-4E for 1990. Used 1985 DBH measurements
+    instead.
+
+## Step 7: Setting the Western Root Disease Parameters
+
+| Dam | Sev   | Model        | Comments  |
+|-----|-------|--------------|-----------|
+| 62  | 00-03 | Root Disease | Phellinus |
+
+Severity codes are defined as follows:
+
+-   01 = Tree is within 30 feet of a root disease infected tree
+
+-   02 = Symptoms of root disease detected on the tree
+
+-   03 = Symptoms of root disease and crown deterioration detected
+
+If the severity code is 01 and the tree diameter is not more than 5
+inches, then the tree is regarded as an uninfected small tree in the
+disease center; if the severity code is 00 or 01 and the tree diameter
+is greater than 5 inches, the tree is regarded as an infected large
+tree\
+
+When it comes to specifying disease centers, there are two schools of
+thought on this and it really depends on the overall root disease
+condition in the stand. If there are identifiable root disease pockets
+or centers, you can some those up for the stand for the number of
+centers. If the diseased trees, live and dead, are basically scattered
+throughout the stand, a single center is the best choice. In defining
+parameters with the RRInit keyword, the percent of roots infected (a
+pathologist would give a much better estimate) 0.1 (10%) is considered
+light infection and mortality will occur well before 100% of roots
+become infected depending on the disease type. Specification of infected
+and uninfected number of trees does not need to be specific tree counts,
+because the model is just using these values to calculate a proportion.
+
+-   Dam code of 62 for all trees that had signs/symptoms (severity code
+
+    2)  or mortality (severity code 03).
+
+-   If the plot center tree was infected then every tree within that
+    plot was coded with a 00,01 for that year.
+
+-   If tree was coded with a 02 or 03, an estimation of proximity was
+    done and the previous two trees and the next two trees within the
+    plot were assigned with a 00.
+
+-   If last tree in the plot was coded a 02 or 03 then trees #1 and #2
+    were coded with a 01 and vice versa if the last two trees within the
+    plot were coded as 02 or 03.
+
+"When root disease occurs in numerous small centers or when the edges of
+centers are not readily discernible on the ground, the stand should be
+modeled as one disease center."
+(<https://www.fs.fed.us/rm/pubs/rmrs_p054/rmrs_p054_055_067.pdf>)
+
+## Addtional Notes
+
+-   24B Tree #2 DBH from 1990 is probably wrong.
+-   14F Tree #40 missing DBH from 1990
+-   Additional previous notes from Everett concerning potential errors
+    within the data can be found in the "notes" spreadsheet of the "WC
+    Final 2020 - 08_05_20.xlsx" spreadsheet © 2021 GitHub, Inc. Terms
+    Privacy Security Status Docs Contact GitHub Pricing API Training
+    Blog About

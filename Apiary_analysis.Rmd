@@ -96,6 +96,13 @@ combined_data$AMT1<-as.factor(combined_data$AMT1)
 combined_data$NDBH[combined_data$NDBH==0]<-NA
 combined_data$ODBH[combined_data$ODBH==0]<-NA
 
+#add treatment code variable and unique Tree and subplot ID variables
+combined_data$TRT_code<-ifelse(combined_data$TRT=="RA10Y", "A", ifelse(combined_data$TRT=="CW10Y","B", ifelse(combined_data$TRT=="DF0Y","C", ifelse(combined_data$TRT=="RA20Y","D","E"))))
+combined_data$TRT_code<-as.factor(combined_data$TRT_code)
+combined_data$SUBPLOT_ID<-as.factor(paste(combined_data$TRT_code,combined_data$REP,combined_data$SUBPLOT, sep = ""))
+combined_data$Tree_ID<-paste(combined_data$SUBPLOT_ID,combined_data$TREE, sep = "_")
+
+
 #saveRDS(combined_data, file="C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/combined_trt_data.Rds")
 
 #write.csv(combined_data, file="C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/combined_trt_data.csv", row.names = FALSE)
@@ -214,11 +221,15 @@ combined_data$SP<-"DF"
 ##Remaining questions
 Note says that DF tretament "C" was 45 years old in 2020.Thus, plots were established in 1975.  All treatments were started at the same time follwing clearcut. DF in 10 year roation treatments are 35 (45-10) years old and in 20 year treatments 25 (45-20) years old.
 
+
 Mike indicated that there were 34 trees planted in each of the cicular observation subplots.
 
 To what year(s) do(es) the "old" measurements in the provided data refer?
+mean DBH of 20y rotations for "ODBH" old dbh is 7-9cm, so maybe 2010 when the doug firs would have been ~15 yo
 
-Are there any additional useful maps? Anna?
+If this is the case, could we recode the measurements in terms of DF age? So assuming 2010 old DBH for DF0y would be 35Y, old DBH for 10y trts would be 25Y, for 20y trts would be 15y. New (2020) DBH for DF0y would be 45Y, old DBH for 10y trts would be 35Y, for 20y trts would be 25y. Could create this variable as "DF_age" with data in long format?
+
+Are there any additional useful maps? Anna? Mike? Do we have coordinates or GIS objects for plot Centers
 
 11 trees without NDBH measurements. Are they duplicated in other plots? Remove them? No, they are dead (or one fused trunk).
 
@@ -228,7 +239,39 @@ Is there a stem map and/or do the tree numbers refer to a position in the subplo
 ##Plotting old and new DBH histograms
 ```{r}
 #pivot to long data by old and new
-#create subplot and plot datasets and summary statistics
+#pivoting data from wide to long format
+#for diameters
+long_data<- pivot_longer(combined_data, cols = c("ODBH","NDBH"), names_to = "YEAR", values_to = "DBH_mm")
+#for status
+status<-pivot_longer(combined_data, cols = c("OSTS","NSTS"), names_to = "YEAR", values_to = "STATUS")
+#for height
+height<-pivot_longer(combined_data, cols = c("OHT","NHT"), names_to = "YEAR", values_to = "HEIGHT")
+#for damage code with dummy variable for old because the data was not taken
+combined_data$ODAM1<-NA
+damage<-pivot_longer(combined_data, cols = c("ODAM1","DAM1"), names_to = "YEAR", values_to = "DAM")
+
+#combining
+long_data$STATUS<-as.character(status$STATUS)
+long_data$HEIGHT<-as.character(height$HEIGHT)
+long_data$DAMAGE<-as.character(damage$DAM)
+
+#creating DF_age variable based on treatment and estimated measurement year
+long_data$DF_age<-as.numeric(ifelse(long_data$YEAR=="ODBH", #if old
+                ifelse(long_data$TRT=="RA20Y"|long_data$TRT=="CW20Y",15, #if 20Y
+                      ifelse(long_data$TRT=="DF0Y",35 #if 0Y
+                          , 25)) #else/ if 10Y
+          , #else/ if new
+                ifelse(long_data$TRT=="RA20Y"|long_data$TRT=="CW20Y",25, #if 20Y
+                      ifelse(long_data$TRT=="DF0Y",45 #if 0Y
+                          , 35)))) #else/ if 10Y
+
+#subsetting to remove wide columns and irrelevant columns
+drop2<-c("OSTS","NSTS","OHLC","NHLC","DAM1","ODAM1")
+long_data<-long_data[,!names(long_data) %in% drop2]
+
+ggplot(long_data,aes(x=DF_age,y=DBH_mm,color=TRT))+geom_jitter()+scale_color_viridis_d()+ylab("DBH (mm) count")+xlab("Douglas Fir Estimated Age (years)")
+
+#create subplot and plot datasets and summary statistics including DF only for Shawn to test FVS with
 #calculate summary statistics for live diameters
 #calculate basal area with mm DBH
 #calculate proportion surviving
