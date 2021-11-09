@@ -237,7 +237,7 @@ Are there any additional useful maps? Anna? Mike? Do we have coordinates or GIS 
 Randomization/exp design.  RCB?
 Is there a stem map and/or do the tree numbers refer to a position in the subplot?
 
-##Plotting old and new DBH histograms
+##Plotting old and new DBH distributions
 ```{r}
 #pivot to long data by old and new
 #pivoting data from wide to long format
@@ -284,5 +284,15 @@ ggplot(long_data,aes(x=factor(DF_age),y=DBH_mm,fill=TRT))+geom_boxplot()+scale_f
 #calculate summary statistics for live diameters
 #calculate basal area with mm DBH
 #calculate proportion surviving
+#generate randomly sampled initial diameters
+```
+
+##Calculating live dbh and plotting status and live dbh distributions
+
+
+
+##Generating Stand level summaries
+```{r}
+
 ```
 
