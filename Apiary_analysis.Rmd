@@ -25,46 +25,49 @@ library(ggplot2)
 
 ## Importing data
 Two multi-sheet workboooks were provided by Anna Leon of Weyerhauser (Anna.Leon@weyerhaeuser.com). One with keys for metadata codes and one with coded data plus a dictionary for column names
+
+NOTE: Lab computer path "showalt_d/", home computer "showa/"
+
 ```{r, message=FALSE}
 #reading in code sheets form metadata workbook
-Apiary_TMTs <- read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/Apiary_2020_Path_Data_All_for_Jared_2.xlsx", sheet = "Treatments", range = "A1:C6", col_names = TRUE)
+Apiary_TMTs <- read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/raw_data/Apiary_2020_Path_Data_All_for_Jared_2.xlsx", sheet = "Treatments", range = "A1:C6", col_names = TRUE)
 colnames(Apiary_TMTs)<-c("TMT_code","TMT_short","TMT_name")
 
-Species_codes <- read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/Apiary_Measurement_Codes.xls",sheet = "Species_Codes", range = "A5:B130", col_names = FALSE)
+Species_codes <- read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/raw_data/Apiary_Measurement_Codes.xls",sheet = "Species_Codes", range = "A5:B130", col_names = FALSE)
 colnames(Species_codes)<-c("Species_Code","Species_name")
 
-Origin_codes <- read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/Apiary_Measurement_Codes.xls",sheet = "Origin_Codes", range = "A5:B10", col_names = FALSE)
+Origin_codes <- read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/raw_data/Apiary_Measurement_Codes.xls",sheet = "Origin_Codes", range = "A5:B10", col_names = FALSE)
 colnames(Origin_codes)<-c("Origin_Code","Origin")
 
-Status_codes <- read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/Apiary_Measurement_Codes.xls",sheet = "Status_Codes", range = "A5:B19", col_names = FALSE)
+Status_codes <- read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/raw_data/Apiary_Measurement_Codes.xls",sheet = "Status_Codes", range = "A5:B19", col_names = FALSE)
 colnames(Status_codes)<-c("Status_Code","Status")
 
-Damage_codes <- read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/Apiary_Measurement_Codes.xls",sheet = "Damage_Codes", range = "A5:B62", col_names = FALSE)
+Damage_codes <- read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/raw_data/Apiary_Measurement_Codes.xls",sheet = "Damage_Codes", range = "A5:B62", col_names = FALSE)
 colnames(Damage_codes)<-c("Damage_Code","Damage")
 
-Position_codes <- read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/Apiary_Measurement_Codes.xls",sheet = "Position_Codes", range = "A7:B14", col_names = FALSE)
+Position_codes <- read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/raw_data/Apiary_Measurement_Codes.xls",sheet = "Position_Codes", range = "A7:B14", col_names = FALSE)
 colnames(Position_codes)<-c("Position_Code","Position")
 
-Damage_amount_codes <- read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/Apiary_Measurement_Codes.xls",sheet = "Amount_Codes", range = "A5:B54", col_names = FALSE)
+Damage_amount_codes <- read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/raw_data/Apiary_Measurement_Codes.xls",sheet = "Amount_Codes", range = "A5:B54", col_names = FALSE)
 colnames(Damage_amount_codes)<-c("Damage_Amount_Code","Damage_Amount")
 
 #reading in dictionary sheet from data workbook
-Data_dict <- read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/Apiary_2020_Path_Data_All_for_Jared_2.xlsx",sheet = "Data_Dictionary", range = "A3:B23", col_names = FALSE)
+Data_dict <- read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/raw_data/Apiary_2020_Path_Data_All_for_Jared_2.xlsx",sheet = "Data_Dictionary", range = "A3:B23", col_names = FALSE)
 colnames(Data_dict)<-c("Column_Name","Description")
 
 #reading in data
-A_plots <- read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/data_input_edits.xlsx",sheet = "A-Plots", col_names = TRUE)
+A_plots <- read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/raw_data/data_input_edits.xlsx",sheet = "A-Plots", col_names = TRUE)
 #unique(A_plots$AMT1)
 A_plots$AMT1[A_plots$AMT1==0]<-NA
 
-B_plots <- read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/data_input_edits.xlsx",sheet = "B-Plots", col_names = TRUE)
+B_plots <- read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/raw_data/data_input_edits.xlsx",sheet = "B-Plots", col_names = TRUE)
 
-C_plots <- read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/data_input_edits.xlsx",sheet = "C-Plots", col_names = TRUE)
+C_plots <- read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/raw_data/data_input_edits.xlsx",sheet = "C-Plots", col_names = TRUE)
 #checking nonconforming trt entries with "y" instead of "Y"
 #unique(C_plots$TRT)
 C_plots$TRT[C_plots$TRT=="DF0y"]<-"DF0Y"
 
-D_plots <- read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/data_input_edits.xlsx",sheet = "D-Plots", col_names = TRUE)
+D_plots <- read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/raw_data/data_input_edits.xlsx",sheet = "D-Plots", col_names = TRUE)
 #checking nonconforming trt entries with "y" instead of "Y"
 #unique(D_plots$TRT)
 #unique(D_plots$DAM1)
@@ -73,7 +76,7 @@ D_plots$TRT[D_plots$TRT=="RA20y"]<-"RA20Y"
 D_plots$DAM1[D_plots$DAM1=="Blank"]<-NA
 D_plots$AMT1[D_plots$AMT1=="Blank"]<-NA
 
-E_plots <- read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/data_input_edits.xlsx",sheet = "E-Plots", col_names = TRUE)
+E_plots <- read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/raw_data/data_input_edits.xlsx",sheet = "E-Plots", col_names = TRUE)
 
 #combine all treatments together into one dataset and change coded variables to factors rather than numbers
 combined_data<-rbind(A_plots,B_plots,C_plots,D_plots,E_plots)
@@ -103,15 +106,15 @@ combined_data$SUBPLOT_ID<-as.factor(paste(combined_data$TRT_code,combined_data$R
 combined_data$Tree_ID<-paste(combined_data$SUBPLOT_ID,combined_data$TREE, sep = "_")
 
 
-#saveRDS(combined_data, file="C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/combined_trt_data.Rds")
+#saveRDS(combined_data, file="C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/raw_data/combined_trt_data.Rds")
 
-#write.csv(combined_data, file="C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/combined_trt_data.csv", row.names = FALSE)
+#write.csv(combined_data, file="C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/raw_data/combined_trt_data.csv", row.names = FALSE)
 ```
 
 ## Data Summarization
 
 ```{r, message=FALSE}
-#combined_data<- readRDS("C:/Users/showa/Documents/LeBoldus_Lab/Laminated_Root_Rot/Apiariy_LRR/raw_data/combined_trt_data.Rds")
+#combined_data<- readRDS("C:/Users/showalt_d/Documents/LeBoldus_Lab/Laminated_Root_Rot/Apiariy_LRR/raw_data/combined_trt_data.Rds")
 
 #looking at entries which have notes
 #notes<-combined_data[which(is.na(combined_data$NOTE)==FALSE),]
@@ -134,7 +137,7 @@ ggplot(TRTxREP_summary,aes(x=TRT,y=count,fill=REP ))+geom_col()+scale_fill_virid
 TRTxREPxSub_summary<-combined_data %>% group_by(TRT, REP, SUBPLOT, .drop=FALSE) %>% summarise(count=n())
 TRTxREPxSub_summary
 ggplot(TRTxREPxSub_summary,aes(x=REP,y=count,fill=SUBPLOT )) +geom_col()+scale_fill_viridis_d()+ylab("Tree count")+xlab("Rep")+ facet_grid(~TRT, scales = "fixed", space = "free_x", switch = "x") + geom_hline(yintercept = 170)+ geom_hline(yintercept = 34) + geom_hline(yintercept = 68)+ geom_hline(yintercept = 102)+ geom_hline(yintercept = 136)
-ggsave("C:/Users/showa/Documents/GitHub/Apiary_LRR/Trees_per_subplot.pdf")
+ggsave("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Trees_per_subplot.pdf")
 
 #there appears to be an imbalance of trees between treatments
 #trying to look for duplicate TREE ID numbers
@@ -153,9 +156,9 @@ ggsave("C:/Users/showa/Documents/GitHub/Apiary_LRR/Trees_per_subplot.pdf")
 #tree_dup_data<-combined_data[which(combined_data$TREE %in% dupe_trees$TREE),]
 #sorting by TREE ID
 #ordered_tree_dup_data<-tree_dup_data[order(tree_dup_data$TREE),]
-#saveRDS(ordered_tree_dup_data, file="C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/duplicated_trees.Rds")
+#saveRDS(ordered_tree_dup_data, file="C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/raw_data/duplicated_trees.Rds")
 
-#write.csv(ordered_tree_dup_data, file="C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/duplicated_trees.csv", row.names = FALSE)
+#write.csv(ordered_tree_dup_data, file="C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/raw_data/duplicated_trees.csv", row.names = FALSE)
 
 #adding "duplicated" flag for tree IDs that are duplicated in the dataset
 
@@ -166,7 +169,7 @@ ggsave("C:/Users/showa/Documents/GitHub/Apiary_LRR/Trees_per_subplot.pdf")
 #TRTxREPxSUBxdup_summary<-combined_data2 %>% group_by(TRT, REP, SUBPLOT, dup, .drop=FALSE) %>% summarise(count=n())
 #TRTxREPxSUBxdup_summary
 #ggplot(TRTxREPxSUBxdup_summary,aes(x=SUBPLOT,y=count,fill=dup ))+geom_col()+scale_fill_viridis_d()+ylab("Tree count")+xlab("Subplot")+ facet_grid(rows=vars(REP), cols=vars(TRT), scales = "fixed", space = "free_x", switch = "x") + geom_hline(yintercept=34)
-#ggsave("C:/Users/showa/Documents/GitHub/Apiary_LRR/Duplicated_Trees_per_subplot.pdf")
+#ggsave("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Duplicated_Trees_per_subplot.pdf")
 ```
 
 ```{r}
@@ -185,7 +188,7 @@ ggplot(TRTxOSTS_summary,aes(x=TRT,y=count,fill=OSTS))+geom_col()+scale_fill_viri
 
 DAM_summary<-combined_data %>% group_by(DAM1) %>% summarise(count=n())
 DAM_summary
-#write.csv(DAM_summary, file="C:/Users/showa/Documents/LeBoldus_Lab/Laminated_Root_Rot/Apiariy_LRR/raw_data/DAM_summary.csv", row.names = FALSE)
+#write.csv(DAM_summary, file="C:/Users/showalt_d/Documents/LeBoldus_Lab/Laminated_Root_Rot/Apiariy_LRR/raw_data/DAM_summary.csv", row.names = FALSE)
 
 AMT_summary<-combined_data %>% group_by(AMT1) %>% summarise(count=n())
 AMT_summary
@@ -201,7 +204,7 @@ OR_summary
 
 #returning the entries for which AMT1 is 808, an invalid code
 #AMT_808<-combined_data[which(combined_data$AMT1 == 808),]
-#write.csv(AMT_808, file="C:/Users/showa/Documents/LeBoldus_Lab/Laminated_Root_Rot/Apiariy_LRR/raw_data/amt_808_data.csv", row.names = FALSE)
+#write.csv(AMT_808, file="C:/Users/showalt_d/Documents/LeBoldus_Lab/Laminated_Root_Rot/Apiariy_LRR/raw_data/amt_808_data.csv", row.names = FALSE)
 
 #fix
 combined_data$AMT1[combined_data$AMT1 == 808]<-NA
@@ -209,13 +212,13 @@ combined_data$AMT1[combined_data$AMT1 == 808]<-NA
 #returning the entries for which NDBH is NA or 0 without explanation
 DBH_NA<-combined_data[is.na(combined_data$NDBH),]
 DBH_NA_no_explain<-DBH_NA[is.na(DBH_NA$AMT1),]
-#write.csv(DBH_NA_no_explain, file="C:/Users/showa/Documents/LeBoldus_Lab/Laminated_Root_Rot/Apiariy_LRR/raw_data/DBH_NA_no_explain_data.csv", row.names = FALSE)
+#write.csv(DBH_NA_no_explain, file="C:/Users/showalt_d/Documents/LeBoldus_Lab/Laminated_Root_Rot/Apiariy_LRR/raw_data/DBH_NA_no_explain_data.csv", row.names = FALSE)
 
 #returning the entries for which SP is NA
 #SP_0<-combined_data[is.na(combined_data$SP),]
 #fix
 combined_data$SP<-"DF"
-#write.csv(SP_0, file="C:/Users/showa/Documents/LeBoldus_Lab/Laminated_Root_Rot/Apiariy_LRR/raw_data/SP_0_data.csv", row.names = FALSE)
+#write.csv(SP_0, file="C:/Users/showalt_d/Documents/LeBoldus_Lab/Laminated_Root_Rot/Apiariy_LRR/raw_data/SP_0_data.csv", row.names = FALSE)
 ```
 
 ##Remaining questions
