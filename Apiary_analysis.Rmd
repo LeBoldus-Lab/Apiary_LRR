@@ -95,23 +95,23 @@ combined_data$PLOT<-as.factor(combined_data$PLOT)
 combined_data$SUBPLOT<-as.factor(combined_data$SUBPLOT)
 combined_data$REP<-as.factor(combined_data$REP)
 combined_data$TRT<-as.factor(combined_data$TRT)
-combined_data$TREE<-as.factor(combined_data$TREE)
-combined_data$SP<-as.factor(combined_data$SP)
-combined_data$OR<-as.factor(combined_data$OR)
-combined_data$OSTS<-as.factor(combined_data$OSTS)
-combined_data$NSTS<-as.factor(combined_data$NSTS)
-combined_data$DAM1<-as.factor(combined_data$DAM1)
-combined_data$POS1<-as.factor(combined_data$POS1)
-combined_data$AMT1<-as.factor(combined_data$AMT1)
+combined_data$TREE<-as.character(combined_data$TREE)
+combined_data$SP<-as.character(combined_data$SP)
+combined_data$OR<-as.character(combined_data$OR)
+combined_data$OSTS<-as.character(combined_data$OSTS)
+combined_data$NSTS<-as.character(combined_data$NSTS)
+combined_data$DAM1<-as.character(combined_data$DAM1)
+combined_data$POS1<-as.character(combined_data$POS1)
+combined_data$AMT1<-as.character(combined_data$AMT1)
 
 new_combined_data$LOC<-as.factor(new_combined_data$LOC)
 new_combined_data$PLOT<-as.factor(new_combined_data$PLOT)
 new_combined_data$SUBPLOT<-as.factor(new_combined_data$SUBPLOT)
 new_combined_data$REP<-as.factor(new_combined_data$REP)
 new_combined_data$TRT<-as.factor(new_combined_data$TRT)
-new_combined_data$TREE<-as.factor(new_combined_data$TREE)
-new_combined_data$DAM1<-as.factor(new_combined_data$DAM1)
-new_combined_data$LASTTREE<-as.double(new_combined_data$LASTTREE)
+new_combined_data$TREE<-as.character(new_combined_data$TREE)
+new_combined_data$DAM1<-as.character(new_combined_data$DAM1)
+new_combined_data$LASTTREE<-as.character(new_combined_data$LASTTREE)
 new_combined_data$DIA_87_mm<-as.numeric(new_combined_data$DIA_87_mm)
 new_combined_data$DIA_95_mm<-as.numeric(new_combined_data$DIA_95_mm)
 new_combined_data$DIA_11_mm<-as.numeric(new_combined_data$DIA_11_mm)
@@ -165,14 +165,51 @@ new_combined_data_small<-as.data.frame(new_combined_data[,(colnames(new_combined
 
 
 test<-merge.data.frame(new_combined_data_small, combined_data, by= "Tree_ID", all.y = TRUE)
-
+# checking for instances when DIA_11_mm and ODBH (supposedly 2011) are more than 15 mm different
+# making a flag. Counding the flags. Subsetting the data for flags.
 test$DBH_diff<-(test$ODBH - test$DIA_11_mm)
-test$dbh_flag<- ifelse(test$DBH_diff>15,TRUE,FALSE)
+test$dbh_flag<- ifelse(abs(test$DBH_diff) >15,TRUE,FALSE)
 flag_count<-sum(test$dbh_flag, na.rm=TRUE)
 flag_count
 DBH_flags<-as.data.frame(test[which(test$dbh_flag==TRUE),c("Tree_ID","DIA_87_mm","DIA_95_mm","STS_11","OSTS","DIA_11_mm","ODBH","NDBH","DBH_diff","dbh_flag")])
 
+# renaming
 full_data<- as.data.frame(test)
+
+# checking when STS_11 and OSTS don't match, as with diameter above.
+
+full_data$STS_flag <- ifelse(full_data$STS_11!=full_data$OSTS, TRUE, FALSE)
+STS_flags<-as.data.frame(full_data[which(full_data$STS_flag==TRUE),c("Tree_ID","STS_87","STS_95","STS_11","OSTS","NSTS","DIA_87_mm","DIA_95_mm","DIA_11_mm","ODBH","NDBH")])
+STS_flag_count<-sum(full_data$STS_flag, na.rm=TRUE)
+STS_flag_count
+
+# subsetting to when STS_11=1 and separately when NSTS=1 
+STS_flags_1<-as.data.frame(STS_flags[which(STS_flags$STS_11==1),])
+STS_flags_2<-as.data.frame(STS_flags[which(STS_flags$NSTS==1),])
+
+# calculating differences in ODBH and NDBH to identify possible dead trees that didn't grow between the 2 measurements
+full_data$new_dia_diff<-(full_data$NDBH - full_data$ODBH)
+full_data$nd_dif_flag<- ifelse(
+  (
+    abs(full_data$new_dia_diff) 
+    < 5 
+     ),1,0)
+nd_dif_flag_count<-sum(full_data$nd_dif_flag, na.rm=TRUE)
+nd_dif_flag_count
+# subsetting this data to trees which have OSTS or NSTS =1 contradicting their living status
+DIA_diff_sts<-as.data.frame(full_data[which((full_data$nd_dif_flag==1) & (full_data$NSTS=="1")),c("Tree_ID","STS_87","STS_95","STS_11","OSTS","NSTS","DIA_87_mm","DIA_95_mm","DIA_11_mm","ODBH","NDBH")])
+
+# checking for trees with ODBH greater than 5 mm larger than NDBH   #there are none
+#oops<-full_data[which(full_data$ODBH > (full_data$NDBH + 5)),"Tree_ID"]
+
+#Using ODBH values for missing DIA_11_mm values
+
+full_data$DBH_11<-ifelse(is.na(full_data$DIA_11_mm),full_data$ODBH,full_data$DIA_11_mm)
+
+#and for status values
+
+full_data$STS_2011<-ifelse(is.na(full_data$STS_11),full_data$OSTS,full_data$STS_11)
+
 
 #write.csv(full_data, file="C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/full_data.csv", row.names = FALSE)
 
@@ -184,7 +221,7 @@ full_data<- as.data.frame(test)
 ## Data Summarization
 
 ```{r, message=FALSE}
-#combined_data<- readRDS("C:/Users/showa/Documents/LeBoldus_Lab/Laminated_Root_Rot/Apiariy_LRR/raw_data/combined_trt_data.Rds")
+#full_data<- readRDS("C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/full_data.Rds")
 
 #looking at entries which have notes
 #notes<-combined_data[which(is.na(combined_data$NOTE)==FALSE),]
@@ -199,7 +236,7 @@ full_data<- as.data.frame(test)
 
 
 #summarizing tree count by TRT and REP
-TRTxREP_summary<-combined_data %>% group_by(TRT, REP, .drop=FALSE) %>% summarise(count=n())
+TRTxREP_summary<-full_data %>% group_by(TRT, REP, .drop=FALSE) %>% summarise(count=n())
 TRTxREP_summary
 ggplot(TRTxREP_summary,aes(x=TRT,y=count,fill=REP ))+geom_col()+scale_fill_viridis_d()+ylab("Tree count")+xlab("Treatment")
 
@@ -314,30 +351,105 @@ Is there a stem map and/or do the tree numbers refer to a position in the subplo
 ```{r}
 #pivot to long data by old and new
 #pivoting data from wide to long format
+
+#checking similary of column types before combining
+#glimpse(full_data)
+#as.character  Tree_ID TREE LASTTREE  STS_87 STS_95  STS_11 STS_2011 OSTS  NSTS  DAM1.x(2011) DAM1.y(2020)
+full_data$Tree_ID<-as.character(full_data$Tree_ID)
+full_data$TREE<-as.character(full_data$TREE)
+full_data$LASTTREE<-as.character(full_data$LASTTREE)
+full_data$STS_87<-as.character(full_data$STS_87)
+full_data$STS_95<-as.character(full_data$STS_95)
+full_data$STS_11<-as.character(full_data$STS_11)
+full_data$STS_2011<-as.character(full_data$STS_2011)
+full_data$OSTS<-as.character(full_data$OSTS)
+full_data$NSTS<-as.character(full_data$NSTS)
+full_data$DAM1.x<-as.character(full_data$DAM1.x)
+full_data$DAM1.y<-as.character(full_data$DAM1.y)
+
+#as.double DIA_87_mm  DIA_97_mm DIA_11_mm DBH_11 ODBH NDBH
+full_data$DIA_87_mm<-as.double(full_data$DIA_87_mm)
+full_data$DIA_95_mm<-as.double(full_data$DIA_95_mm)
+full_data$DIA_11_mm<-as.double(full_data$DIA_11_mm)
+full_data$DBH_11<-as.double(full_data$DBH_11)
+full_data$ODBH<-as.double(full_data$ODBH)
+full_data$NDBH<-as.double(full_data$NDBH)
+
+#as.factor PLOT REP SUBPLOT TRT TRT_code  SUBPLOT_ID
+full_data$PLOT<-as.factor(full_data$PLOT)
+full_data$REP<-as.factor(full_data$REP)
+full_data$SUBPLOT<-as.factor(full_data$SUBPLOT)
+full_data$TRT<-as.factor(full_data$TRT)
+full_data$TRT_code<-as.factor(full_data$TRT_code)
+full_data$SUBPLOT_ID<-as.factor(full_data$SUBPLOT_ID)
+
+
 #for diameters
-long_data<- pivot_longer(combined_data, cols = c("ODBH","NDBH"), names_to = "YEAR", values_to = "DBH_mm")
+#long_data<- pivot_longer(combined_data, cols = c("ODBH","NDBH"), names_to = "YEAR", values_to = "DBH_mm")
+long_data<- pivot_longer(full_data, cols = c("DIA_87_mm","DIA_95_mm","DBH_11","NDBH"), names_to = "YEAR", values_to = "DBH_mm")
 #for status
-status<-pivot_longer(combined_data, cols = c("OSTS","NSTS"), names_to = "YEAR", values_to = "STATUS")
+#status<-pivot_longer(combined_data, cols = c("OSTS","NSTS"), names_to = "YEAR", values_to = "STATUS")
+status<-pivot_longer(full_data, cols = c("STS_87","STS_95","STS_2011","NSTS"), names_to = "YEAR", values_to = "STATUS")
+
 #for height
-height<-pivot_longer(combined_data, cols = c("OHT","NHT"), names_to = "YEAR", values_to = "HEIGHT")
-#for damage code with dummy variable for old because the data was not taken
-combined_data$ODAM1<-NA
-damage<-pivot_longer(combined_data, cols = c("ODAM1","DAM1"), names_to = "YEAR", values_to = "DAM")
+#height<-pivot_longer(combined_data, cols = c("OHT","NHT"), names_to = "YEAR", values_to = "HEIGHT")
+#for damage code with dummy variable for  because the data was not taken
+#combined_data$ODAM1<-NA
+#damage<-pivot_longer(combined_data, cols = c("ODAM1","DAM1"), names_to = "YEAR", values_to = "DAM")
+
+#for 2011 and 2020 damage codes with dummy variables for 87 95 because the data was not taken
+full_data$DAM87<-NA
+full_data$DAM95<-NA
+damage<-pivot_longer(full_data, cols = c("DAM87","DAM95","DAM1.x","DAM1.y"), names_to = "YEAR", values_to = "DAM")
 
 #combining
 long_data$STATUS<-as.character(status$STATUS)
-long_data$HEIGHT<-as.character(height$HEIGHT)
+#long_data$HEIGHT<-as.character(height$HEIGHT)
 long_data$DAMAGE<-as.character(damage$DAM)
 
+#replacing numbers for "YEAR" and also adding a "YEAR" factor variable
+long_data$YEAR_dbl<-as.double(ifelse(long_data$YEAR=="DIA_87_mm", 1987,
+                                     ifelse(long_data$YEAR=="DIA_95_mm", 1995,
+                                            ifelse(long_data$YEAR=="DBH_11", 2011,
+                                                   ifelse(long_data$YEAR=="NDBH", 2020, NA)))))
+long_data$YEAR_fac<-as.factor(long_data$YEAR_dbl)
+
+#making descriptive status variable
+long_data$ALIVE<-as.character(ifelse(long_data$STATUS=="1", "ALIVE",
+                                     ifelse(long_data$STATUS=="3", "DEAD", NA)))
+
+#making live basal area calculation using status and diameter
+long_data$Live_BA_sq_m<-as.double(ifelse(long_data$STATUS=="1", (long_data$DBH_mm / 2000)^2 ,NA))
+
 #creating DF_age variable based on treatment and estimated measurement year
-long_data$DF_age<-as.numeric(ifelse(long_data$YEAR=="ODBH", #if old
-                ifelse(long_data$TRT=="RA20Y"|long_data$TRT=="CW20Y",16, #if 20Y
-                      ifelse(long_data$TRT=="DF0Y",36 #if 0Y
-                          , 26)) #else/ if 10Y
-          , #else/ if new
+#long_data$DF_age<-as.numeric(ifelse(long_data$YEAR=="ODBH", #if old
+#                ifelse(long_data$TRT=="RA20Y"|long_data$TRT=="CW20Y",16, #if 20Y
+#                      ifelse(long_data$TRT=="DF0Y",36 #if 0Y
+#                          , 26)) #else/ if 10Y
+#          , #else/ if new
+#                ifelse(long_data$TRT=="RA20Y"|long_data$TRT=="CW20Y",25, #if 20Y
+#                      ifelse(long_data$TRT=="DF0Y",45 #if 0Y
+#                          , 35)))) #else/ if 10Y
+
+#####TRY TO FIX THIS
+
+long_data$DF_age<-as.numeric(
+      ifelse(long_data$YEAR=="NDBH", #if 2020
                 ifelse(long_data$TRT=="RA20Y"|long_data$TRT=="CW20Y",25, #if 20Y
                       ifelse(long_data$TRT=="DF0Y",45 #if 0Y
-                          , 35)))) #else/ if 10Y
+                          , 35)) #else/ if 10Y
+    , #if not 2020
+    ifelse(long_data$YEAR=="DBH_11", #if 2011
+                ifelse(long_data$TRT=="RA20Y"|long_data$TRT=="CW20Y", 16, #if 20y
+                      ifelse(long_data$YEAR=="DF0Y", 36 #if 0Y
+                          ,26))  #else/ if 10Y
+    , #if not 2011
+    ifelse(long_data$YEAR=="DIA_95_mm", #if 1995
+                ifelse(long_data$TRT=="RA10Y"|long_data$TRT=="CW10Y",10 #if 10Y
+                           
+    , #if not 1995
+    ifelse(long_data$TRT=="DF0Y", 12, #if DF0Y
+           NA)))))) #if not DF0Y or any later year.
 
 #subsetting to remove wide columns and irrelevant columns
 drop2<-c("OSTS","NSTS","OHLC","NHLC","DAM1","ODAM1")
