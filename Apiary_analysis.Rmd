@@ -537,3 +537,7 @@ ggplot(data=subset(long_data_keep, !is.na(ALIVE)) ,aes(x=factor(DF_age),fill=ALI
 
 ```
 
+
+##Try linear regression with live BA or prop mortality by DF year. Multiplot and compare slope
+
+##Trying spatial statistics on plots with stem maps
