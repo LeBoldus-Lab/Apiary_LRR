@@ -26,10 +26,14 @@ library(ggplot2)
 ## Importing data
 Two multi-sheet workboooks were provided by Anna Leon of Weyerhauser (Anna.Leon@weyerhaeuser.com). One with keys for metadata codes and one with coded data plus a dictionary for column names
 
+Also recieve raw datasheets which were transcribed into Excell and imported.
+
+Jan 2022 received additional digital data from John Browning. Contains 1995 and 2011 measurements for plots A B and C. As well as stem maps for A and B. This should fill in the data for the plots A11-A15 and A31-A35 that were missing raw datasheets and add a 1995 measurement for C plots (DF0Y). The fields for this data are somewhat different and include a field called "dead year". Sheet 1 Data range B2:K2214
+
 NOTE: Lab computer path "showalt_d/", home computer "showa/"
 
 ```{r, message=FALSE}
-#reading in code sheets form metadata workbook
+#reading in abbreviation code sheets from metadata workbook from Anna
 Apiary_TMTs <- read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/Apiary_2020_Path_Data_All_for_Jared_2.xlsx", sheet = "Treatments", range = "A1:C6", col_names = TRUE)
 colnames(Apiary_TMTs)<-c("TMT_code","TMT_short","TMT_name")
 
@@ -60,19 +64,12 @@ A_plots <- read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/data_
 #unique(A_plots$AMT1)
 A_plots$AMT1[A_plots$AMT1==0]<-NA
 
-A_plots_2<- read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/Stem_maps_and_datasheets/transcribed_datasheets_87_95_11_common_format.xlsx",sheet = "A_Plots", col_names = TRUE) 
-
 B_plots <- read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/data_input_edits.xlsx",sheet = "B-Plots", col_names = TRUE)
-
-B_plots_2<- read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/Stem_maps_and_datasheets/transcribed_datasheets_87_95_11_common_format.xlsx",sheet = "B_Plots", col_names = TRUE)
-
 
 C_plots <- read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/data_input_edits.xlsx",sheet = "C-Plots", col_names = TRUE)
 #checking nonconforming trt entries with "y" instead of "Y"
 #unique(C_plots$TRT)
 C_plots$TRT[C_plots$TRT=="DF0y"]<-"DF0Y"
-
-C_plots_2<- read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/Stem_maps_and_datasheets/transcribed_datasheets_87_95_11_common_format.xlsx",sheet = "C_Plots", col_names = TRUE)
 
 D_plots <- read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/data_input_edits.xlsx",sheet = "D-Plots", col_names = TRUE)
 #checking nonconforming trt entries with "y" instead of "Y"
@@ -88,7 +85,7 @@ E_plots <- read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/data_
 #combine all treatments together into one dataset and change coded variables to factors rather than numbers
 combined_data<-rbind(A_plots,B_plots,C_plots,D_plots,E_plots)
 
-new_combined_data<-rbind(A_plots_2,B_plots_2,C_plots_2)
+
 #unique(combined_data$TRT)
 combined_data$LOC<-as.factor(combined_data$LOC)
 combined_data$PLOT<-as.factor(combined_data$PLOT)
@@ -104,6 +101,24 @@ combined_data$DAM1<-as.character(combined_data$DAM1)
 combined_data$POS1<-as.character(combined_data$POS1)
 combined_data$AMT1<-as.character(combined_data$AMT1)
 
+#removing false zeros for DBH measurements
+combined_data$NDBH[combined_data$NDBH==0]<-NA
+combined_data$ODBH[combined_data$ODBH==0]<-NA
+
+#add treatment code variable and unique Tree and subplot ID variables
+combined_data$TRT_code<-ifelse(combined_data$TRT=="RA10Y", "A", ifelse(combined_data$TRT=="CW10Y","B", ifelse(combined_data$TRT=="DF0Y","C", ifelse(combined_data$TRT=="RA20Y","D","E"))))
+combined_data$TRT_code<-as.factor(combined_data$TRT_code)
+combined_data$SUBPLOT_ID<-as.factor(paste(combined_data$TRT_code,combined_data$REP,combined_data$SUBPLOT, sep = ""))
+combined_data$Tree_ID<-paste(combined_data$SUBPLOT_ID,combined_data$TREE, sep = "_")
+
+#Repeat similar process for transcribed datasheets adding new dates.
+
+A_plots_2<- read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/Stem_maps_and_datasheets/transcribed_datasheets_87_95_11_common_format.xlsx",sheet = "A_Plots", col_names = TRUE) 
+B_plots_2<- read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/Stem_maps_and_datasheets/transcribed_datasheets_87_95_11_common_format.xlsx",sheet = "B_Plots", col_names = TRUE)
+C_plots_2<- read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/Stem_maps_and_datasheets/transcribed_datasheets_87_95_11_common_format.xlsx",sheet = "C_Plots", col_names = TRUE)
+
+new_combined_data<-rbind(A_plots_2,B_plots_2,C_plots_2)
+
 new_combined_data$LOC<-as.factor(new_combined_data$LOC)
 new_combined_data$PLOT<-as.factor(new_combined_data$PLOT)
 new_combined_data$SUBPLOT<-as.factor(new_combined_data$SUBPLOT)
@@ -116,22 +131,17 @@ new_combined_data$DIA_87_mm<-as.numeric(new_combined_data$DIA_87_mm)
 new_combined_data$DIA_95_mm<-as.numeric(new_combined_data$DIA_95_mm)
 new_combined_data$DIA_11_mm<-as.numeric(new_combined_data$DIA_11_mm)
 
-
-#removing false zeros for DBH measurements
-combined_data$NDBH[combined_data$NDBH==0]<-NA
-combined_data$ODBH[combined_data$ODBH==0]<-NA
-
-#add treatment code variable and unique Tree and subplot ID variables
-combined_data$TRT_code<-ifelse(combined_data$TRT=="RA10Y", "A", ifelse(combined_data$TRT=="CW10Y","B", ifelse(combined_data$TRT=="DF0Y","C", ifelse(combined_data$TRT=="RA20Y","D","E"))))
-combined_data$TRT_code<-as.factor(combined_data$TRT_code)
-combined_data$SUBPLOT_ID<-as.factor(paste(combined_data$TRT_code,combined_data$REP,combined_data$SUBPLOT, sep = ""))
-combined_data$Tree_ID<-paste(combined_data$SUBPLOT_ID,combined_data$TREE, sep = "_")
-
 new_combined_data$TRT_code<-ifelse(new_combined_data$TRT=="RA10Y", "A", ifelse(new_combined_data$TRT=="CW10Y","B", "C"))
 new_combined_data$TRT_code<-as.factor(new_combined_data$TRT_code)
 new_combined_data$SUBPLOT_ID<-as.factor(paste(new_combined_data$TRT_code,new_combined_data$REP,new_combined_data$SUBPLOT, sep = ""))
 new_combined_data$Tree_ID<-paste(new_combined_data$SUBPLOT_ID,new_combined_data$TREE, sep = "_")
 
+
+#adding January data to add 1995 data for C plots (DF0)
+
+#it may be easiest to manually add this data to the input file above (new_combined_data) #C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/Stem_maps_and_datasheets/transcribed_datasheets_87_95_11_common_format.xlsx > #C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/Stem_maps_and_datasheets/transcribed_datasheets_87_95_11_common_format_2022_update.xlsx
+
+updated_data
 
 #saveRDS(combined_data, file="C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/combined_trt_data.Rds")
 
@@ -146,7 +156,7 @@ new_combined_data$Tree_ID<-paste(new_combined_data$SUBPLOT_ID,new_combined_data$
 
 ```{r, message=FALSE}
 
-#attempting to combine new_combined_data and combined_data
+#attempting to combine new_combined_data (transcribed) and combined_data (excell sheet from Anna)
 
 small_keep<-c("DIA_87_mm","DIA_95_mm","DIA_11_mm","STS_87","STS_95","STS_11","DAM1","DEAD_YEAR","Tree_ID")
 new_combined_data_small<-as.data.frame(new_combined_data[,(colnames(new_combined_data) %in% small_keep)])
@@ -532,12 +542,49 @@ ggplot(data=subset(long_data_keep, !is.na(ALIVE)) ,aes(x=factor(DF_age),fill=ALI
 ```
 
 
-##Generating Stand level summaries
+##Generating Plot and Stand level summaries
 ```{r}
+#comparing with Woods Creek approach
+
+#creating unique tree ID variable of format TRT_REP_SUBPLOT_TREE
+long_data_keep$Tree_ID_TRS<-paste(long_data_keep$TRT_code,long_data_keep$REP,long_data_keep$SUBPLOT,long_data_keep$TREE, sep = "_")
+#creating unique subplotplot ID factor varaible of format TRT_REP_SUBPLOT
+long_data_keep$Subplot_ID_TRS<-as.factor(paste(long_data_keep$TRT_code,long_data_keep$REP,long_data_keep$SUBPLOT, sep = "_"))
+
+#creating subplot level DF
+#subplot_level_df<-long_data_keep %>% group_by(Plot_ID_TBP, YEAR_F, species_gen, COND_CUM) %>% summarise(count = n(), live_BA = sum(live_BA, na.rm=TRUE), mean_live_DIA= mean(live_DIA, na.rm=TRUE))
+
+
+
+#adding the separate TMT, BLOCK, and PLOT columns
+plot_level_df<-plot_level_df %>% separate(Plot_ID_TBP, c("TMT","BLOCK","PLOT"),"_",remove = FALSE)
+plot_level_df$TMT<-as.factor(plot_level_df$TMT)
+plot_level_df$BLOCK<-as.factor(plot_level_df$BLOCK)
+plot_level_df$PLOT<-as.factor(plot_level_df$PLOT)
+glimpse(plot_level_df)
+#creating unique stand ID factor varaible of format TRT_BLOCK
+plot_level_df$Stand_ID_TB<-as.factor(paste(plot_level_df$TMT,plot_level_df$BLOCK, sep = "_"))
+
+
+stand_level_df<- plot_level_df %>% group_by(Stand_ID_TB, YEAR_F, species_gen, COND_CUM, .drop = FALSE)%>% summarise(count = sum(count, na.rm=TRUE), live_BA = sum(live_BA, na.rm=TRUE))
+glimpse(stand_level_df)
+#adding the separate TMT, and BLOCK columns
+stand_level_df<-stand_level_df %>% separate(Stand_ID_TB, c("TMT","BLOCK"),"_",remove = FALSE)
+stand_level_df$TMT<-as.factor(stand_level_df$TMT)
+stand_level_df$BLOCK<-as.factor(stand_level_df$BLOCK)
+glimpse(stand_level_df)
+#write_rds(data_clean, "C:/Users/shawn/Desktop/data_clean.Rds")
+#write_rds(long_data,"~/LeBoldus_Lab/Laminated_Root_Rot/long_data_clean.Rds")
+write_rds(plot_level_df,"plot_level_df.Rds")
+write_rds(stand_level_df,"stand_level_df.Rds")
+#write_csv(long_data,"~/LeBoldus_Lab/Laminated_Root_Rot/long_data_clean.csv")
+#write_csv(plot_level_df, "~/LeBoldus_Lab/Laminated_Root_Rot/plot_level_df.csv")
+#write_csv(stand_level_df, "~/LeBoldus_Lab/Laminated_Root_Rot/stand_level_df.csv")
+
 
 ```
 
 
 ##Try linear regression with live BA or prop mortality by DF year. Multiplot and compare slope
 
-##Trying spatial statistics on plots with stem maps
+##Trying spatial statistics on plots with stem maps?
