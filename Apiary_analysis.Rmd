@@ -59,7 +59,7 @@ colnames(Damage_amount_codes)<-c("Damage_Amount_Code","Damage_Amount")
 Data_dict <- read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/Apiary_2020_Path_Data_All_for_Jared_2.xlsx",sheet = "Data_Dictionary", range = "A3:B23", col_names = FALSE)
 colnames(Data_dict)<-c("Column_Name","Description")
 
-#reading in data
+#reading in data Note that "data_input_edits.xlsx" has been manually reviewed and corrected based on inspection of data in R.
 A_plots <- read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/data_input_edits.xlsx",sheet = "A-Plots", col_names = TRUE)
 #unique(A_plots$AMT1)
 A_plots$AMT1[A_plots$AMT1==0]<-NA
@@ -77,8 +77,8 @@ D_plots <- read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/data_
 #unique(D_plots$DAM1)
 #unique(D_plots$AMT1)
 D_plots$TRT[D_plots$TRT=="RA20y"]<-"RA20Y"
-D_plots$DAM1[D_plots$DAM1=="Blank"]<-NA
-D_plots$AMT1[D_plots$AMT1=="Blank"]<-NA
+#D_plots$DAM1[D_plots$DAM1=="Blank"]<-NA
+#D_plots$AMT1[D_plots$AMT1=="Blank"]<-NA
 
 E_plots <- read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/data_input_edits.xlsx",sheet = "E-Plots", col_names = TRUE)
 
@@ -140,8 +140,6 @@ new_combined_data$Tree_ID<-paste(new_combined_data$SUBPLOT_ID,new_combined_data$
 #adding January data to add 1995 data for C plots (DF0)
 
 #it may be easiest to manually add this data to the input file above (new_combined_data) #C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/Stem_maps_and_datasheets/transcribed_datasheets_87_95_11_common_format.xlsx > #C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/Stem_maps_and_datasheets/transcribed_datasheets_87_95_11_common_format_2022_update.xlsx
-
-updated_data
 
 #saveRDS(combined_data, file="C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/combined_trt_data.Rds")
 
@@ -338,7 +336,7 @@ combined_data$SP<-"DF"
 #write.csv(SP_0, file="C:/Users/showa/Documents/LeBoldus_Lab/Laminated_Root_Rot/Apiariy_LRR/raw_data/SP_0_data.csv", row.names = FALSE)
 ```
 
-##Remaining questions
+## Remaining questions
 Note says that DF tretament "C" was 45 years old in 2020.Thus, plots were established in 1975.  All treatments were started at the same time follwing clearcut. DF in 10 year roation treatments are 35 (45-10) years old and in 20 year treatments 25 (45-20) years old.
 
 
@@ -357,7 +355,7 @@ Are there any additional useful maps? Anna? Mike? Do we have coordinates or GIS 
 Randomization/exp design.  RCB?
 Is there a stem map and/or do the tree numbers refer to a position in the subplot?
 
-##Plotting old and new DBH distributions
+## Converting to long data format
 ```{r}
 #pivot to long data by old and new
 #pivoting data from wide to long format
@@ -441,7 +439,7 @@ long_data$Live_BA_sq_m<-as.double(ifelse(long_data$STATUS=="1", (long_data$DBH_m
 #                      ifelse(long_data$TRT=="DF0Y",45 #if 0Y
 #                          , 35)))) #else/ if 10Y
 
-#####TRY TO FIX THIS
+#####FIXED
 
 long_data$DF_age<-NA
 long_data$DF_age<-as.numeric(
@@ -485,11 +483,6 @@ long_data$DF_age<-as.numeric(
   ) # 2020 close
 ) #numeric close
 
-```
-
-
-
-```{r}
 #subsetting to keep only relevant columns
 
 keep_cols<- c("Tree_ID","TREE","PLOT","REP","SUBPLOT","SUBPLOT_ID","TRT","TRT_code","YEAR_fac","YEAR_dbl","DF_age","ALIVE","DBH_mm","Live_BA_sq_m","STATUS","DAMAGE")
@@ -498,6 +491,16 @@ long_data_keep<-long_data_keep[,keep_cols]
 
 #drop2<-c("OSTS","NSTS","OHLC","NHLC","DAM1","ODAM1")
 #long_data<-long_data[,!names(long_data) %in% drop2]
+
+#write.csv(long_data_keep, file="C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/long_data_keep.csv", row.names = FALSE)
+
+#saveRDS(long_data_keep, file="C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/long_data_keep.Rds")
+```
+
+
+## Basic Plotting
+```{r}
+
 
 #ggplot(long_data_keep,aes(x=DF_age,y=DBH_mm,color=TRT, alpha=0.2))+geom_jitter()+scale_color_viridis_d()+ylab("DBH (mm)")+xlab("Douglas Fir Age (years)")
 
@@ -524,7 +527,7 @@ ggplot(long_data_keep,aes(x=factor(DF_age),y=Live_BA_sq_m,fill=TRT))+geom_boxplo
 #generate randomly sampled initial diameters
 ```
 
-##Calculating live dbh and plotting status and live dbh distributions
+## Calculating live dbh and plotting status and live dbh distributions
 
 ```{r}
 #plotting viability as a function of DF_age across treatments
@@ -542,44 +545,45 @@ ggplot(data=subset(long_data_keep, !is.na(ALIVE)) ,aes(x=factor(DF_age),fill=ALI
 ```
 
 
-##Generating Plot and Stand level summaries
+## Generating Plot and Stand level summaries
 ```{r}
-#comparing with Woods Creek approach
+#building from Woods Creek approach
 
 #creating unique tree ID variable of format TRT_REP_SUBPLOT_TREE
 long_data_keep$Tree_ID_TRS<-paste(long_data_keep$TRT_code,long_data_keep$REP,long_data_keep$SUBPLOT,long_data_keep$TREE, sep = "_")
 #creating unique subplotplot ID factor varaible of format TRT_REP_SUBPLOT
 long_data_keep$Subplot_ID_TRS<-as.factor(paste(long_data_keep$TRT_code,long_data_keep$REP,long_data_keep$SUBPLOT, sep = "_"))
 
-#creating subplot level DF
-#subplot_level_df<-long_data_keep %>% group_by(Plot_ID_TBP, YEAR_F, species_gen, COND_CUM) %>% summarise(count = n(), live_BA = sum(live_BA, na.rm=TRUE), mean_live_DIA= mean(live_DIA, na.rm=TRUE))
-
-
+#creating subplot level DF excluding trees with no status recorded (like 1987 measurements for ABDE and 1995 for CDE)
+#sources for: 
+  #removing STATUS=NA https://stackoverflow.com/questions/29501188/dplyr-removing-nas-from-group-by-variable 
+  #excluding Live_BA_sq_m = 0 https://stackoverflow.com/questions/54805570/dplyr-summarise-keep-na-if-all-summarised-values-are-na/54805923
+subplot_df<-long_data_keep %>% filter(!is.na(STATUS)) %>% group_by(Subplot_ID_TRS, YEAR_fac,TRT, STATUS, .drop = TRUE) %>% summarise(count = n(), Live_BA_sq_m = if(all(is.na(Live_BA_sq_m))) NA_real_ else sum(Live_BA_sq_m, na.rm=TRUE))
 
 #adding the separate TMT, BLOCK, and PLOT columns
-plot_level_df<-plot_level_df %>% separate(Plot_ID_TBP, c("TMT","BLOCK","PLOT"),"_",remove = FALSE)
-plot_level_df$TMT<-as.factor(plot_level_df$TMT)
-plot_level_df$BLOCK<-as.factor(plot_level_df$BLOCK)
-plot_level_df$PLOT<-as.factor(plot_level_df$PLOT)
-glimpse(plot_level_df)
+subplot_df<-subplot_df %>% separate(Subplot_ID_TRS, c("TRT","REP","SUBPLOT"),"_",remove = FALSE)
+subplot_df$TRT<-as.factor(subplot_df$TRT)
+subplot_df$REP<-as.factor(subplot_df$REP)
+subplot_df$SUBPLOT<-as.factor(subplot_df$SUBPLOT)
+glimpse(subplot_df)
 #creating unique stand ID factor varaible of format TRT_BLOCK
-plot_level_df$Stand_ID_TB<-as.factor(paste(plot_level_df$TMT,plot_level_df$BLOCK, sep = "_"))
+subplot_df$Stand_ID_TR<-as.factor(paste(subplot_df$TRT,subplot_df$REP, sep = "_"))
+
+stand_df<- subplot_df %>% filter(!is.na(STATUS)) %>% group_by(Stand_ID_TR, YEAR_fac, TRT, STATUS, .drop = TRUE) %>% summarise(count = sum(count, na.rm=TRUE), Live_BA_sq_m = if(all(is.na(Live_BA_sq_m))) NA_real_ else sum(Live_BA_sq_m, na.rm=TRUE))
 
 
-stand_level_df<- plot_level_df %>% group_by(Stand_ID_TB, YEAR_F, species_gen, COND_CUM, .drop = FALSE)%>% summarise(count = sum(count, na.rm=TRUE), live_BA = sum(live_BA, na.rm=TRUE))
-glimpse(stand_level_df)
-#adding the separate TMT, and BLOCK columns
-stand_level_df<-stand_level_df %>% separate(Stand_ID_TB, c("TMT","BLOCK"),"_",remove = FALSE)
-stand_level_df$TMT<-as.factor(stand_level_df$TMT)
-stand_level_df$BLOCK<-as.factor(stand_level_df$BLOCK)
-glimpse(stand_level_df)
-#write_rds(data_clean, "C:/Users/shawn/Desktop/data_clean.Rds")
-#write_rds(long_data,"~/LeBoldus_Lab/Laminated_Root_Rot/long_data_clean.Rds")
-write_rds(plot_level_df,"plot_level_df.Rds")
-write_rds(stand_level_df,"stand_level_df.Rds")
-#write_csv(long_data,"~/LeBoldus_Lab/Laminated_Root_Rot/long_data_clean.csv")
-#write_csv(plot_level_df, "~/LeBoldus_Lab/Laminated_Root_Rot/plot_level_df.csv")
-#write_csv(stand_level_df, "~/LeBoldus_Lab/Laminated_Root_Rot/stand_level_df.csv")
+#adding the separate REP column
+stand_df<-stand_df %>% separate(Stand_ID_TR, c(NA,"REP"),"_",remove = FALSE)
+stand_df$REP<-as.factor(stand_df$REP)
+
+
+
+
+#write_rds(subplot_df,"C:/Users/showa/Documents/GitHub/Apiary_LRR/subplot_df.Rds")
+#write_rds(stand_df,"C:/Users/showa/Documents/GitHub/Apiary_LRR/stand_level_df.Rds")
+
+#write_csv(subplot_df, "C:/Users/showa/Documents/GitHub/Apiary_LRR/subplot_df.csv")
+#write_csv(stand_df, "C:/Users/showa/Documents/GitHub/Apiary_LRR/stand_df.csv")
 
 
 ```
