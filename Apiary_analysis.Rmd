@@ -534,11 +534,25 @@ ggplot(data=subset(long_data_keep, !is.na(ALIVE)) ,aes(x=factor(DF_age),fill=ALI
   ylab("Mortality")+
   xlab("Douglas Fir Age (years)")+
   scale_x_discrete(c("10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31","32","33","34","35","36","37","38","39","40","41","42","43","44","45","46"), drop=FALSE, limits= c("10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31","32","33","34","35","36","37","38","39","40","41","42","43","44","45","46"), breaks=c("10","12","16","25","26","35","36","45")) +
-  facet_wrap(~TRT, 
+  facet_wrap(~TRT+ REP 
              #scales = "free_x", # fix the x axis across facets.
              #space = "free_x",  # Let the width of facets vary and force all bars to have the same width.
              #switch = "x"
              )
+
+#attempting to plot damage type
+ggplot(data=subset(long_data_keep, !is.na(ALIVE)) ,aes(x=factor(DF_age),fill=DAMAGE))+
+  geom_bar(position="fill")+scale_fill_viridis_d()+
+  ylab("Mortality")+
+  xlab("Douglas Fir Age (years)")+
+  scale_x_discrete(c("10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31","32","33","34","35","36","37","38","39","40","41","42","43","44","45","46"), drop=FALSE, limits= c("10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31","32","33","34","35","36","37","38","39","40","41","42","43","44","45","46"), breaks=c("10","12","16","25","26","35","36","45")) +
+  facet_wrap(~TRT+ REP 
+             #scales = "free_x", # fix the x axis across facets.
+             #space = "free_x",  # Let the width of facets vary and force all bars to have the same width.
+             #switch = "x"
+             )
+
+
 
 ```
 
