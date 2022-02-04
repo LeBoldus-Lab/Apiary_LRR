@@ -247,7 +247,7 @@ ggplot(TRTxREP_summary,aes(x=TRT,y=count,fill=REP ))+geom_col()+scale_fill_virid
 TRTxREPxSub_summary<-combined_data %>% group_by(TRT, REP, SUBPLOT, .drop=FALSE) %>% summarise(count=n())
 TRTxREPxSub_summary
 ggplot(TRTxREPxSub_summary,aes(x=REP,y=count,fill=SUBPLOT )) +geom_col()+scale_fill_viridis_d()+ylab("Tree count")+xlab("Rep")+ facet_grid(~TRT, scales = "fixed", space = "free_x", switch = "x") + geom_hline(yintercept = 170)+ geom_hline(yintercept = 34) + geom_hline(yintercept = 68)+ geom_hline(yintercept = 102)+ geom_hline(yintercept = 136)
-ggsave("C:/Users/showa/Documents/GitHub/Apiary_LRR/Trees_per_subplot.pdf")
+#ggsave("C:/Users/showa/Documents/GitHub/Apiary_LRR/Trees_per_subplot.pdf")
 
 #there appears to be an imbalance of trees between treatments
 #trying to look for duplicate TREE ID numbers
@@ -421,6 +421,12 @@ long_data$YEAR_fac<-as.factor(long_data$YEAR_dbl)
 long_data$ALIVE<-as.character(ifelse(long_data$STATUS=="1", "ALIVE",
                                      ifelse(long_data$STATUS=="3", "DEAD", NA)))
 
+#and a suppression flag
+long_data$SUPP<-as.character(ifelse(long_data$DAMAGE=="400", "SUPP", NA))
+
+#and a root rot flag
+long_data$ROOT<-as.character(ifelse((long_data$DAMAGE=="806"|long_data$DAMAGE=="807"|long_data$DAMAGE=="808"), "ROT", NA))
+                                     
 #making live basal area calculation using status and diameter
 long_data$Live_BA_sq_m<-as.double(ifelse(long_data$STATUS=="1", (long_data$DBH_mm / 2000)^2 ,NA))
 
@@ -480,7 +486,7 @@ long_data$DF_age<-as.numeric(
 
 #subsetting to keep only relevant columns
 
-keep_cols<- c("Tree_ID","TREE","PLOT","REP","SUBPLOT","SUBPLOT_ID","TRT","TRT_code","YEAR_fac","YEAR_dbl","DF_age","ALIVE","DBH_mm","Live_BA_sq_m","STATUS","DAMAGE")
+keep_cols<- c("Tree_ID","TREE","PLOT","REP","SUBPLOT","SUBPLOT_ID","TRT","TRT_code","YEAR_fac","YEAR_dbl","DF_age","ALIVE","DBH_mm","Live_BA_sq_m","STATUS","DAMAGE", "SUPP", "ROOT")
 long_data_keep<-long_data[,names(long_data) %in% keep_cols]
 long_data_keep<-long_data_keep[,keep_cols]
 
@@ -543,7 +549,7 @@ ggplot(data=subset(long_data_keep, !is.na(ALIVE)) ,aes(x=factor(DF_age),fill=ALI
 #attempting to plot damage type
 ggplot(data=subset(long_data_keep, !is.na(ALIVE)) ,aes(x=factor(DF_age),fill=DAMAGE))+
   geom_bar(position="fill")+scale_fill_viridis_d()+
-  ylab("Mortality")+
+  ylab("Proportion of Trees")+
   xlab("Douglas Fir Age (years)")+
   scale_x_discrete(c("10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31","32","33","34","35","36","37","38","39","40","41","42","43","44","45","46"), drop=FALSE, limits= c("10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31","32","33","34","35","36","37","38","39","40","41","42","43","44","45","46"), breaks=c("10","12","16","25","26","35","36","45")) +
   facet_wrap(~TRT+ REP 
@@ -551,8 +557,143 @@ ggplot(data=subset(long_data_keep, !is.na(ALIVE)) ,aes(x=factor(DF_age),fill=DAM
              #space = "free_x",  # Let the width of facets vary and force all bars to have the same width.
              #switch = "x"
              )
+#ggsave("C:/Users/showa/Documents/GitHub/Apiary_LRR/Damage_counts_by_subplot.pdf")
+
+#just suppression
+#ggplot(data=subset(long_data_keep, !is.na(ALIVE)) ,aes(x=factor(DF_age),fill=SUPP))+
+#  geom_bar(position="fill")+scale_fill_viridis_d()+
+#  ylab("Proportion of Trees")+
+#  xlab("Douglas Fir Age (years)")+
+#  scale_x_discrete(c("10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31","32","33","34","35"#,"36","37","38","39","40","41","42","43","44","45","46"), drop=FALSE, limits= #c("10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31","32","33","34","35","36","37","38","39#","40","41","42","43","44","45","46"), breaks=c("10","12","16","25","26","35","36","45")) +
+#  facet_wrap(~TRT+ REP 
+#             #scales = "free_x", # fix the x axis across facets.
+#             #space = "free_x",  # Let the width of facets vary and force all bars to have the same width.
+#             #switch = "x"
+#             )
+#attempting to add counts labels over bars
+#ggplot(data=subset(long_data_keep, !is.na(ALIVE)) ,aes(x=factor(DF_age),fill=SUPP))+
+#  geom_bar(position="fill")+scale_fill_viridis_d()+
+#  stat_count(geom = "text", aes(label = ..count.., color=SUPP), position = position_stack(vjust =0.5))+
+#  ylab("Proportion of Trees")+
+#  xlab("Douglas Fir Age (years)")+
+#  scale_x_discrete(c("10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31","32","33","34","35"#,"36","37","38","39","40","41","42","43","44","45","46"), drop=FALSE, limits= #c("10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31","32","33","34","35","36","37","38","39#","40","41","42","43","44","45","46"), breaks=c("10","12","16","25","26","35","36","45")) +
+#  facet_wrap(~TRT+ REP 
+#             #scales = "free_x", # fix the x axis across facets.
+#             #space = "free_x",  # Let the width of facets vary and force all bars to have the same width.
+#             #switch = "x"
+#             )
+#looking whether there are a lot of alive suppressed trees in A1 and A3 reps. Which looks like NO.
+AxSxP<-long_data_keep %>% group_by(TRT, REP, DF_age, ALIVE, DAMAGE, .drop=FALSE) %>% summarise(count=n())
+
+#then why are the trees so small in those reps?
+
+#attempt to make a histogram of tree diamters by trt rep and DF age.
+#subset by treatments and treatments with similar ages
+RACW10<-subset(long_data_keep, (TRT=="RA10Y" |TRT=="CW10Y"))
+RACW20<-subset(long_data_keep, (TRT=="RA20Y" |TRT=="CW20Y"))
+RA10<-subset(long_data_keep, TRT=="RA10Y")
+CW10<-subset(long_data_keep, TRT=="CW10Y")
+DF0<-subset(long_data_keep, TRT=="DF0")
+
+#make varible containing total counts of trees with diameters
+Labels_ALIVE <- subset(RA10, ALIVE=="ALIVE") %>% group_by(DF_age, REP, ALIVE) %>% summarise(N=paste0('Alive: ',n()))
+Labels_DEAD <- subset(RA10, ALIVE=="DEAD") %>% group_by(DF_age, REP, ALIVE) %>% summarise(N=paste0('Dead: ',n()))
+#X position using dummy value
+Labels_ALIVE$DBH_mm <- 300
+Labels_DEAD$DBH_mm <- 300
+ggplot(data=subset(RA10, !is.na(ALIVE)) ,aes(DBH_mm,fill=ALIVE))+
+  geom_histogram(position="stack", bins=20)+scale_fill_viridis_d()+
+  labs(title= "Size distrubtion of trees in RA10 Treatment by Age and Rep",x="DBH (mm)",y= "Trees") +
+  geom_text(data = Labels_ALIVE,aes(x=DBH_mm,y=70,label=N))+
+  geom_text(data = Labels_DEAD,aes(x=DBH_mm,y=60,label=N))+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  facet_grid(rows=vars(DF_age),vars(REP), labeller = label_both)
+#ggsave("C:/Users/showa/Documents/GitHub/Apiary_LRR/RA10_DBH_histos_by_age_and_rep.pdf")
+
+#Drilling down to look at subplots within reps 1 and 3
+RA10_R0<-subset(RA10, REP==0)
+RA10_R1<-subset(RA10, REP==1)
+RA10_R2<-subset(RA10, REP==2)
+RA10_R3<-subset(RA10, REP==3)
+RA10_R4<-subset(RA10, REP==4)
+
+#plotting0
+Lab0_ALIVE <- subset(RA10_R0, ALIVE=="ALIVE") %>% group_by(DF_age, SUBPLOT, ALIVE) %>% summarise(N=paste0('Alive: ',n()))
+Lab0_DEAD <- subset(RA10_R0, ALIVE=="DEAD") %>% group_by(DF_age, SUBPLOT, ALIVE) %>% summarise(N=paste0('Dead: ',n()))
+#X position using dummy value
+Lab0_ALIVE$DBH_mm <- 250
+Lab0_DEAD$DBH_mm <- 250
+ggplot(data=subset(RA10_R0, !is.na(ALIVE)) ,aes(DBH_mm,fill=ALIVE))+
+  geom_histogram(position="stack", bins=20)+scale_fill_viridis_d()+
+  labs(title= "Size distrubtion of trees in RA10 Rep 0 by Age and Subplot",x="DBH (mm)",y= "Trees") +
+  geom_text(data = Lab0_ALIVE,aes(x=DBH_mm,y=15,label=N))+
+  geom_text(data = Lab0_DEAD,aes(x=DBH_mm,y=12,label=N))+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  facet_grid(rows=vars(DF_age),vars(SUBPLOT), labeller = label_both)
+#ggsave("C:/Users/showa/Documents/GitHub/Apiary_LRR/RA10_Rep0_DBH_histos_by_age_and_subplot.pdf")
+
+#plotting 1
+Label_ALIVE <- subset(RA10_R1, ALIVE=="ALIVE") %>% group_by(DF_age, SUBPLOT, ALIVE) %>% summarise(N=paste0('Alive: ',n()))
+Label_DEAD <- subset(RA10_R1, ALIVE=="DEAD") %>% group_by(DF_age, SUBPLOT, ALIVE) %>% summarise(N=paste0('Dead: ',n()))
+#X position using dummy value
+Label_ALIVE$DBH_mm <- 150
+Label_DEAD$DBH_mm <- 150
+ggplot(data=subset(RA10_R1, !is.na(ALIVE)) ,aes(DBH_mm,fill=ALIVE))+
+  geom_histogram(position="stack", bins=20)+scale_fill_viridis_d()+
+  labs(title= "Size distrubtion of trees in RA10 Rep 1 by Age and Subplot",x="DBH (mm)",y= "Trees") +
+  geom_text(data = Label_ALIVE,aes(x=DBH_mm,y=10,label=N))+
+  geom_text(data = Label_DEAD,aes(x=DBH_mm,y=9,label=N))+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  facet_grid(rows=vars(DF_age),vars(SUBPLOT), labeller = label_both)
+#ggsave("C:/Users/showa/Documents/GitHub/Apiary_LRR/RA10_Rep1_DBH_histos_by_age_and_subplot.pdf")
+
+#plotting2
+Lab2_ALIVE <- subset(RA10_R2, ALIVE=="ALIVE") %>% group_by(DF_age, SUBPLOT, ALIVE) %>% summarise(N=paste0('Alive: ',n()))
+Lab2_DEAD <- subset(RA10_R2, ALIVE=="DEAD") %>% group_by(DF_age, SUBPLOT, ALIVE) %>% summarise(N=paste0('Dead: ',n()))
+#X position using dummy value
+Lab2_ALIVE$DBH_mm <- 250
+Lab2_DEAD$DBH_mm <- 250
+ggplot(data=subset(RA10_R2, !is.na(ALIVE)) ,aes(DBH_mm,fill=ALIVE))+
+  geom_histogram(position="stack", bins=20)+scale_fill_viridis_d()+
+  labs(title= "Size distrubtion of trees in RA10 Rep 2 by Age and Subplot",x="DBH (mm)",y= "Trees") +
+  geom_text(data = Lab2_ALIVE,aes(x=DBH_mm,y=10,label=N))+
+  geom_text(data = Lab2_DEAD,aes(x=DBH_mm,y=8,label=N))+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  facet_grid(rows=vars(DF_age),vars(SUBPLOT), labeller = label_both)
+#ggsave("C:/Users/showa/Documents/GitHub/Apiary_LRR/RA10_Rep2_DBH_histos_by_age_and_subplot.pdf")
+
+#plotting3
+Lab_ALIVE <- subset(RA10_R3, ALIVE=="ALIVE") %>% group_by(DF_age, SUBPLOT, ALIVE) %>% summarise(N=paste0('Alive: ',n()))
+Lab_DEAD <- subset(RA10_R3, ALIVE=="DEAD") %>% group_by(DF_age, SUBPLOT, ALIVE) %>% summarise(N=paste0('Dead: ',n()))
+#X position using dummy value
+Lab_ALIVE$DBH_mm <- 150
+Lab_DEAD$DBH_mm <- 150
+ggplot(data=subset(RA10_R3, !is.na(ALIVE)) ,aes(DBH_mm,fill=ALIVE))+
+  geom_histogram(position="stack", bins=20)+scale_fill_viridis_d()+
+  labs(title= "Size distrubtion of trees in RA10 Rep 3 by Age and Subplot",x="DBH (mm)",y= "Trees") +
+  geom_text(data = Lab_ALIVE,aes(x=DBH_mm,y=7,label=N))+
+  geom_text(data = Lab_DEAD,aes(x=DBH_mm,y=6,label=N))+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  facet_grid(rows=vars(DF_age),vars(SUBPLOT), labeller = label_both)
+#ggsave("C:/Users/showa/Documents/GitHub/Apiary_LRR/RA10_Rep3_DBH_histos_by_age_and_subplot.pdf")
+
+#plotting4
+Lab4_ALIVE <- subset(RA10_R4, ALIVE=="ALIVE") %>% group_by(DF_age, SUBPLOT, ALIVE) %>% summarise(N=paste0('Alive: ',n()))
+Lab4_DEAD <- subset(RA10_R4, ALIVE=="DEAD") %>% group_by(DF_age, SUBPLOT, ALIVE) %>% summarise(N=paste0('Dead: ',n()))
+#X position using dummy value
+Lab4_ALIVE$DBH_mm <- 250
+Lab4_DEAD$DBH_mm <- 250
+ggplot(data=subset(RA10_R4, !is.na(ALIVE)) ,aes(DBH_mm,fill=ALIVE))+
+  geom_histogram(position="stack", bins=20)+scale_fill_viridis_d()+
+  labs(title= "Size distrubtion of trees in RA10 Rep 4 by Age and Subplot",x="DBH (mm)",y= "Trees") +
+  geom_text(data = Lab4_ALIVE,aes(x=DBH_mm,y=18,label=N))+
+  geom_text(data = Lab4_DEAD,aes(x=DBH_mm,y=15,label=N))+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  facet_grid(rows=vars(DF_age),vars(SUBPLOT), labeller = label_both)
+#ggsave("C:/Users/showa/Documents/GitHub/Apiary_LRR/RA10_Rep4_DBH_histos_by_age_and_subplot.pdf")
 
 
+#Make rep and subplot summaries for other treatments like I did for RA10 and RA10 reps 
 
 ```
 
