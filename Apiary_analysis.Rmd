@@ -1210,21 +1210,21 @@ COPIED FROM WOODS CREEK STATISTICAL ANALYSIS
 AOV_in<-stand_df_age
 
 AOV_alive<-subset(AOV_in, AOV_in$STATUS==1)
-AOV_alive_count<- AOV_alive %>% group_by(Stand_ID_TR, DF_age)%>%summarise(alive=sum(count, na.rm=TRUE), Live_BA_sq_m = if(all(is.na(Live_BA_sq_m))) NA_real_ else sum(Live_BA_sq_m, na.rm=TRUE))
+AOV_alive_count<- AOV_alive %>% group_by(Stand_ID_TR, DF_age)%>%summarise(alive=sum(count, na.rm=TRUE), Live_BA_mpha = if(all(is.na(Live_BA_mpha))) NA_real_ else sum(Live_BA_mpha, na.rm=TRUE))
 AOV_dead<-subset(AOV_in, AOV_in$STATUS==3)
-AOV_dead_count<- AOV_dead %>% group_by(Stand_ID_TR, DF_age)%>%summarise(dead=sum(count, na.rm=TRUE), Live_BA_sq_m = if(all(is.na(Live_BA_sq_m))) NA_real_ else sum(Live_BA_sq_m, na.rm=TRUE)) 
+AOV_dead_count<- AOV_dead %>% group_by(Stand_ID_TR, DF_age)%>%summarise(dead=sum(count, na.rm=TRUE), Live_BA_mpha = if(all(is.na(Live_BA_mpha))) NA_real_ else sum(Live_BA_mpha, na.rm=TRUE)) 
 
 #attempt to merge datasets but there are not "dead" entries for all of the stand/year combinations
 #need to add rows for stand years with zero dead trees https://www.statology.org/r-append-to-data-frame/
 dead_add<-data.frame("Stand_ID_TR"=c("A_4", "B_2", "B_3", "B_4"),
                      "DF_age"=c(10, 10, 10, 10),
                      "dead"=c(0, 0, 0, 0),
-                     "Live_BA_sq_m"=c(NA, NA,NA, NA))
+                     "Live_BA_mpha"=c(NA, NA,NA, NA))
 
 dead_add$Stand_ID_TR<-as.factor(dead_add$Stand_ID_TR)
 dead_add$DF_age<-as.double(dead_add$DF_age)
 dead_add$dead<-as.integer(dead_add$dead)
-dead_add$Live_BA_sq_m<-as.double(dead_add$Live_BA_sq_m)
+dead_add$Live_BA_mpha<-as.double(dead_add$Live_BA_mpha)
 AOV_dead_count_add<-rbind(AOV_dead_count, dead_add)
 #need to have rows in same order to cbind
 AOV_dead_count_add<-AOV_dead_count_add[c(1:10,60,11:18,61,19:20,62,21,22,63,23:59),]
@@ -1250,6 +1250,7 @@ AOV_prop_dead$Tname<-ifelse(AOV_prop_dead$TRT=="A",
                                              "RA20",
                                              "CW20"))))
 
+#RUN ANOVA
 ```
 
 ## Plotting
@@ -1273,12 +1274,12 @@ ggplot(AOV_prop_dead,aes(x=factor(DF_age),y=prop_dead, fill=Tname)) + geom_boxpl
 #ggsave("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Summary_Graphs/Mort_by_TRT_REPS_labeled.pdf")
 
 
-ggplot(AOV_prop_dead,aes(x=factor(DF_age),y=Live_BA_sq_m, fill=Tname)) + geom_boxplot()+
-   ylab("Live BA (sq m)")+
+ggplot(AOV_prop_dead,aes(x=factor(DF_age),y=Live_BA_mpha, fill=Tname)) + geom_boxplot()+
+   ylab("Live BA (sq m/ha)")+
    scale_x_discrete(c("10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31","32","33","34","35","36","37","38","39","40","41","42","43","44","45","46"), drop=FALSE, limits= c("10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31","32","33","34","35","36","37","38","39","40","41","42","43","44","45","46"), breaks=c("10","12","16","25","26","35","36","45")) +scale_fill_viridis_d() +
  xlab("Douglas Fir Age (years)")+
   geom_text(label=AOV_prop_dead$REP, alpha=0.5, position = "dodge")
-#ggsave("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Summary_Graphs/Live_BA_by_TRT_REPS_labeled.pdf")
+#ggsave("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Summary_Graphs/Live_BA_mpha_by_TRT_REPS_labeled.pdf")
 
 ```
 
