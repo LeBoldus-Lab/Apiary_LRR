@@ -1581,7 +1581,7 @@ AOV_prop_Dead$Treatment<-ifelse(AOV_prop_Dead$TRT=="A",
                             "Red Alder 10 years",
                             ifelse(AOV_prop_Dead$TRT=="B",
                                "Cottonwood 10 years", "Immediate Douglas fir"))
-#creating stand means
+#creating stand means and SE for BA and asin prop mort, and prop mort, prop presumed mort
 AOV_BA_stand_mean<- stand_ABC %>% group_by(TRT, DF_age)%>%summarise( N = sum(!is.na(Live_BA_mpha)),BA=mean(Live_BA_mpha, na.rm=TRUE), sd = sd(Live_BA_mpha, na.rm=TRUE),se = sd / sqrt(N))
 AOV_BA_stand_mean$age<-as.numeric(AOV_BA_stand_mean$DF_age)
 #adding descriptive treatment name
@@ -1591,6 +1591,37 @@ AOV_BA_stand_mean$Treatment<-ifelse(AOV_BA_stand_mean$TRT=="A",
                                "Cottonwood 10 years", "Immediate Douglas fir"))
 AOV_BA_stand_mean$lower<-AOV_BA_stand_mean$BA-AOV_BA_stand_mean$se
 AOV_BA_stand_mean$upper<-AOV_BA_stand_mean$BA+AOV_BA_stand_mean$se
+
+AOV_asnmort_stand_mean<- AOV_prop_Dead %>% group_by(TRT, DF_age)%>%summarise( N = sum(!is.na(asn)),asn_mean=mean(asn, na.rm=TRUE), sd = sd(asn, na.rm=TRUE),se = sd / sqrt(N))
+AOV_asnmort_stand_mean$age<-as.numeric(AOV_asnmort_stand_mean$DF_age)
+#adding descriptive treatment name
+AOV_asnmort_stand_mean$Treatment<-ifelse(AOV_asnmort_stand_mean$TRT=="A",
+                            "Red Alder 10 years",
+                            ifelse(AOV_asnmort_stand_mean$TRT=="B",
+                               "Cottonwood 10 years", "Immediate Douglas fir"))
+AOV_asnmort_stand_mean$lower<-AOV_asnmort_stand_mean$asn_mean-AOV_asnmort_stand_mean$se
+AOV_asnmort_stand_mean$upper<-AOV_asnmort_stand_mean$asn_mean+AOV_asnmort_stand_mean$se
+
+AOV_mort_stand_mean<- AOV_prop_Dead %>% group_by(TRT, DF_age)%>%summarise( N = sum(!is.na(prop_Dead)),mort_mean=mean(prop_Dead, na.rm=TRUE), sd = sd(prop_Dead, na.rm=TRUE),se = sd / sqrt(N))
+AOV_mort_stand_mean$age<-as.numeric(AOV_mort_stand_mean$DF_age)
+#adding descriptive treatment name
+AOV_mort_stand_mean$Treatment<-ifelse(AOV_mort_stand_mean$TRT=="A",
+                            "Red Alder 10 years",
+                            ifelse(AOV_mort_stand_mean$TRT=="B",
+                               "Cottonwood 10 years", "Immediate Douglas fir"))
+AOV_mort_stand_mean$lower<-AOV_mort_stand_mean$mort_mean-AOV_mort_stand_mean$se
+AOV_mort_stand_mean$upper<-AOV_mort_stand_mean$mort_mean+AOV_mort_stand_mean$se
+
+AOV_mort_miss_stand_mean<- AOV_prop_Dead %>% group_by(TRT, DF_age)%>%summarise( N = sum(!is.na(prop_D_miss)),mort_miss_mean=mean(prop_D_miss, na.rm=TRUE), sd = sd(prop_D_miss, na.rm=TRUE),se = sd / sqrt(N))
+AOV_mort_miss_stand_mean$age<-as.numeric(AOV_mort_miss_stand_mean$DF_age)
+#adding descriptive treatment name
+AOV_mort_miss_stand_mean$Treatment<-ifelse(AOV_mort_miss_stand_mean$TRT=="A",
+                            "Red Alder 10 years",
+                            ifelse(AOV_mort_miss_stand_mean$TRT=="B",
+                               "Cottonwood 10 years", "Immediate Douglas fir"))
+AOV_mort_miss_stand_mean$lower<-AOV_mort_miss_stand_mean$mort_miss_mean-AOV_mort_miss_stand_mean$se
+AOV_mort_miss_stand_mean$upper<-AOV_mort_miss_stand_mean$mort_miss_mean+AOV_mort_miss_stand_mean$se
+
 #RUN ANOVA
 ```
 
@@ -1619,6 +1650,46 @@ AOV_prop_Dead$age<-as.numeric(AOV_prop_Dead$DF_age)
 
 ```{r}
 #graphing
+
+#BA
+BA_box_sev<-AOV_prop_Dead %>% 
+  mutate(Treatment= factor(Treatment, levels = c("Red Alder 10 years","Cottonwood 10 years","Immediate Douglas fir")))%>%
+  ggplot(aes(x=factor(DF_age),y=Live_BA_mpha, fill=Treatment)) + 
+  geom_boxplot(position = position_dodge(preserve = "single"))+
+   ylab("Live BA (sq m/ha)")+
+   scale_x_discrete("Douglas Fir Age (years)", drop=FALSE, limits= c("0","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31","32","33","34","35","36","37","38","39","40","41","42","43","44","45","46","47","48"), breaks=c("0","10","12","26","35","36","45")) +scale_fill_viridis_d(begin=0.3) +
+ xlab("Douglas Fir Age (years)")+
+geom_text(label=AOV_prop_Dead$DF_SEV, alpha=0.3, nudge_x= 1)+
+geom_text(label=AOV_prop_Dead$CW_SEV, alpha=0.3, nudge_x = -1)+
+geom_text(label=AOV_prop_Dead$RA_SEV, alpha=0.3, nudge_x = -2)+
+theme_bw()
+BA_box_sev
+#ggsave("C:/Users/showa/Documents/GitHub/Apiary_LRR/Summary_Graphs/Live_BA_mpha_by_TRT_REPS_labeled_ABC.pdf")
+
+BA_point_sev<-AOV_BA_stand_mean %>% 
+  mutate(Treatment= factor(Treatment, levels = c("Red Alder 10 years","Cottonwood 10 years","Immediate Douglas fir")))%>%
+  ggplot(aes(age,BA, color=Treatment)) + 
+  geom_point()+
+  geom_errorbar(aes(ymin=lower, ymax=upper))+
+  geom_line()+
+  ylab("Stand Mean (+/-SE) Live BA (sq m/ha)")+
+  xlab("Douglas Fir Age (years)")+
+  scale_color_viridis_d(begin=0.3) +
+theme_bw()
+BA_point_sev
+#ggsave("C:/Users/showa/Documents/GitHub/Apiary_LRR/Summary_Graphs/Live_BA_mpha_by_TRT_REPS_labeled_ABC.pdf")
+
+BA_ribbon<-AOV_BA_stand_mean %>% 
+  mutate(Treatment= factor(Treatment, levels = c("Red Alder 10 years","Cottonwood 10 years","Immediate Douglas fir")))%>%
+  ggplot(aes(age,BA, fill=Treatment)) + 
+  geom_ribbon(aes(ymin=lower, ymax=upper),alpha=0.5)+
+  ylab("Stand Mean (+/-SE) Live BA (sq m/ha)")+
+  xlab("Douglas Fir Age (years)")+
+  scale_fill_viridis_d(begin=0.3) +
+theme_bw()
+BA_ribbon
+
+#prop mort
 pd_box<-AOV_prop_Dead %>% 
   mutate(Treatment= factor(Treatment, levels = c("Red Alder 10 years","Cottonwood 10 years","Immediate Douglas fir"))) %>%
   ggplot(aes(x=factor(DF_age),y=prop_Dead, fill=Treatment))+ 
@@ -1646,6 +1717,30 @@ ylim(0,1)+
 theme_bw()
 pd_box_sev
 
+pd_point<-AOV_mort_stand_mean %>% 
+  mutate(Treatment= factor(Treatment, levels = c("Red Alder 10 years","Cottonwood 10 years","Immediate Douglas fir")))%>%
+  ggplot(aes(age,mort_mean, color=Treatment)) + 
+  geom_point()+
+  geom_errorbar(aes(ymin=lower, ymax=upper))+
+  geom_line()+
+  ylab("Stand Mean (+/-SE) Porportion Mortality")+
+  xlab("Douglas Fir Age (years)")+
+  scale_color_viridis_d(begin=0.3) +
+theme_bw()
+pd_point
+#ggsave("C:/Users/showa/Documents/GitHub/Apiary_LRR/Summary_Graphs/Live_BA_mpha_by_TRT_REPS_labeled_ABC.pdf")
+
+pd_ribbon<-AOV_mort_stand_mean %>% 
+  mutate(Treatment= factor(Treatment, levels = c("Red Alder 10 years","Cottonwood 10 years","Immediate Douglas fir")))%>%
+  ggplot(aes(age,mort_mean, fill=Treatment)) + 
+  geom_ribbon(aes(ymin=lower, ymax=upper),alpha=0.5)+
+  ylab("Stand Mean (+/-SE) Porportion Mortality")+
+  xlab("Douglas Fir Age (years)")+
+  scale_fill_viridis_d(begin=0.3) +
+theme_bw()
+pd_ribbon
+
+#presumed prop mort
 pd_box_sev_miss<-AOV_prop_Dead %>% 
   mutate(Treatment= factor(Treatment, levels = c("Red Alder 10 years","Cottonwood 10 years","Immediate Douglas fir"))) %>%
   ggplot(aes(x=factor(DF_age),y=prop_D_miss, fill=Treatment))+ 
@@ -1661,6 +1756,9 @@ theme_bw()
 pd_box_sev_miss
 #ggsave("C:/Users/showa/Documents/GitHub/Apiary_LRR/Summary_Graphs/Mort_by_TRT_REPS_labeled_ABC.pdf")
 
+####ADD POINT SE AND RIBBON FOR PRESUMED MORT
+
+#prop alive
 pa_box_sev<-AOV_prop_Dead %>% 
   mutate(Treatment= factor(Treatment, levels = c("Red Alder 10 years","Cottonwood 10 years","Immediate Douglas fir"))) %>%
   ggplot(aes(x=factor(DF_age),y=prop_Alive, fill=Treatment))+ 
@@ -1690,39 +1788,19 @@ theme_bw()
 pa_box_sev_miss
 #ggsave("C:/Users/showa/Documents/GitHub/Apiary_LRR/Summary_Graphs/Mort_by_TRT_REPS_labeled_ABC.pdf")
 
-BA_box_sev<-AOV_prop_Dead %>% 
-  mutate(Treatment= factor(Treatment, levels = c("Red Alder 10 years","Cottonwood 10 years","Immediate Douglas fir")))%>%
-  ggplot(aes(x=factor(DF_age),y=Live_BA_mpha, fill=Treatment)) + 
-  geom_boxplot(position = position_dodge(preserve = "single"))+
-   ylab("Live BA (sq m/ha)")+
-   scale_x_discrete("Douglas Fir Age (years)", drop=FALSE, limits= c("0","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31","32","33","34","35","36","37","38","39","40","41","42","43","44","45","46","47","48"), breaks=c("0","10","12","26","35","36","45")) +scale_fill_viridis_d(begin=0.3) +
- xlab("Douglas Fir Age (years)")+
-geom_text(label=AOV_prop_Dead$DF_SEV, alpha=0.3, nudge_x= 1)+
-geom_text(label=AOV_prop_Dead$CW_SEV, alpha=0.3, nudge_x = -1)+
-geom_text(label=AOV_prop_Dead$RA_SEV, alpha=0.3, nudge_x = -2)+
-theme_bw()
-BA_box_sev
-#ggsave("C:/Users/showa/Documents/GitHub/Apiary_LRR/Summary_Graphs/Live_BA_mpha_by_TRT_REPS_labeled_ABC.pdf")
+#asn mort
+####ADD POINT SE AND RIBBON FOR ASN MORT
 
-BA_point_sev<-AOV_BA_stand_mean %>% 
-  mutate(Treatment= factor(Treatment, levels = c("Red Alder 10 years","Cottonwood 10 years","Immediate Douglas fir")))%>%
-  ggplot(aes(age,BA, color=Treatment)) + 
-  geom_point()+
-  geom_errorbar(aes(ymin=lower, ymax=upper))
-  #ylab("Stand Mean Live BA (sq m/ha)")+
-  xlab("Douglas Fir Age (years)")+
-  scale_color_viridis_d(begin=0.3) +
-theme_bw()
-BA_point_sev
-#ggsave("C:/Users/showa/Documents/GitHub/Apiary_LRR/Summary_Graphs/Live_BA_mpha_by_TRT_REPS_labeled_ABC.pdf")
 
 ```
 
-plot mean asn prop mort x DF age, fit slopes by TRT?
+plot mean asn prop mort x DF age, fit slopes by TRT? Same for BA. include initial incidence as ordinal variable? Kruskal Wallace or rank-based for Reps/initial incidence?
 ANOVA FINALLY????????
 example provided by stats consult https://rpubs.com/tmcurley/twowayanova
 len.aov <- aov(len ~ supp + dose + supp:dose, data = ToothGrowth)
 summary(len.aov)
 Proportion Dead
 
-somehow modify to run the anova on years independently, or add year as a covariate?
+modify to run the anova on years independently, or add year as a covariate?
+
+Prepare Stand-level FVS input for Shawn.  10y and 12y data. Proportion of subplots with Pw as measure of disease in each stand. 
