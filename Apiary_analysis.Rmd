@@ -90,7 +90,7 @@ combined_data<-rbind(A_plots,B_plots,C_plots,D_plots,E_plots)
 combined_data$LOC<-as.factor(combined_data$LOC)
 combined_data$PLOT<-as.factor(combined_data$PLOT)
 combined_data$SUBPLOT<-as.factor(combined_data$SUBPLOT)
-combined_data$REP<-as.factor(combined_data$REP)
+#combined_data$REP<-as.factor(combined_data$REP)
 combined_data$TRT<-as.factor(combined_data$TRT)
 combined_data$TREE<-as.character(combined_data$TREE)
 combined_data$SP<-as.character(combined_data$SP)
@@ -122,7 +122,7 @@ new_combined_data<-rbind(A_plots_2,B_plots_2,C_plots_2)
 new_combined_data$LOC<-as.factor(new_combined_data$LOC)
 new_combined_data$PLOT<-as.factor(new_combined_data$PLOT)
 new_combined_data$SUBPLOT<-as.factor(new_combined_data$SUBPLOT)
-new_combined_data$REP<-as.factor(new_combined_data$REP)
+#new_combined_data$REP<-as.factor(new_combined_data$REP)
 new_combined_data$TRT<-as.factor(new_combined_data$TRT)
 new_combined_data$TREE<-as.character(new_combined_data$TREE)
 new_combined_data$DAM1<-as.character(new_combined_data$DAM1)
@@ -239,26 +239,26 @@ ABC<- full_data[full_data$TRT=="RA10Y"|full_data$TRT=="CW10Y"|full_data$TRT=="DF
 
 
 #summarizing tree count by TRT and REP
-TRTxREP_summary<-full_data %>% group_by(TRT, REP, .drop=FALSE) %>% summarise(count=n())
-TRTxREP_summary
-
-#the following command shows the viridis palette with 10 values. 
-#scales::show_col(scales::viridis_pal()(10))
-
-ggplot(TRTxREP_summary,aes(x=TRT,y=count,fill=REP ))+geom_col()+scale_fill_viridis_d()+ylab("Tree count")+xlab("Treatment")
-
-#additionaly summarizing by subplot
-TRTxREPxSub_summary<-full_data %>% group_by(TRT, REP, SUBPLOT, .drop=FALSE) %>% summarise(count=n())
-TRTxREPxSub_summary
-ggplot(TRTxREPxSub_summary,aes(x=REP,y=count,fill=SUBPLOT )) +geom_col()+scale_fill_viridis_d()+ylab("Tree count")+xlab("Rep")+ facet_grid(~TRT, scales = "fixed", space = "free_x", switch = "x") + geom_hline(yintercept = 170)+ geom_hline(yintercept = 34) + geom_hline(yintercept = 68)+ geom_hline(yintercept = 102)+ geom_hline(yintercept = 136)
-#ggsave("C:/Users/showa/Documents/GitHub/Apiary_LRR/Trees_per_subplot.pdf")
-
-#just ABC trts
-#additionaly summarizing by subplot
-TRTxREPxSub_ABC<-ABC %>% group_by(TRT, REP, SUBPLOT, .drop=TRUE) %>% summarise(count=n())
-TRTxREPxSub_ABC
-ggplot(TRTxREPxSub_ABC,aes(x=REP,y=count,fill=SUBPLOT )) +geom_col()+scale_fill_viridis_d()+ylab("Tree count")+xlab("Rep")+ facet_grid(~TRT, scales = "fixed", space = "free_x", switch = "x") + geom_hline(yintercept = 170)+ geom_hline(yintercept = 34) + geom_hline(yintercept = 68)+ geom_hline(yintercept = 102)+ geom_hline(yintercept = 136)
-#ggsave("C:/Users/showa/Documents/GitHub/Apiary_LRR/Summary_Graphs/ABC_Trees_per_subplot.pdf")
+#TRTxREP_summary<-full_data %>% group_by(TRT, REP, .drop=FALSE) %>% summarise(count=n())
+#TRTxREP_summary
+#
+##the following command shows the viridis palette with 10 values. 
+##scales::show_col(scales::viridis_pal()(10))
+#
+#ggplot(TRTxREP_summary,aes(x=TRT,y=count,fill=factor(REP)))+geom_col()+scale_fill_viridis_d()+ylab("Tree count")+xlab("Treatment")
+#
+##additionaly summarizing by subplot
+#TRTxREPxSub_summary<-full_data %>% group_by(TRT, REP, SUBPLOT, .drop=FALSE) %>% summarise(count=n())
+#TRTxREPxSub_summary
+#ggplot(TRTxREPxSub_summary,aes(x=factor(REP),y=count,fill=SUBPLOT )) +geom_col()+scale_fill_viridis_d()+ylab("Tree count")+xlab("Rep")+ #facet_grid(~TRT, scales = "fixed", space = "free_x", switch = "x") + geom_hline(yintercept = 170)+ geom_hline(yintercept = 34) + geom_hline(yintercept #= 68)+ geom_hline(yintercept = 102)+ geom_hline(yintercept = 136)
+##ggsave("C:/Users/showa/Documents/GitHub/Apiary_LRR/Trees_per_subplot.pdf")
+#
+##just ABC trts
+##additionaly summarizing by subplot
+#TRTxREPxSub_ABC<-ABC %>% group_by(TRT, REP, SUBPLOT, .drop=TRUE) %>% summarise(count=n())
+#TRTxREPxSub_ABC
+#ggplot(TRTxREPxSub_ABC,aes(x=factor(REP),y=count,fill=SUBPLOT )) +geom_col()+scale_fill_viridis_d()+ylab("Tree count")+xlab("Rep")+ facet_grid(~TRT, #scales = "fixed", space = "free_x", switch = "x") + geom_hline(yintercept = 170)+ geom_hline(yintercept = 34) + geom_hline(yintercept = 68)+ #geom_hline(yintercept = 102)+ geom_hline(yintercept = 136)
+##ggsave("C:/Users/showa/Documents/GitHub/Apiary_LRR/Summary_Graphs/ABC_Trees_per_subplot.pdf")
 
 #there appears to be an imbalance of trees between treatments
 #trying to look for duplicate TREE ID numbers
@@ -294,52 +294,52 @@ ggplot(TRTxREPxSub_ABC,aes(x=REP,y=count,fill=SUBPLOT )) +geom_col()+scale_fill_
 ```
 
 ```{r}
-TRTxNSTS_summary<-combined_data %>% group_by(TRT, NSTS, .drop=FALSE) %>% summarise(count=n())
-TRTxNSTS_summary
-ggplot(TRTxNSTS_summary,aes(x=TRT,y=count,fill=NSTS ))+geom_col()+scale_fill_viridis_d()+ylab("Tree count")+xlab("Treatment")
-
-TRTxOSTS_summary<-combined_data %>% group_by(TRT, OSTS, .drop=FALSE) %>% summarise(count=n())
-TRTxOSTS_summary
-#ggplot(TRTxOSTS_summary,aes(x=TRT,y=count,fill=OSTS ))+geom_col()+scale_fill_viridis_d()+ylab("Tree count")+xlab("Treatment")
-ggplot(TRTxOSTS_summary,aes(x=TRT,y=count,fill=OSTS))+geom_col()+scale_fill_viridis_d()+ylab("Tree count")+xlab("Treatment")
-
-
-#TRTxDAM_summary<-combined_data %>% group_by(TRT, DAM1) %>% summarise(count=n())
-#TRTxDAM_summary
-
-DAM_summary<-combined_data %>% group_by(DAM1) %>% summarise(count=n())
-DAM_summary
-#write.csv(DAM_summary, file="C:/Users/showa/Documents/LeBoldus_Lab/Laminated_Root_Rot/Apiariy_LRR/raw_data/DAM_summary.csv", row.names = FALSE)
-
-AMT_summary<-combined_data %>% group_by(AMT1) %>% summarise(count=n())
-AMT_summary
-
-DAMxAMT_summary<-combined_data %>% group_by(DAM1, AMT1) %>% summarise(count=n())
-DAMxAMT_summary
-
-POS_summary<-combined_data %>% group_by(POS1) %>% summarise(count=n())
-POS_summary
-
-OR_summary<-combined_data %>% group_by(OR) %>% summarise(count=n())
-OR_summary
-
-#returning the entries for which AMT1 is 808, an invalid code
-#AMT_808<-combined_data[which(combined_data$AMT1 == 808),]
-#write.csv(AMT_808, file="C:/Users/showa/Documents/LeBoldus_Lab/Laminated_Root_Rot/Apiariy_LRR/raw_data/amt_808_data.csv", row.names = FALSE)
-
-#fix
-combined_data$AMT1[combined_data$AMT1 == 808]<-NA
-
-#returning the entries for which NDBH is NA or 0 without explanation
-DBH_NA<-combined_data[is.na(combined_data$NDBH),]
-DBH_NA_no_explain<-DBH_NA[is.na(DBH_NA$AMT1),]
-#write.csv(DBH_NA_no_explain, file="C:/Users/showa/Documents/LeBoldus_Lab/Laminated_Root_Rot/Apiariy_LRR/raw_data/DBH_NA_no_explain_data.csv", row.names = FALSE)
-
-#returning the entries for which SP is NA
-#SP_0<-combined_data[is.na(combined_data$SP),]
-#fix
-combined_data$SP<-"DF"
-#write.csv(SP_0, file="C:/Users/showa/Documents/LeBoldus_Lab/Laminated_Root_Rot/Apiariy_LRR/raw_data/SP_0_data.csv", row.names = FALSE)
+#TRTxNSTS_summary<-combined_data %>% group_by(TRT, NSTS, .drop=FALSE) %>% summarise(count=n())
+#TRTxNSTS_summary
+#ggplot(TRTxNSTS_summary,aes(x=TRT,y=count,fill=NSTS ))+geom_col()+scale_fill_viridis_d()+ylab("Tree count")+xlab("Treatment")
+#
+#TRTxOSTS_summary<-combined_data %>% group_by(TRT, OSTS, .drop=FALSE) %>% summarise(count=n())
+#TRTxOSTS_summary
+##ggplot(TRTxOSTS_summary,aes(x=TRT,y=count,fill=OSTS ))+geom_col()+scale_fill_viridis_d()+ylab("Tree count")+xlab("Treatment")
+#ggplot(TRTxOSTS_summary,aes(x=TRT,y=count,fill=OSTS))+geom_col()+scale_fill_viridis_d()+ylab("Tree count")+xlab("Treatment")
+#
+#
+##TRTxDAM_summary<-combined_data %>% group_by(TRT, DAM1) %>% summarise(count=n())
+##TRTxDAM_summary
+#
+#DAM_summary<-combined_data %>% group_by(DAM1) %>% summarise(count=n())
+#DAM_summary
+##write.csv(DAM_summary, file="C:/Users/showa/Documents/LeBoldus_Lab/Laminated_Root_Rot/Apiariy_LRR/raw_data/DAM_summary.csv", row.names = FALSE)
+#
+#AMT_summary<-combined_data %>% group_by(AMT1) %>% summarise(count=n())
+#AMT_summary
+#
+#DAMxAMT_summary<-combined_data %>% group_by(DAM1, AMT1) %>% summarise(count=n())
+#DAMxAMT_summary
+#
+#POS_summary<-combined_data %>% group_by(POS1) %>% summarise(count=n())
+#POS_summary
+#
+#OR_summary<-combined_data %>% group_by(OR) %>% summarise(count=n())
+#OR_summary
+#
+##returning the entries for which AMT1 is 808, an invalid code
+##AMT_808<-combined_data[which(combined_data$AMT1 == 808),]
+##write.csv(AMT_808, file="C:/Users/showa/Documents/LeBoldus_Lab/Laminated_Root_Rot/Apiariy_LRR/raw_data/amt_808_data.csv", row.names = FALSE)
+#
+##fix
+#combined_data$AMT1[combined_data$AMT1 == 808]<-NA
+#
+##returning the entries for which NDBH is NA or 0 without explanation
+#DBH_NA<-combined_data[is.na(combined_data$NDBH),]
+#DBH_NA_no_explain<-DBH_NA[is.na(DBH_NA$AMT1),]
+##write.csv(DBH_NA_no_explain, file="C:/Users/showa/Documents/LeBoldus_Lab/Laminated_Root_Rot/Apiariy_LRR/raw_data/DBH_NA_no_explain_data.csv", #row.names = FALSE)
+#
+##returning the entries for which SP is NA
+##SP_0<-combined_data[is.na(combined_data$SP),]
+##fix
+#combined_data$SP<-"DF"
+##write.csv(SP_0, file="C:/Users/showa/Documents/LeBoldus_Lab/Laminated_Root_Rot/Apiariy_LRR/raw_data/SP_0_data.csv", row.names = FALSE)
 ```
 
 ## Remaining questions
@@ -391,7 +391,7 @@ full_data$NDBH<-as.double(full_data$NDBH)
 
 #as.factor PLOT REP SUBPLOT TRT TRT_code  SUBPLOT_ID
 full_data$PLOT<-as.factor(full_data$PLOT)
-full_data$REP<-as.factor(full_data$REP)
+#full_data$REP<-as.factor(full_data$REP)
 full_data$SUBPLOT<-as.factor(full_data$SUBPLOT)
 full_data$TRT<-as.factor(full_data$TRT)
 full_data$TRT_code<-as.factor(full_data$TRT_code)
@@ -437,7 +437,8 @@ long_data$SUPP<-as.character(ifelse(long_data$DAMAGE=="400", "SUPP", NA))
 
 #and a root rot flag
 long_data$ROOT<-as.character(ifelse((long_data$DAMAGE=="806"|long_data$DAMAGE=="807"|long_data$DAMAGE=="808"), "ROT", NA))
-long_data$PW<-as.character(ifelse((long_data$DAMAGE=="806"|long_data$DAMAGE=="807"), "PW", NA))                                     
+long_data$PW_R<-as.character(ifelse((long_data$DAMAGE=="806"|long_data$DAMAGE=="807"), 1, NA))
+long_data$PW<-as.character(ifelse((long_data$DAMAGE=="807"), 1, NA))
 #making live basal area calculation for each tree using status and diameter
 
 long_data$Live_BA_sq_m<-as.double(ifelse(long_data$STATUS=="1", (3.14159*((long_data$DBH_mm / 2000)^2)) ,NA))
@@ -500,7 +501,7 @@ long_data$FVS_age<-NA
 long_data$FVS_age<-ifelse(long_data$DF_age==10,0,ifelse(long_data$DF_age==12,0,ifelse(long_data$DF_age==26,16,ifelse(long_data$DF_age==35,25,ifelse(long_data$DF_age==36,24,ifelse(long_data$DF_age==45,35,NA))))))
 #subsetting to keep only relevant columns
 
-keep_cols<- c("Tree_ID","TREE","PLOT","REP","SUBPLOT","SUBPLOT_ID","TRT","TRT_code","YEAR_fac","YEAR_dbl","DF_age","Tree_status","DBH_mm","Live_BA_sq_m","STATUS","DAMAGE", "SUPP", "ROOT","PW","FVS_age")
+keep_cols<- c("Tree_ID","TREE","PLOT","REP","SUBPLOT","SUBPLOT_ID","TRT","TRT_code","YEAR_fac","YEAR_dbl","DF_age","Tree_status","DBH_mm","Live_BA_sq_m","STATUS","DAMAGE", "SUPP", "ROOT","PW","PW_R","FVS_age")
 long_data_keep<-long_data[,names(long_data) %in% keep_cols]
 long_data_keep<-long_data_keep[,keep_cols]
 ABC_long_keep<-long_data_keep[long_data_keep$TRT_code=="A"|long_data_keep$TRT_code=="B"|long_data_keep$TRT_code=="C",]
@@ -1348,8 +1349,8 @@ long_data_keep$Subplot_ID_TRS<-as.factor(paste(long_data_keep$TRT_code,long_data
   #removing STATUS=NA https://stackoverflow.com/questions/29501188/dplyr-removing-nas-from-group-by-variable 
   #excluding Live_BA_sq_m = 0 https://stackoverflow.com/questions/54805570/dplyr-summarise-keep-na-if-all-summarised-values-are-na/54805923
 #subplot_df<-long_data_keep %>% filter(!is.na(STATUS)) %>% group_by(Subplot_ID_TRS, YEAR_fac,TRT, STATUS, .drop = TRUE) %>% summarise(count = n(), Live_BA_sq_m = if(all(is.na(Live_BA_sq_m))) NA_real_ else sum(Live_BA_sq_m, na.rm=TRUE))
-#using DF age instead of year
-subplot_df_age<-long_data_keep %>% filter(!is.na(STATUS)) %>% group_by(Subplot_ID_TRS, DF_age,TRT, STATUS, .drop = TRUE) %>% summarise(count = n(), Live_BA_sq_m = if(all(is.na(Live_BA_sq_m))) NA_real_ else sum(Live_BA_sq_m, na.rm=TRUE))
+#using DF age instead of year and adding PW and PW+root rot counts
+subplot_df_age<-long_data_keep %>% filter(!is.na(STATUS)) %>% group_by(Subplot_ID_TRS, DF_age,TRT, STATUS, .drop = TRUE) %>% summarise(count = n(), Live_BA_sq_m = if(all(is.na(Live_BA_sq_m))) NA_real_ else sum(Live_BA_sq_m, na.rm=TRUE),PW=sum(!is.na(PW)), PW_R=sum(!is.na(PW_R)))
 
 # correcting subplot-level Live-BA to include area sampled (ha)
 # subplots have 27' radius = 1/20 or 0.053 acre = 0.021448339 hectare
@@ -1370,12 +1371,13 @@ subplot_df_age<-subplot_df_age %>% separate(Subplot_ID_TRS, c("TRT","REP","SUBPL
 subplot_df_age$Stand_ID_TR<-as.factor(paste(subplot_df_age$TRT,subplot_df_age$REP, sep = "_"))
 # updating to calculate stand-level Live-BA mph and fpa by taking the mean of subplots rather than summing so I can account for missing data/subplots
 
+#calculating whether or not subplots had Pw (807) or PW or root rot (806 or 807) at the first measurement (10 or 12 y)
+PW_in_subplot_1012<-subplot_df_age %>% filter(DF_age==10|DF_age==12) %>% group_by(Subplot_ID_TRS, .drop = TRUE) %>% summarise(PW=sum(PW), PW_R=sum(PW_R))
+#none of the 10 or 12y measurements had any PW, likely because all of those notes were input as from the second measurement off of the datasheets. I'm unable to tell which comments on the datasheet corresponded to the first measurement or the second measurement.
 
-###MAKE ABC DF AND SUBSET TO ONLY LIVING TREES? ADD FVS AGE AND SUMMARIZE COUNT OF PW FOR FVS INPUT
+#instead I will just use REP and as a proxy for FVS parameter related to initial incidence, since that is what was used to determine the blocking anyway. Rep 1=0.2, Rep 2=0.4, Rep 3=0.6 Rep 4=0.8 Rep 0=1.0
 
-
-
-stand_df_age<- subplot_df_age %>% filter(!is.na(STATUS)) %>% group_by(Stand_ID_TR, DF_age, TRT, STATUS, .drop = TRUE) %>% summarise(count = sum(count, na.rm=TRUE), sum_Live_BA_sq_m = if(all(is.na(Live_BA_sq_m))) NA_real_ else sum(Live_BA_sq_m, na.rm=TRUE), Live_BA_mpha = if(all(is.na(Live_BA_mpha))) NA_real_ else mean(Live_BA_mpha, na.rm=TRUE), sum_Live_BA_sq_ft = if(all(is.na(Live_BA_sq_ft))) NA_real_ else sum(Live_BA_sq_ft, na.rm=TRUE), Live_BA_fpa = if(all(is.na(Live_BA_fpa))) NA_real_ else mean(Live_BA_fpa, na.rm=TRUE))
+stand_df_age<- subplot_df_age %>% filter(!is.na(STATUS)) %>% group_by(Stand_ID_TR, DF_age, TRT, STATUS, .drop = TRUE) %>% summarise(count = sum(count, na.rm=TRUE), sum_Live_BA_sq_m = if(all(is.na(Live_BA_sq_m))) NA_real_ else sum(Live_BA_sq_m, na.rm=TRUE), Live_BA_mpha = if(all(is.na(Live_BA_mpha))) NA_real_ else mean(Live_BA_mpha, na.rm=TRUE), sum_Live_BA_sq_ft = if(all(is.na(Live_BA_sq_ft))) NA_real_ else sum(Live_BA_sq_ft, na.rm=TRUE), Live_BA_fpa = if(all(is.na(Live_BA_fpa))) NA_real_ else mean(Live_BA_fpa, na.rm=TRUE),PW=sum(PW), PW_R=sum(PW_R))
 
 #adding the separate REP column
 stand_df_age<-stand_df_age %>% separate(Stand_ID_TR, c(NA,"REP"),"_",remove = FALSE)
@@ -1404,6 +1406,15 @@ stand_ABC$Treatment<-ifelse(stand_ABC$TRT=="A",
 #write_csv(subplot_ABC, "C:/Users/showa/Documents/GitHub/Apiary_LRR/subplot_level_ABC.csv")
 #write_csv(stand_ABC, "C:/Users/showa/Documents/GitHub/Apiary_LRR/stand_level_ABC.csv")
 
+#Creating FVS_input
+FVS_prep_alive<- ABC_long_keep %>% filter(Tree_status=="Alive"&FVS_age==0)
+FVS_prep_all<- ABC_long_keep %>% filter(FVS_age==0)
+FVS_prep_alive$root_prop<-ifelse(FVS_prep_alive$REP=="0","5",FVS_prep_alive$REP)
+FVS_prep_all$root_prop<-ifelse(FVS_prep_all$REP=="0","5",FVS_prep_all$REP)
+FVS_input_alive<-FVS_prep_alive[,c("Tree_ID","TREE","TRT_code","Tree_status","DBH_mm","FVS_age","root_prop")]
+FVS_input_all<-FVS_prep_all[,c("Tree_ID","TREE","TRT_code","Tree_status","DBH_mm","FVS_age","root_prop")]
+#write_csv(FVS_input_alive, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_input_alive.csv")
+#write_csv(FVS_input_all, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_input_all.csv")
 ```
 
 
