@@ -34,44 +34,44 @@ NOTE: Lab computer path "showalt_d/", home computer "showa/"
 
 ```{r, message=FALSE}
 #reading in abbreviation code sheets from metadata workbook from Anna
-Apiary_TMTs <- read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/raw_data/Apiary_2020_Path_Data_All_for_Jared_2.xlsx", sheet = "Treatments", range = "A1:C6", col_names = TRUE)
+Apiary_TMTs <- read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/Apiary_2020_Path_Data_All_for_Jared_2.xlsx", sheet = "Treatments", range = "A1:C6", col_names = TRUE)
 colnames(Apiary_TMTs)<-c("TMT_code","TMT_short","TMT_name")
 
-Species_codes <- read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/raw_data/Apiary_Measurement_Codes.xls",sheet = "Species_Codes", range = "A5:B130", col_names = FALSE)
+Species_codes <- read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/Apiary_Measurement_Codes.xls",sheet = "Species_Codes", range = "A5:B130", col_names = FALSE)
 colnames(Species_codes)<-c("Species_Code","Species_name")
 
-Origin_codes <- read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/raw_data/Apiary_Measurement_Codes.xls",sheet = "Origin_Codes", range = "A5:B10", col_names = FALSE)
+Origin_codes <- read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/Apiary_Measurement_Codes.xls",sheet = "Origin_Codes", range = "A5:B10", col_names = FALSE)
 colnames(Origin_codes)<-c("Origin_Code","Origin")
 
-Status_codes <- read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/raw_data/Apiary_Measurement_Codes.xls",sheet = "Status_Codes", range = "A5:B19", col_names = FALSE)
+Status_codes <- read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/Apiary_Measurement_Codes.xls",sheet = "Status_Codes", range = "A5:B19", col_names = FALSE)
 colnames(Status_codes)<-c("Status_Code","Status")
 
-Damage_codes <- read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/raw_data/Apiary_Measurement_Codes.xls",sheet = "Damage_Codes", range = "A5:B62", col_names = FALSE)
+Damage_codes <- read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/Apiary_Measurement_Codes.xls",sheet = "Damage_Codes", range = "A5:B62", col_names = FALSE)
 colnames(Damage_codes)<-c("Damage_Code","Damage")
 
-Position_codes <- read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/raw_data/Apiary_Measurement_Codes.xls",sheet = "Position_Codes", range = "A7:B14", col_names = FALSE)
+Position_codes <- read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/Apiary_Measurement_Codes.xls",sheet = "Position_Codes", range = "A7:B14", col_names = FALSE)
 colnames(Position_codes)<-c("Position_Code","Position")
 
-Damage_amount_codes <- read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/raw_data/Apiary_Measurement_Codes.xls",sheet = "Amount_Codes", range = "A5:B54", col_names = FALSE)
+Damage_amount_codes <- read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/Apiary_Measurement_Codes.xls",sheet = "Amount_Codes", range = "A5:B54", col_names = FALSE)
 colnames(Damage_amount_codes)<-c("Damage_Amount_Code","Damage_Amount")
 
 #reading in dictionary sheet from data workbook
-Data_dict <- read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/raw_data/Apiary_2020_Path_Data_All_for_Jared_2.xlsx",sheet = "Data_Dictionary", range = "A3:B23", col_names = FALSE)
+Data_dict <- read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/Apiary_2020_Path_Data_All_for_Jared_2.xlsx",sheet = "Data_Dictionary", range = "A3:B23", col_names = FALSE)
 colnames(Data_dict)<-c("Column_Name","Description")
 
 #reading in data Note that "data_input_edits.xlsx" has been manually reviewed and corrected based on inspection of data in R.
-A_plots <- read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/raw_data/data_input_edits.xlsx",sheet = "A-Plots", col_names = TRUE)
+A_plots <- read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/data_input_edits.xlsx",sheet = "A-Plots", col_names = TRUE)
 #unique(A_plots$AMT1)
 A_plots$AMT1[A_plots$AMT1==0]<-NA
 
-B_plots <- read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/raw_data/data_input_edits.xlsx",sheet = "B-Plots", col_names = TRUE)
+B_plots <- read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/data_input_edits.xlsx",sheet = "B-Plots", col_names = TRUE)
 
-C_plots <- read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/raw_data/data_input_edits.xlsx",sheet = "C-Plots", col_names = TRUE)
+C_plots <- read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/data_input_edits.xlsx",sheet = "C-Plots", col_names = TRUE)
 #checking nonconforming trt entries with "y" instead of "Y"
 #unique(C_plots$TRT)
 C_plots$TRT[C_plots$TRT=="DF0y"]<-"DF0Y"
 
-D_plots <- read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/raw_data/data_input_edits.xlsx",sheet = "D-Plots", col_names = TRUE)
+D_plots <- read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/data_input_edits.xlsx",sheet = "D-Plots", col_names = TRUE)
 #checking nonconforming trt entries with "y" instead of "Y"
 #unique(D_plots$TRT)
 #unique(D_plots$DAM1)
@@ -80,7 +80,7 @@ D_plots$TRT[D_plots$TRT=="RA20y"]<-"RA20Y"
 #D_plots$DAM1[D_plots$DAM1=="Blank"]<-NA
 #D_plots$AMT1[D_plots$AMT1=="Blank"]<-NA
 
-E_plots <- read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/raw_data/data_input_edits.xlsx",sheet = "E-Plots", col_names = TRUE)
+E_plots <- read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/data_input_edits.xlsx",sheet = "E-Plots", col_names = TRUE)
 
 #combine all treatments together into one dataset and change coded variables to factors rather than numbers
 combined_data<-rbind(A_plots,B_plots,C_plots,D_plots,E_plots)
@@ -113,9 +113,9 @@ combined_data$Tree_ID<-paste(combined_data$SUBPLOT_ID,combined_data$TREE, sep = 
 
 #Repeat similar process for transcribed datasheets adding new dates.
 
-A_plots_2<- read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/raw_data/Stem_maps_and_datasheets/transcribed_datasheets_87_95_11_common_format.xlsx",sheet = "A_Plots", col_names = TRUE) 
-B_plots_2<- read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/raw_data/Stem_maps_and_datasheets/transcribed_datasheets_87_95_11_common_format.xlsx",sheet = "B_Plots", col_names = TRUE)
-C_plots_2<- read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/raw_data/Stem_maps_and_datasheets/transcribed_datasheets_87_95_11_common_format.xlsx",sheet = "C_Plots", col_names = TRUE)
+A_plots_2<- read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/Stem_maps_and_datasheets/transcribed_datasheets_87_95_11_common_format.xlsx",sheet = "A_Plots", col_names = TRUE) 
+B_plots_2<- read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/Stem_maps_and_datasheets/transcribed_datasheets_87_95_11_common_format.xlsx",sheet = "B_Plots", col_names = TRUE)
+C_plots_2<- read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/Stem_maps_and_datasheets/transcribed_datasheets_87_95_11_common_format.xlsx",sheet = "C_Plots", col_names = TRUE)
 
 new_combined_data<-rbind(A_plots_2,B_plots_2,C_plots_2)
 
@@ -136,13 +136,13 @@ new_combined_data$TRT_code<-as.factor(new_combined_data$TRT_code)
 new_combined_data$SUBPLOT_ID<-as.factor(paste(new_combined_data$TRT_code,new_combined_data$REP,new_combined_data$SUBPLOT, sep = ""))
 new_combined_data$Tree_ID<-paste(new_combined_data$SUBPLOT_ID,new_combined_data$TREE, sep = "_")
 
-#saveRDS(combined_data, file="C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/raw_data/combined_trt_data.Rds")
+#saveRDS(combined_data, file="C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/combined_trt_data.Rds")
 
-#saveRDS(new_combined_data, file="C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/raw_data/Stem_maps_and_datasheets/new_combined_trt_data.Rds")
+#saveRDS(new_combined_data, file="C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/Stem_maps_and_datasheets/new_combined_trt_data.Rds")
 
-#write.csv(combined_data, file="C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/raw_data/combined_trt_data.csv", row.names = FALSE)
+#write.csv(combined_data, file="C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/combined_trt_data.csv", row.names = FALSE)
 
-#write.csv(new_combined_data, file="C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/raw_data/Stem_maps_and_datasheets/new_combined_trt_data.csv", row.names = FALSE)
+#write.csv(new_combined_data, file="C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/Stem_maps_and_datasheets/new_combined_trt_data.csv", row.names = FALSE)
 ```
 
 ## Combining new and old datasets
@@ -214,9 +214,9 @@ full_data$DBH_11<-ifelse(is.na(full_data$DIA_11_mm),full_data$ODBH,full_data$DIA
 full_data$STS_2011<-ifelse(is.na(full_data$STS_11),full_data$OSTS,full_data$STS_11)
 ABC<- full_data[full_data$TRT=="RA10Y"|full_data$TRT=="CW10Y"|full_data$TRT=="DF0Y",]
 
-#write.csv(full_data, file="C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/raw_data/full_data.csv", row.names = FALSE)
+#write.csv(full_data, file="C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/full_data.csv", row.names = FALSE)
 
-#saveRDS(full_data, file="C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/raw_data/full_data.Rds")
+#saveRDS(full_data, file="C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/full_data.Rds")
 
 ```
 
@@ -224,7 +224,7 @@ ABC<- full_data[full_data$TRT=="RA10Y"|full_data$TRT=="CW10Y"|full_data$TRT=="DF
 ## Data Summarization
 
 ```{r, message=FALSE}
-#full_data<- readRDS("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/raw_data/full_data.Rds")
+#full_data<- readRDS("C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/full_data.Rds")
 
 #looking at entries which have notes
 #notes<-combined_data[which(is.na(combined_data$NOTE)==FALSE),]
@@ -251,14 +251,14 @@ ABC<- full_data[full_data$TRT=="RA10Y"|full_data$TRT=="CW10Y"|full_data$TRT=="DF
 #TRTxREPxSub_summary<-full_data %>% group_by(TRT, REP, SUBPLOT, .drop=FALSE) %>% summarise(count=n())
 #TRTxREPxSub_summary
 #ggplot(TRTxREPxSub_summary,aes(x=factor(REP),y=count,fill=SUBPLOT )) +geom_col()+scale_fill_viridis_d()+ylab("Tree count")+xlab("Rep")+ #facet_grid(~TRT, scales = "fixed", space = "free_x", switch = "x") + geom_hline(yintercept = 170)+ geom_hline(yintercept = 34) + geom_hline(yintercept #= 68)+ geom_hline(yintercept = 102)+ geom_hline(yintercept = 136)
-##ggsave("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Trees_per_subplot.pdf")
+##ggsave("C:/Users/showa/Documents/GitHub/Apiary_LRR/Trees_per_subplot.pdf")
 #
 ##just ABC trts
 ##additionaly summarizing by subplot
 #TRTxREPxSub_ABC<-ABC %>% group_by(TRT, REP, SUBPLOT, .drop=TRUE) %>% summarise(count=n())
 #TRTxREPxSub_ABC
 #ggplot(TRTxREPxSub_ABC,aes(x=factor(REP),y=count,fill=SUBPLOT )) +geom_col()+scale_fill_viridis_d()+ylab("Tree count")+xlab("Rep")+ facet_grid(~TRT, #scales = "fixed", space = "free_x", switch = "x") + geom_hline(yintercept = 170)+ geom_hline(yintercept = 34) + geom_hline(yintercept = 68)+ #geom_hline(yintercept = 102)+ geom_hline(yintercept = 136)
-##ggsave("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Summary_Graphs/ABC_Trees_per_subplot.pdf")
+##ggsave("C:/Users/showa/Documents/GitHub/Apiary_LRR/Summary_Graphs/ABC_Trees_per_subplot.pdf")
 
 #there appears to be an imbalance of trees between treatments
 #trying to look for duplicate TREE ID numbers
@@ -277,9 +277,9 @@ ABC<- full_data[full_data$TRT=="RA10Y"|full_data$TRT=="CW10Y"|full_data$TRT=="DF
 #tree_dup_data<-combined_data[which(combined_data$TREE %in% dupe_trees$TREE),]
 #sorting by TREE ID
 #ordered_tree_dup_data<-tree_dup_data[order(tree_dup_data$TREE),]
-#saveRDS(ordered_tree_dup_data, file="C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/raw_data/duplicated_trees.Rds")
+#saveRDS(ordered_tree_dup_data, file="C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/duplicated_trees.Rds")
 
-#write.csv(ordered_tree_dup_data, file="C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/raw_data/duplicated_trees.csv", row.names = FALSE)
+#write.csv(ordered_tree_dup_data, file="C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/duplicated_trees.csv", row.names = FALSE)
 
 #adding "duplicated" flag for tree IDs that are duplicated in the dataset
 
@@ -290,7 +290,7 @@ ABC<- full_data[full_data$TRT=="RA10Y"|full_data$TRT=="CW10Y"|full_data$TRT=="DF
 #TRTxREPxSUBxdup_summary<-combined_data2 %>% group_by(TRT, REP, SUBPLOT, dup, .drop=FALSE) %>% summarise(count=n())
 #TRTxREPxSUBxdup_summary
 #ggplot(TRTxREPxSUBxdup_summary,aes(x=SUBPLOT,y=count,fill=dup ))+geom_col()+scale_fill_viridis_d()+ylab("Tree count")+xlab("Subplot")+ facet_grid(rows=vars(REP), cols=vars(TRT), scales = "fixed", space = "free_x", switch = "x") + geom_hline(yintercept=34)
-#ggsave("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Duplicated_Trees_per_subplot.pdf")
+#ggsave("C:/Users/showa/Documents/GitHub/Apiary_LRR/Duplicated_Trees_per_subplot.pdf")
 ```
 
 ```{r}
@@ -309,7 +309,7 @@ ABC<- full_data[full_data$TRT=="RA10Y"|full_data$TRT=="CW10Y"|full_data$TRT=="DF
 #
 #DAM_summary<-combined_data %>% group_by(DAM1) %>% summarise(count=n())
 #DAM_summary
-##write.csv(DAM_summary, file="C:/Users/showalt_d/Documents/LeBoldus_Lab/Laminated_Root_Rot/Apiariy_LRR/raw_data/DAM_summary.csv", row.names = FALSE)
+##write.csv(DAM_summary, file="C:/Users/showa/Documents/LeBoldus_Lab/Laminated_Root_Rot/Apiariy_LRR/raw_data/DAM_summary.csv", row.names = FALSE)
 #
 #AMT_summary<-combined_data %>% group_by(AMT1) %>% summarise(count=n())
 #AMT_summary
@@ -325,7 +325,7 @@ ABC<- full_data[full_data$TRT=="RA10Y"|full_data$TRT=="CW10Y"|full_data$TRT=="DF
 #
 ##returning the entries for which AMT1 is 808, an invalid code
 ##AMT_808<-combined_data[which(combined_data$AMT1 == 808),]
-##write.csv(AMT_808, file="C:/Users/showalt_d/Documents/LeBoldus_Lab/Laminated_Root_Rot/Apiariy_LRR/raw_data/amt_808_data.csv", row.names = FALSE)
+##write.csv(AMT_808, file="C:/Users/showa/Documents/LeBoldus_Lab/Laminated_Root_Rot/Apiariy_LRR/raw_data/amt_808_data.csv", row.names = FALSE)
 #
 ##fix
 #combined_data$AMT1[combined_data$AMT1 == 808]<-NA
@@ -333,13 +333,13 @@ ABC<- full_data[full_data$TRT=="RA10Y"|full_data$TRT=="CW10Y"|full_data$TRT=="DF
 ##returning the entries for which NDBH is NA or 0 without explanation
 #DBH_NA<-combined_data[is.na(combined_data$NDBH),]
 #DBH_NA_no_explain<-DBH_NA[is.na(DBH_NA$AMT1),]
-##write.csv(DBH_NA_no_explain, file="C:/Users/showalt_d/Documents/LeBoldus_Lab/Laminated_Root_Rot/Apiariy_LRR/raw_data/DBH_NA_no_explain_data.csv", #row.names = FALSE)
+##write.csv(DBH_NA_no_explain, file="C:/Users/showa/Documents/LeBoldus_Lab/Laminated_Root_Rot/Apiariy_LRR/raw_data/DBH_NA_no_explain_data.csv", #row.names = FALSE)
 #
 ##returning the entries for which SP is NA
 ##SP_0<-combined_data[is.na(combined_data$SP),]
 ##fix
 #combined_data$SP<-"DF"
-##write.csv(SP_0, file="C:/Users/showalt_d/Documents/LeBoldus_Lab/Laminated_Root_Rot/Apiariy_LRR/raw_data/SP_0_data.csv", row.names = FALSE)
+##write.csv(SP_0, file="C:/Users/showa/Documents/LeBoldus_Lab/Laminated_Root_Rot/Apiariy_LRR/raw_data/SP_0_data.csv", row.names = FALSE)
 ```
 
 ## Remaining questions
@@ -508,9 +508,9 @@ ABC_long_keep<-long_data_keep[long_data_keep$TRT_code=="A"|long_data_keep$TRT_co
 #drop2<-c("OSTS","NSTS","OHLC","NHLC","DAM1","ODAM1")
 #long_data<-long_data[,!names(long_data) %in% drop2]
 
-#write.csv(long_data_keep, file="C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/raw_data/long_data_keep.csv", row.names = FALSE)
+#write.csv(long_data_keep, file="C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/long_data_keep.csv", row.names = FALSE)
 
-#saveRDS(long_data_keep, file="C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/raw_data/long_data_keep.Rds")
+#saveRDS(long_data_keep, file="C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/long_data_keep.Rds")
 ```
 
 ## Basic Plotting
@@ -581,7 +581,7 @@ ggplot(data=subset(long_data_keep, !is.na(Tree_status)) ,aes(x=factor(DF_age),fi
              #space = "free_x",  # Let the width of facets vary and force all bars to have the same width.
              #switch = "x"
              )
-#ggsave("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Summary_Graphs/Damage_counts_by_subplot.pdf")
+#ggsave("C:/Users/showa/Documents/GitHub/Apiary_LRR/Summary_Graphs/Damage_counts_by_subplot.pdf")
 
 #just suppression
 #ggplot(data=subset(long_data_keep, !is.na(Tree_status)) ,aes(x=factor(DF_age),fill=SUPP))+
@@ -653,7 +653,7 @@ pRA10<- subset(RA10, !is.na(Tree_status)) %>%
   xlim(0,600)+
   theme_bw()
 pRA10
-#ggsave("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Summary_Graphs/RA10_DBH_histos_by_age_and_rep.pdf", height= 10, width = 12, units="in")
+#ggsave("C:/Users/showa/Documents/GitHub/Apiary_LRR/Summary_Graphs/RA10_DBH_histos_by_age_and_rep.pdf", height= 10, width = 12, units="in")
 
 #Drilling down to look at subplots within reps 1 and 3
 RA10_R0<-subset(RA10, REP==0)
@@ -684,7 +684,7 @@ pRA10_0<- subset(RA10_R0, !is.na(Tree_status)) %>%
   xlim(0,600)+
   theme_bw()
 pRA10_0
-#ggsave("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Summary_Graphs/RA10_Rep0_DBH_histos_by_age_and_subplot.pdf", height= 10, width = 12, units="in")
+#ggsave("C:/Users/showa/Documents/GitHub/Apiary_LRR/Summary_Graphs/RA10_Rep0_DBH_histos_by_age_and_subplot.pdf", height= 10, width = 12, units="in")
 
 #plotting 1
 med10_1Alive<-subset(RA10_R1, Tree_status=="Alive") %>% 
@@ -708,7 +708,7 @@ pRA10_1<- subset(RA10_R1, !is.na(Tree_status)) %>%
   xlim(0,600)+
   theme_bw()
 pRA10_1
-#ggsave("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Summary_Graphs/RA10_Rep1_DBH_histos_by_age_and_subplot.pdf", height= 10, width = 12, units="in")
+#ggsave("C:/Users/showa/Documents/GitHub/Apiary_LRR/Summary_Graphs/RA10_Rep1_DBH_histos_by_age_and_subplot.pdf", height= 10, width = 12, units="in")
 
 #plotting2
 med10_2Alive<-subset(RA10_R2, Tree_status=="Alive") %>% 
@@ -732,7 +732,7 @@ pRA10_2<- subset(RA10_R2, !is.na(Tree_status)) %>%
   xlim(0,600)+
   theme_bw()
 pRA10_2
-#ggsave("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Summary_Graphs/RA10_Rep2_DBH_histos_by_age_and_subplot.pdf", height= 10, width = 12, units="in")
+#ggsave("C:/Users/showa/Documents/GitHub/Apiary_LRR/Summary_Graphs/RA10_Rep2_DBH_histos_by_age_and_subplot.pdf", height= 10, width = 12, units="in")
 
 #plotting3
 med10_3Alive<-subset(RA10_R3, Tree_status=="Alive") %>% 
@@ -756,7 +756,7 @@ pRA10_3<- subset(RA10_R3, !is.na(Tree_status)) %>%
   xlim(0,600)+
   theme_bw()
 pRA10_3
-#ggsave("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Summary_Graphs/RA10_Rep3_DBH_histos_by_age_and_subplot.pdf", height= 10, width = 12, units="in")
+#ggsave("C:/Users/showa/Documents/GitHub/Apiary_LRR/Summary_Graphs/RA10_Rep3_DBH_histos_by_age_and_subplot.pdf", height= 10, width = 12, units="in")
 
 #plotting4
 med10_4Alive<-subset(RA10_R4, Tree_status=="Alive") %>% 
@@ -780,7 +780,7 @@ pRA10_4<- subset(RA10_R4, !is.na(Tree_status)) %>%
   xlim(0,600)+
   theme_bw()
 pRA10_4
-#ggsave("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Summary_Graphs/RA10_Rep4_DBH_histos_by_age_and_subplot.pdf", height= 10, width = 12, units="in")
+#ggsave("C:/Users/showa/Documents/GitHub/Apiary_LRR/Summary_Graphs/RA10_Rep4_DBH_histos_by_age_and_subplot.pdf", height= 10, width = 12, units="in")
 
 #Make rep and subplot summaries for other treatments like I did for RA10 and RA10 reps. update with medians and color adustment 
 
@@ -811,7 +811,7 @@ pCW10<- subset(CW10, !is.na(Tree_status)) %>%
   xlim(0,600)+
   theme_bw()
 pCW10
-#ggsave("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Summary_Graphs/CW10_DBH_histos_by_age_and_rep.pdf", height= 10, width = 12, units="in")
+#ggsave("C:/Users/showa/Documents/GitHub/Apiary_LRR/Summary_Graphs/CW10_DBH_histos_by_age_and_rep.pdf", height= 10, width = 12, units="in")
 
 #make varible containing total counts of trees with diameters
 LabCW10_Alive <- subset(CW10, Tree_status=="Alive") %>% group_by(DF_age, REP, Tree_status) %>% summarise(N=paste0('Alive: ',n()))
@@ -827,7 +827,7 @@ pCW10<-ggplot(data=subset(CW10, !is.na(Tree_status)) ,aes(DBH_mm,fill=Tree_statu
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
   facet_grid(rows=vars(DF_age),vars(REP), labeller = label_both)
 pCW10
-#ggsave("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Summary_Graphs/CW10_DBH_histos_by_age_and_rep.pdf")
+#ggsave("C:/Users/showa/Documents/GitHub/Apiary_LRR/Summary_Graphs/CW10_DBH_histos_by_age_and_rep.pdf")
 
 #Drilling down to look at subplots within reps
 CW10_R0<-subset(CW10, REP==0)
@@ -858,7 +858,7 @@ pCW10_0<- subset(CW10_R0, !is.na(Tree_status)) %>%
   xlim(0,600)+
   theme_bw()
 pCW10_0
-#ggsave("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Summary_Graphs/CW10_Rep0_DBH_histos_by_age_and_subplot.pdf", height= 10, width = 12, units="in")
+#ggsave("C:/Users/showa/Documents/GitHub/Apiary_LRR/Summary_Graphs/CW10_Rep0_DBH_histos_by_age_and_subplot.pdf", height= 10, width = 12, units="in")
 
 #plotting1
 medCW10_1Alive<-subset(CW10_R1, Tree_status=="Alive") %>% 
@@ -882,7 +882,7 @@ pCW10_1<- subset(CW10_R1, !is.na(Tree_status)) %>%
   xlim(0,600)+
   theme_bw()
 pCW10_1
-#ggsave("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Summary_Graphs/CW10_Rep1_DBH_histos_by_age_and_subplot.pdf", height= 10, width = 12, units="in")
+#ggsave("C:/Users/showa/Documents/GitHub/Apiary_LRR/Summary_Graphs/CW10_Rep1_DBH_histos_by_age_and_subplot.pdf", height= 10, width = 12, units="in")
 
 #plotting2
 medCW10_2Alive<-subset(CW10_R2, Tree_status=="Alive") %>% 
@@ -906,7 +906,7 @@ pCW10_2<- subset(CW10_R2, !is.na(Tree_status)) %>%
   xlim(0,600)+
   theme_bw()
 pCW10_2
-#ggsave("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Summary_Graphs/CW10_Rep2_DBH_histos_by_age_and_subplot.pdf", height= 10, width = 12, units="in")
+#ggsave("C:/Users/showa/Documents/GitHub/Apiary_LRR/Summary_Graphs/CW10_Rep2_DBH_histos_by_age_and_subplot.pdf", height= 10, width = 12, units="in")
 
 #plotting3
 medCW10_3Alive<-subset(CW10_R3, Tree_status=="Alive") %>% 
@@ -930,7 +930,7 @@ pCW10_3<- subset(CW10_R3, !is.na(Tree_status)) %>%
   xlim(0,600)+
   theme_bw()
 pCW10_3
-#ggsave("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Summary_Graphs/CW10_Rep3_DBH_histos_by_age_and_subplot.pdf", height= 10, width = 12, units="in")
+#ggsave("C:/Users/showa/Documents/GitHub/Apiary_LRR/Summary_Graphs/CW10_Rep3_DBH_histos_by_age_and_subplot.pdf", height= 10, width = 12, units="in")
 
 #plotting4
 medCW10_4Alive<-subset(CW10_R4, Tree_status=="Alive") %>% 
@@ -954,7 +954,7 @@ pCW10_4<- subset(CW10_R4, !is.na(Tree_status)) %>%
   xlim(0,600)+
   theme_bw()
 pCW10_4
-#ggsave("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Summary_Graphs/CW10_Rep4_DBH_histos_by_age_and_subplot.pdf", height= 10, width = 12, units="in")
+#ggsave("C:/Users/showa/Documents/GitHub/Apiary_LRR/Summary_Graphs/CW10_Rep4_DBH_histos_by_age_and_subplot.pdf", height= 10, width = 12, units="in")
 ```
 
 ```{r}
@@ -973,7 +973,7 @@ pCW10_4
 #  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
 #  facet_grid(rows=vars(DF_age),vars(REP), labeller = label_both)
 #pCW20
-##ggsave("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Summary_Graphs/CW20_DBH_histos_by_age_and_rep.pdf")
+##ggsave("C:/Users/showa/Documents/GitHub/Apiary_LRR/Summary_Graphs/CW20_DBH_histos_by_age_and_rep.pdf")
 #
 ##Drilling down to look at subplots within reps
 #CW20_R0<-subset(CW20, REP==0)
@@ -996,7 +996,7 @@ pCW10_4
 #  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
 #  facet_grid(rows=vars(DF_age),vars(SUBPLOT), labeller = label_both)
 #pCW20_0
-##ggsave("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Summary_Graphs/CW20_Rep0_DBH_histos_by_age_and_subplot.pdf")
+##ggsave("C:/Users/showa/Documents/GitHub/Apiary_LRR/Summary_Graphs/CW20_Rep0_DBH_histos_by_age_and_subplot.pdf")
 #
 ##plotting1
 #LabCW20_1_Alive <- subset(CW20_R1, Tree_status=="Alive") %>% group_by(DF_age, SUBPLOT, Tree_status) %>% summarise(N=paste0('Alive: ',n()))
@@ -1012,7 +1012,7 @@ pCW10_4
 #  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
 #  facet_grid(rows=vars(DF_age),vars(SUBPLOT), labeller = label_both)
 #pCW20_1
-##ggsave("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Summary_Graphs/CW20_Rep1_DBH_histos_by_age_and_subplot.pdf")
+##ggsave("C:/Users/showa/Documents/GitHub/Apiary_LRR/Summary_Graphs/CW20_Rep1_DBH_histos_by_age_and_subplot.pdf")
 #
 ##plotting2
 #LabCW20_2_Alive <- subset(CW20_R2, Tree_status=="Alive") %>% group_by(DF_age, SUBPLOT, Tree_status) %>% summarise(N=paste0('Alive: ',n()))
@@ -1028,7 +1028,7 @@ pCW10_4
 #  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
 #  facet_grid(rows=vars(DF_age),vars(SUBPLOT), labeller = label_both)
 #pCW20_2
-##ggsave("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Summary_Graphs/CW20_Rep2_DBH_histos_by_age_and_subplot.pdf")
+##ggsave("C:/Users/showa/Documents/GitHub/Apiary_LRR/Summary_Graphs/CW20_Rep2_DBH_histos_by_age_and_subplot.pdf")
 #
 ##plotting3
 #LabCW20_3_Alive <- subset(CW20_R3, Tree_status=="Alive") %>% group_by(DF_age, SUBPLOT, Tree_status) %>% summarise(N=paste0('Alive: ',n()))
@@ -1044,7 +1044,7 @@ pCW10_4
 #  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
 #  facet_grid(rows=vars(DF_age),vars(SUBPLOT), labeller = label_both)
 #pCW20_3
-##ggsave("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Summary_Graphs/CW20_Rep3_DBH_histos_by_age_and_subplot.pdf")
+##ggsave("C:/Users/showa/Documents/GitHub/Apiary_LRR/Summary_Graphs/CW20_Rep3_DBH_histos_by_age_and_subplot.pdf")
 #
 ##plotting4
 #LabCW20_4_Alive <- subset(CW20_R4, Tree_status=="Alive") %>% group_by(DF_age, SUBPLOT, Tree_status) %>% summarise(N=paste0('Alive: ',n()))
@@ -1060,7 +1060,7 @@ pCW10_4
 #  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
 #  facet_grid(rows=vars(DF_age),vars(SUBPLOT), labeller = label_both)
 #pCW20_4
-##ggsave("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Summary_Graphs/CW20_Rep4_DBH_histos_by_age_and_subplot.pdf")
+##ggsave("C:/Users/showa/Documents/GitHub/Apiary_LRR/Summary_Graphs/CW20_Rep4_DBH_histos_by_age_and_subplot.pdf")
 #
 ```
 
@@ -1081,7 +1081,7 @@ pCW10_4
 #  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
 #  facet_grid(rows=vars(DF_age),vars(REP), labeller = label_both)
 #pRA20
-##ggsave("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Summary_Graphs/RA20_DBH_histos_by_age_and_rep.pdf")
+##ggsave("C:/Users/showa/Documents/GitHub/Apiary_LRR/Summary_Graphs/RA20_DBH_histos_by_age_and_rep.pdf")
 #
 ##Drilling down to look at subplots within reps
 #RA20_R0<-subset(RA20, REP==0)
@@ -1104,7 +1104,7 @@ pCW10_4
 #  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
 #  facet_grid(rows=vars(DF_age),vars(SUBPLOT), labeller = label_both)
 #pRA20_0
-##ggsave("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Summary_Graphs/RA20_Rep0_DBH_histos_by_age_and_subplot.pdf")
+##ggsave("C:/Users/showa/Documents/GitHub/Apiary_LRR/Summary_Graphs/RA20_Rep0_DBH_histos_by_age_and_subplot.pdf")
 #
 ##plotting1
 #LabRA20_1_Alive <- subset(RA20_R1, Tree_status=="Alive") %>% group_by(DF_age, SUBPLOT, Tree_status) %>% summarise(N=paste0('Alive: ',n()))
@@ -1120,7 +1120,7 @@ pCW10_4
 #  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
 #  facet_grid(rows=vars(DF_age),vars(SUBPLOT), labeller = label_both)
 #pRA20_1
-##ggsave("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Summary_Graphs/RA20_Rep1_DBH_histos_by_age_and_subplot.pdf")
+##ggsave("C:/Users/showa/Documents/GitHub/Apiary_LRR/Summary_Graphs/RA20_Rep1_DBH_histos_by_age_and_subplot.pdf")
 #
 ##plotting2
 #LabRA20_2_Alive <- subset(RA20_R2, Tree_status=="Alive") %>% group_by(DF_age, SUBPLOT, Tree_status) %>% summarise(N=paste0('Alive: ',n()))
@@ -1136,7 +1136,7 @@ pCW10_4
 #  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
 #  facet_grid(rows=vars(DF_age),vars(SUBPLOT), labeller = label_both)
 #pRA20_2
-##ggsave("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Summary_Graphs/RA20_Rep2_DBH_histos_by_age_and_subplot.pdf")
+##ggsave("C:/Users/showa/Documents/GitHub/Apiary_LRR/Summary_Graphs/RA20_Rep2_DBH_histos_by_age_and_subplot.pdf")
 #
 ##plotting3
 #LabRA20_3_Alive <- subset(RA20_R3, Tree_status=="Alive") %>% group_by(DF_age, SUBPLOT, Tree_status) %>% summarise(N=paste0('Alive: ',n()))
@@ -1152,7 +1152,7 @@ pCW10_4
 #  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
 #  facet_grid(rows=vars(DF_age),vars(SUBPLOT), labeller = label_both)
 #pRA20_3
-##ggsave("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Summary_Graphs/RA20_Rep3_DBH_histos_by_age_and_subplot.pdf")
+##ggsave("C:/Users/showa/Documents/GitHub/Apiary_LRR/Summary_Graphs/RA20_Rep3_DBH_histos_by_age_and_subplot.pdf")
 #
 ##plotting4
 #LabRA20_4_Alive <- subset(RA20_R4, Tree_status=="Alive") %>% group_by(DF_age, SUBPLOT, Tree_status) %>% summarise(N=paste0('Alive: ',n()))
@@ -1168,7 +1168,7 @@ pCW10_4
 #  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
 #  facet_grid(rows=vars(DF_age),vars(SUBPLOT), labeller = label_both)
 #pRA20_4
-##ggsave("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Summary_Graphs/RA20_Rep4_DBH_histos_by_age_and_subplot.pdf")
+##ggsave("C:/Users/showa/Documents/GitHub/Apiary_LRR/Summary_Graphs/RA20_Rep4_DBH_histos_by_age_and_subplot.pdf")
 ```
 
 
@@ -1196,7 +1196,7 @@ pDF0<- subset(DF0, !is.na(Tree_status)) %>%
   xlim(0,600)+
   theme_bw()
 pDF0
-#ggsave("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Summary_Graphs/DF0_DBH_histos_by_age_and_rep.pdf", height= 10, width = 12, units="in")
+#ggsave("C:/Users/showa/Documents/GitHub/Apiary_LRR/Summary_Graphs/DF0_DBH_histos_by_age_and_rep.pdf", height= 10, width = 12, units="in")
 
 #Drilling down to look at subplots within reps
 DF0_R0<-subset(DF0, REP==0)
@@ -1227,7 +1227,7 @@ pDF0_0<- subset(DF0_R0, !is.na(Tree_status)) %>%
   xlim(0,600)+
   theme_bw()
 pDF0_0
-#ggsave("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Summary_Graphs/DF0_Rep0_DBH_histos_by_age_and_subplot.pdf", height= 10, width = 12, units="in")
+#ggsave("C:/Users/showa/Documents/GitHub/Apiary_LRR/Summary_Graphs/DF0_Rep0_DBH_histos_by_age_and_subplot.pdf", height= 10, width = 12, units="in")
 
 #plotting1
 medDF0_1Alive<-subset(DF0_R1, Tree_status=="Alive") %>% 
@@ -1251,7 +1251,7 @@ pDF0_1<- subset(DF0_R1, !is.na(Tree_status)) %>%
   xlim(0,600)+
   theme_bw()
 pDF0_1
-#ggsave("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Summary_Graphs/DF0_Rep1_DBH_histos_by_age_and_subplot.pdf", height= 10, width = 12, units="in")
+#ggsave("C:/Users/showa/Documents/GitHub/Apiary_LRR/Summary_Graphs/DF0_Rep1_DBH_histos_by_age_and_subplot.pdf", height= 10, width = 12, units="in")
 
 #plotting2
 medDF0_2Alive<-subset(DF0_R2, Tree_status=="Alive") %>% 
@@ -1275,7 +1275,7 @@ pDF0_2<- subset(DF0_R2, !is.na(Tree_status)) %>%
   xlim(0,600)+
   theme_bw()
 pDF0_2
-#ggsave("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Summary_Graphs/DF0_Rep2_DBH_histos_by_age_and_subplot.pdf", height= 10, width = 12, units="in")
+#ggsave("C:/Users/showa/Documents/GitHub/Apiary_LRR/Summary_Graphs/DF0_Rep2_DBH_histos_by_age_and_subplot.pdf", height= 10, width = 12, units="in")
 
 #plotting3
 medDF0_3Alive<-subset(DF0_R3, Tree_status=="Alive") %>% 
@@ -1299,7 +1299,7 @@ pDF0_3<- subset(DF0_R3, !is.na(Tree_status)) %>%
   xlim(0,600)+
   theme_bw()
 pDF0_3
-#ggsave("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Summary_Graphs/DF0_Rep3_DBH_histos_by_age_and_subplot.pdf", height= 10, width = 12, units="in")
+#ggsave("C:/Users/showa/Documents/GitHub/Apiary_LRR/Summary_Graphs/DF0_Rep3_DBH_histos_by_age_and_subplot.pdf", height= 10, width = 12, units="in")
 
 #plotting4
 medDF0_4Alive<-subset(DF0_R4, Tree_status=="Alive") %>% 
@@ -1323,13 +1323,13 @@ pDF0_4<- subset(DF0_R4, !is.na(Tree_status)) %>%
   xlim(0,600)+
   theme_bw()
 pDF0_4
-#ggsave("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Summary_Graphs/DF0_Rep4_DBH_histos_by_age_and_subplot.pdf", height= 10, width = 12, units="in")
+#ggsave("C:/Users/showa/Documents/GitHub/Apiary_LRR/Summary_Graphs/DF0_Rep4_DBH_histos_by_age_and_subplot.pdf", height= 10, width = 12, units="in")
 
 #printing all plots in one file
 ###MyPlots<-list(pRA10,pRA10_0,pRA10_1,pRA10_2,pRA10_3,pRA10_4,pCW10,pCW10_0,pCW10_1,pCW10_2,pCW10_3,pCW10_4,pRA20,pRA20_0,pRA20_1,pRA20_2,pRA20_3,pRA20_4,pCW20,pCW20_0,pCW20_1,pCW20_2,pCW20_3,pCW20_4,pDF0,pDF0_0,pDF0_1,pDF0_2,pDF0_3,pDF0_4)
 #MyPlots<-list(pRA10,pRA10_0,pRA10_1,pRA10_2,pRA10_3,pRA10_4,pCW10,pCW10_0,pCW10_1,pCW10_2,pCW10_3,pCW10_4,pDF0,pDF0_0,pDF0_1,pDF0_2,pDF0_3,pDF0_4)
 
-#pdf("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Summary_Graphs/Rep_and_subplot_summaries_by_treatment_ABC.pdf", height= 10, width = 12)
+#pdf("C:/Users/showa/Documents/GitHub/Apiary_LRR/Summary_Graphs/Rep_and_subplot_summaries_by_treatment_ABC.pdf", height= 10, width = 12)
 #MyPlots
 #dev.off()
 ```
@@ -1396,15 +1396,15 @@ stand_ABC$Treatment<-ifelse(stand_ABC$TRT=="A",
                             "10RA",
                             ifelse(stand_ABC$TRT=="B",
                                "10CW", "DF"))
-#write_rds(subplot_df_age,"C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/subplot_df_age.Rds")
-#write_rds(stand_df_age,"C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/stand_level_df_age.Rds")
-#write_rds(subplot_ABC,"C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/subplot_level_ABC.Rds")
-#write_rds(stand_a=ABC,"C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/stand_level_ABC.Rds")
+#write_rds(subplot_df_age,"C:/Users/showa/Documents/GitHub/Apiary_LRR/subplot_df_age.Rds")
+#write_rds(stand_df_age,"C:/Users/showa/Documents/GitHub/Apiary_LRR/stand_level_df_age.Rds")
+#write_rds(subplot_ABC,"C:/Users/showa/Documents/GitHub/Apiary_LRR/subplot_level_ABC.Rds")
+#write_rds(stand_a=ABC,"C:/Users/showa/Documents/GitHub/Apiary_LRR/stand_level_ABC.Rds")
 
-#write_csv(subplot_df_age, "C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/subplot_df_age.csv")
-#write_csv(stand_df_age, "C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/stand_df_age.csv")
-#write_csv(subplot_ABC, "C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/subplot_level_ABC.csv")
-#write_csv(stand_ABC, "C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/stand_level_ABC.csv")
+#write_csv(subplot_df_age, "C:/Users/showa/Documents/GitHub/Apiary_LRR/subplot_df_age.csv")
+#write_csv(stand_df_age, "C:/Users/showa/Documents/GitHub/Apiary_LRR/stand_df_age.csv")
+#write_csv(subplot_ABC, "C:/Users/showa/Documents/GitHub/Apiary_LRR/subplot_level_ABC.csv")
+#write_csv(stand_ABC, "C:/Users/showa/Documents/GitHub/Apiary_LRR/stand_level_ABC.csv")
 
 #Creating FVS_input
 #A0 Treatment A REP "0" is being called Treatment 1 Stand 5,  A1 = Stand 2, A2= stand 3, A3= Stand 4, A4= Stand 5
@@ -1421,9 +1421,60 @@ FVS_Prep$STANDPLOT_ID<-paste0(FVS_Prep$STAND_ID,"_000",FVS_Prep$PLOT_ID,sep="")
 FVS_Prep$TREE_ID<-FVS_Prep$TREE
 FVS_Prep$HISTORY<-ifelse(FVS_Prep$STATUS=="3","6",FVS_Prep$STATUS)
 FVS_Prep$DIAMETER<-(FVS_Prep$DBH_mm * 0.03937)
+#T1S2
+T1S2<- filter(FVS_Prep, Tnum=='10' & SEV==2)
+TMT1_STND2_FVS_TreeInit<-T1S2[,c("STAND_CN","STAND_ID","PLOT_CN","PLOT_ID","STANDPLOT_CN","STANDPLOT_ID","TREE_ID","HISTORY","DIAMETER","root_prop")]
+write_csv(TMT1_STND2_FVS_TreeInit, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs/TMT1_STND2_FVS_TreeInit.csv")
+#T1S4
+T1S4<- filter(FVS_Prep, Tnum=='10' & SEV==4)
+TMT1_STND4_FVS_TreeInit<-T1S4[,c("STAND_CN","STAND_ID","PLOT_CN","PLOT_ID","STANDPLOT_CN","STANDPLOT_ID","TREE_ID","HISTORY","DIAMETER","root_prop")]
+write_csv(TMT1_STND4_FVS_TreeInit, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs/TMT1_STND4_FVS_TreeInit.csv")
+#T1S5
 T1S5<- filter(FVS_Prep, Tnum=='10' & SEV==5)
-TMT1_STND5_FVS_TreeInit<-T1S1[,c("STAND_CN","STAND_ID","PLOT_CN","PLOT_ID","STANDPLOT_CN","STANDPLOT_ID","TREE_ID","HISTORY","DIAMETER","root_prop")]
-#write_csv(TMT1_STND5_FVS_TreeInit, "C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/FVS_inputs/TMT1_STND5_FVS_TreeInit.csv")
+TMT1_STND5_FVS_TreeInit<-T1S5[,c("STAND_CN","STAND_ID","PLOT_CN","PLOT_ID","STANDPLOT_CN","STANDPLOT_ID","TREE_ID","HISTORY","DIAMETER","root_prop")]
+write_csv(TMT1_STND5_FVS_TreeInit, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs/TMT1_STND5_FVS_TreeInit.csv")
+#T2S1
+T2S1<- filter(FVS_Prep, Tnum=='20' & SEV==1)
+TMT2_STND1_FVS_TreeInit<-T2S1[,c("STAND_CN","STAND_ID","PLOT_CN","PLOT_ID","STANDPLOT_CN","STANDPLOT_ID","TREE_ID","HISTORY","DIAMETER","root_prop")]
+write_csv(TMT2_STND1_FVS_TreeInit, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs/TMT2_STND1_FVS_TreeInit.csv")
+#T2S2
+T2S2<- filter(FVS_Prep, Tnum=='20' & SEV==2)
+TMT2_STND2_FVS_TreeInit<-T2S2[,c("STAND_CN","STAND_ID","PLOT_CN","PLOT_ID","STANDPLOT_CN","STANDPLOT_ID","TREE_ID","HISTORY","DIAMETER","root_prop")]
+write_csv(TMT2_STND2_FVS_TreeInit, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs/TMT2_STND2_FVS_TreeInit.csv")
+#T2S3
+T2S3<- filter(FVS_Prep, Tnum=='20' & SEV==3)
+TMT2_STND3_FVS_TreeInit<-T2S3[,c("STAND_CN","STAND_ID","PLOT_CN","PLOT_ID","STANDPLOT_CN","STANDPLOT_ID","TREE_ID","HISTORY","DIAMETER","root_prop")]
+write_csv(TMT2_STND3_FVS_TreeInit, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs/TMT2_STND3_FVS_TreeInit.csv")
+#T2S4
+T2S4<- filter(FVS_Prep, Tnum=='20' & SEV==4)
+TMT2_STND4_FVS_TreeInit<-T2S4[,c("STAND_CN","STAND_ID","PLOT_CN","PLOT_ID","STANDPLOT_CN","STANDPLOT_ID","TREE_ID","HISTORY","DIAMETER","root_prop")]
+write_csv(TMT2_STND4_FVS_TreeInit, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs/TMT2_STND4_FVS_TreeInit.csv")
+#T2S1
+T2S5<- filter(FVS_Prep, Tnum=='20' & SEV==5)
+TMT2_STND5_FVS_TreeInit<-T2S5[,c("STAND_CN","STAND_ID","PLOT_CN","PLOT_ID","STANDPLOT_CN","STANDPLOT_ID","TREE_ID","HISTORY","DIAMETER","root_prop")]
+write_csv(TMT2_STND5_FVS_TreeInit, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs/TMT2_STND5_FVS_TreeInit.csv")
+#T3S1
+T3S1<- filter(FVS_Prep, Tnum=='30' & SEV==1)
+TMT3_STND1_FVS_TreeInit<-T3S1[,c("STAND_CN","STAND_ID","PLOT_CN","PLOT_ID","STANDPLOT_CN","STANDPLOT_ID","TREE_ID","HISTORY","DIAMETER","root_prop")]
+write_csv(TMT3_STND1_FVS_TreeInit, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs/TMT3_STND1_FVS_TreeInit.csv")
+#T3S2
+T3S2<- filter(FVS_Prep, Tnum=='30' & SEV==2)
+TMT3_STND2_FVS_TreeInit<-T3S2[,c("STAND_CN","STAND_ID","PLOT_CN","PLOT_ID","STANDPLOT_CN","STANDPLOT_ID","TREE_ID","HISTORY","DIAMETER","root_prop")]
+write_csv(TMT3_STND2_FVS_TreeInit, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs/TMT3_STND2_FVS_TreeInit.csv")
+#T3S1
+T3S3<- filter(FVS_Prep, Tnum=='30' & SEV==3)
+TMT3_STND3_FVS_TreeInit<-T3S3[,c("STAND_CN","STAND_ID","PLOT_CN","PLOT_ID","STANDPLOT_CN","STANDPLOT_ID","TREE_ID","HISTORY","DIAMETER","root_prop")]
+write_csv(TMT3_STND2_FVS_TreeInit, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs/TMT3_STND3_FVS_TreeInit.csv")
+#T3S1
+T3S4<- filter(FVS_Prep, Tnum=='30' & SEV==4)
+TMT3_STND4_FVS_TreeInit<-T3S4[,c("STAND_CN","STAND_ID","PLOT_CN","PLOT_ID","STANDPLOT_CN","STANDPLOT_ID","TREE_ID","HISTORY","DIAMETER","root_prop")]
+write_csv(TMT3_STND4_FVS_TreeInit, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs/TMT3_STND4_FVS_TreeInit.csv")
+#T3S1
+T3S5<- filter(FVS_Prep, Tnum=='30' & SEV==5)
+TMT3_STND5_FVS_TreeInit<-T3S5[,c("STAND_CN","STAND_ID","PLOT_CN","PLOT_ID","STANDPLOT_CN","STANDPLOT_ID","TREE_ID","HISTORY","DIAMETER","root_prop")]
+write_csv(TMT3_STND5_FVS_TreeInit, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs/TMT3_STND5_FVS_TreeInit.csv")
+
+
 #remember that T1S1 and T1S3 are missing
 ###Do for remaining treatmetns and Stands.
 
@@ -1527,7 +1578,7 @@ sub_DF_mort_c
 
 mort_plots<-list(sub_mort,sub_mort_c,sub_RA_mort,sub_RA_mort_c,sub_CW_mort,sub_CW_mort_c,sub_DF_mort,sub_DF_mort_c)
 
-#pdf("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Summary_Graphs/Tree_status_Rep_and_subplot_summaries_ABC.pdf", height= 10, width = 12)
+#pdf("C:/Users/showa/Documents/GitHub/Apiary_LRR/Summary_Graphs/Tree_status_Rep_and_subplot_summaries_ABC.pdf", height= 10, width = 12)
 #mort_plots
 #dev.off()
 
@@ -1540,7 +1591,7 @@ mort_plots<-list(sub_mort,sub_mort_c,sub_RA_mort,sub_RA_mort_c,sub_CW_mort,sub_C
 COPIED FROM WOODS CREEK STATISTICAL ANALYSIS
 
 ```{r}
-#stand_df <- readRDS("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/stand_level_df.Rds")
+#stand_df <- readRDS("C:/Users/showa/Documents/GitHub/Apiary_LRR/stand_level_df.Rds")
 #generate data subset for ANOVA
 AOV_in<-stand_ABC
 AOV_Alive<-subset(AOV_in, AOV_in$STATUS==1)
@@ -1663,7 +1714,7 @@ geom_text(label=AOV_prop_Dead$CW_SEV, alpha=0.3, nudge_x = -1)+
 geom_text(label=AOV_prop_Dead$RA_SEV, alpha=0.3, nudge_x = -2)+
 theme_bw()
 BA_box_sev
-#ggsave("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Summary_Graphs/Live_BA_mpha_by_TRT_REPS_labeled_ABC.pdf")
+#ggsave("C:/Users/showa/Documents/GitHub/Apiary_LRR/Summary_Graphs/Live_BA_mpha_by_TRT_REPS_labeled_ABC.pdf")
 
 BA_point<-AOV_BA_stand_mean %>% 
   mutate(Treatment= factor(Treatment, levels = c("Red Alder 10 years","Cottonwood 10 years","Immediate Douglas fir")))%>%
@@ -1676,7 +1727,7 @@ BA_point<-AOV_BA_stand_mean %>%
   scale_color_viridis_d(begin=0.3) +
 theme_bw()
 BA_point
-#ggsave("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Summary_Graphs/Live_BA_mpha_by_TRT_REPS_labeled_ABC.pdf")
+#ggsave("C:/Users/showa/Documents/GitHub/Apiary_LRR/Summary_Graphs/Live_BA_mpha_by_TRT_REPS_labeled_ABC.pdf")
 
 BA_ribbon<-AOV_BA_stand_mean %>% 
   mutate(Treatment= factor(Treatment, levels = c("Red Alder 10 years","Cottonwood 10 years","Immediate Douglas fir")))%>%
@@ -1728,7 +1779,7 @@ pd_point<-AOV_mort_stand_mean %>%
   ylim(0,1)+
 theme_bw()
 pd_point
-#ggsave("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Summary_Graphs/Live_BA_mpha_by_TRT_REPS_labeled_ABC.pdf")
+#ggsave("C:/Users/showa/Documents/GitHub/Apiary_LRR/Summary_Graphs/Live_BA_mpha_by_TRT_REPS_labeled_ABC.pdf")
 
 pd_ribbon<-AOV_mort_stand_mean %>% 
   mutate(Treatment= factor(Treatment, levels = c("Red Alder 10 years","Cottonwood 10 years","Immediate Douglas fir")))%>%
@@ -1755,7 +1806,7 @@ geom_text(label=AOV_prop_Dead$RA_SEV, alpha=0.3, nudge_x = -2)+
 ylim(0,1)+
 theme_bw()
 pd_box_sev_miss
-#ggsave("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Summary_Graphs/Mort_by_TRT_REPS_labeled_ABC.pdf")
+#ggsave("C:/Users/showa/Documents/GitHub/Apiary_LRR/Summary_Graphs/Mort_by_TRT_REPS_labeled_ABC.pdf")
 
 pd_miss_point<-AOV_mort_miss_stand_mean %>% 
   mutate(Treatment= factor(Treatment, levels = c("Red Alder 10 years","Cottonwood 10 years","Immediate Douglas fir")))%>%
@@ -1769,7 +1820,7 @@ pd_miss_point<-AOV_mort_miss_stand_mean %>%
   ylim(0,1)+
   theme_bw()
 pd_miss_point
-#ggsave("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Summary_Graphs/Live_BA_mpha_by_TRT_REPS_labeled_ABC.pdf")
+#ggsave("C:/Users/showa/Documents/GitHub/Apiary_LRR/Summary_Graphs/Live_BA_mpha_by_TRT_REPS_labeled_ABC.pdf")
 
 pd_miss_ribbon<-AOV_mort_miss_stand_mean %>% 
   mutate(Treatment= factor(Treatment, levels = c("Red Alder 10 years","Cottonwood 10 years","Immediate Douglas fir")))%>%
@@ -1795,7 +1846,7 @@ pd_miss_ribbon
 #  ylim(0,1)+
 #  theme_bw()
 #apd_miss_point
-##ggsave("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Summary_Graphs/Live_BA_mpha_by_TRT_REPS_labeled_ABC.pdf")
+##ggsave("C:/Users/showa/Documents/GitHub/Apiary_LRR/Summary_Graphs/Live_BA_mpha_by_TRT_REPS_labeled_ABC.pdf")
 #
 #apd_miss_ribbon<-AOV_asnmort_stand_mean %>% 
 #  mutate(Treatment= factor(Treatment, levels = c("Red Alder 10 years","Cottonwood 10 years","Immediate Douglas fir")))%>%
@@ -1836,10 +1887,10 @@ pd_miss_ribbon
 #ylim(0,1)+
 #theme_bw()
 #pa_box_sev_miss
-##ggsave("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Summary_Graphs/Mort_by_TRT_REPS_labeled_ABC.pdf")
+##ggsave("C:/Users/showa/Documents/GitHub/Apiary_LRR/Summary_Graphs/Mort_by_TRT_REPS_labeled_ABC.pdf")
 
 #BA_and_mort_plots<-list(BA_box_sev,BA_point, BA_ribbon, pd_box_sev,pd_point,pd_ribbon,pd_box_sev_miss,pd_miss_point,pd_miss_ribbon)
-#pdf("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Summary_Graphs/BA_and_mort_graphs_ABC.pdf", height= 10, width = 10)
+#pdf("C:/Users/showa/Documents/GitHub/Apiary_LRR/Summary_Graphs/BA_and_mort_graphs_ABC.pdf", height= 10, width = 10)
 #BA_and_mort_plots
 #dev.off()
 ```
