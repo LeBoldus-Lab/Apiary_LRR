@@ -1,6 +1,5 @@
 ## Parameters for Apiary Data Western Root Disease Model Runs:
 - Excel file used was "TMT1_STAND2_INPUT.xlsx"
-- Excel file was converted to database file here: https://forest.moscowfsl.wsu.edu/FVSDataConvert/
 - Phellinus (Coniferiporia) root disease was used for the root disease type. The keyword and number for this was RRTYPE = 4. 
 - Total stand size projections being used is .25 acres. This takes into account the 5 plots which are each .05 acres in size. 
 - Total roots disease area in acres was calculated by using the data sheets provided from Weyco and the Forest Service. For TMT1_STAND2 this was 0.4. 
