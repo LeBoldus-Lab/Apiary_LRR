@@ -441,7 +441,7 @@ long_data$PW_R<-as.character(ifelse((long_data$DAMAGE=="806"|long_data$DAMAGE=="
 long_data$PW<-as.character(ifelse((long_data$DAMAGE=="807"), 1, NA))
 #making live basal area calculation for each tree using status and diameter
 
-long_data$Live_BA_sq_m<-as.double(ifelse(long_data$STATUS=="1", (3.14159*((long_data$DBH_mm / 2000)^2)) ,NA))
+long_data$Live_BA_sq_m<-as.double(ifelse(long_data$STATUS=="1", (3.14159*(((long_data$DBH_mm/10)^2)/40000)) , NA))
 
 #creating DF_age variable based on treatment and estimated measurement year
 #long_data$DF_age<-as.numeric(ifelse(long_data$YEAR=="ODBH", #if old
@@ -1350,25 +1350,26 @@ long_data_keep$Subplot_ID_TRS<-as.factor(paste(long_data_keep$TRT_code,long_data
   #excluding Live_BA_sq_m = 0 https://stackoverflow.com/questions/54805570/dplyr-summarise-keep-na-if-all-summarised-values-are-na/54805923
 #subplot_df<-long_data_keep %>% filter(!is.na(STATUS)) %>% group_by(Subplot_ID_TRS, YEAR_fac,TRT, STATUS, .drop = TRUE) %>% summarise(count = n(), Live_BA_sq_m = if(all(is.na(Live_BA_sq_m))) NA_real_ else sum(Live_BA_sq_m, na.rm=TRUE))
 #using DF age instead of year and adding PW and PW+root rot counts
-subplot_df_age<-long_data_keep %>% filter(!is.na(STATUS)) %>% group_by(Subplot_ID_TRS, DF_age,TRT, STATUS, .drop = TRUE) %>% summarise(count = n(), Live_BA_sq_m = if(all(is.na(Live_BA_sq_m))) NA_real_ else sum(Live_BA_sq_m, na.rm=TRUE),PW=sum(!is.na(PW)), PW_R=sum(!is.na(PW_R)))
-
-# correcting subplot-level Live-BA to include area sampled (ha)
-# subplots have 27' radius = 1/20 or 0.053 acre = 0.021448339 hectare
-subplot_df_age$Live_BA_mpha<-subplot_df_age$Live_BA_sq_m/0.021448339
+#converting BA to BA m^2/ha 1/20 acre + 0.02023428 hectares
+subplot_df_age<-long_data_keep %>% filter(!is.na(STATUS)) %>% group_by(Subplot_ID_TRS, DF_age,TRT, STATUS, .drop = TRUE) %>% summarise(count = n(), Live_BA_mpha = if(all(is.na(Live_BA_sq_m))) NA_real_ else sum(Live_BA_sq_m/0.02023428, na.rm=TRUE),PW=sum(!is.na(PW)), PW_R=sum(!is.na(PW_R)))
+subplot_df_year<-long_data_keep %>% filter(!is.na(STATUS)) %>% group_by(Subplot_ID_TRS, YEAR_dbl,TRT, STATUS, .drop = TRUE) %>% summarise(count = n(), Live_BA_mpha = if(all(is.na(Live_BA_sq_m))) NA_real_ else sum(Live_BA_sq_m/0.02023428, na.rm=TRUE),PW=sum(!is.na(PW)), PW_R=sum(!is.na(PW_R)))
 
 # 1 sq m = 10.7639 sq ft
-subplot_df_age$Live_BA_sq_ft<-subplot_df_age$Live_BA_sq_m*10.7639
-subplot_df_age$Live_BA_fpa<-subplot_df_age$Live_BA_sq_ft/.053
-
+#subplot_df_age$Live_BA_sq_ft<-subplot_df_age$Live_BA_sq_m*10.7639
+#subplot_df_age$Live_BA_fpa<-subplot_df_age$Live_BA_sq_ft/.053
+#subplot_df_year$Live_BA_sq_ft<-subplot_df_year$Live_BA_sq_m*10.7639
+#subplot_df_year$Live_BA_fpa<-subplot_df_year$Live_BA_sq_ft/.053
 
 #adding the separate TMT, BLOCK, and PLOT columns
 subplot_df_age<-subplot_df_age %>% separate(Subplot_ID_TRS, c("TRT","REP","SUBPLOT"),"_",remove = FALSE)
+subplot_df_year<-subplot_df_year %>% separate(Subplot_ID_TRS, c("TRT","REP","SUBPLOT"),"_",remove = FALSE)
 #subplot_df_age$TRT<-as.factor(subplot_df_age$TRT)
 #subplot_df_age$REP<-as.factor(subplot_df_age$REP)
 #subplot_df_age$SUBPLOT<-as.factor(subplot_df_age$SUBPLOT)
 
 #creating unique stand ID factor varaible of format TRT_BLOCK
 subplot_df_age$Stand_ID_TR<-as.factor(paste(subplot_df_age$TRT,subplot_df_age$REP, sep = "_"))
+subplot_df_year$Stand_ID_TR<-as.factor(paste(subplot_df_year$TRT,subplot_df_year$REP, sep = "_"))
 # updating to calculate stand-level Live-BA mph and fpa by taking the mean of subplots rather than summing so I can account for missing data/subplots
 
 #calculating whether or not subplots had Pw (807) or PW or root rot (806 or 807) at the first measurement (10 or 12 y)
@@ -1377,14 +1378,20 @@ PW_in_subplot_1012<-subplot_df_age %>% filter(DF_age==10|DF_age==12) %>% group_b
 
 #instead I will just use REP and as a proxy for FVS parameter related to initial incidence, since that is what was used to determine the blocking anyway. Rep 1=0.2, Rep 2=0.4, Rep 3=0.6 Rep 4=0.8 Rep 0=1.0
 
-stand_df_age<- subplot_df_age %>% filter(!is.na(STATUS)) %>% group_by(Stand_ID_TR, DF_age, TRT, STATUS, .drop = TRUE) %>% summarise(count = sum(count, na.rm=TRUE), sum_Live_BA_sq_m = if(all(is.na(Live_BA_sq_m))) NA_real_ else sum(Live_BA_sq_m, na.rm=TRUE), Live_BA_mpha = if(all(is.na(Live_BA_mpha))) NA_real_ else mean(Live_BA_mpha, na.rm=TRUE), sum_Live_BA_sq_ft = if(all(is.na(Live_BA_sq_ft))) NA_real_ else sum(Live_BA_sq_ft, na.rm=TRUE), Live_BA_fpa = if(all(is.na(Live_BA_fpa))) NA_real_ else mean(Live_BA_fpa, na.rm=TRUE),PW=sum(PW), PW_R=sum(PW_R))
+stand_df_age<- subplot_df_age %>% filter(!is.na(STATUS)) %>% group_by(Stand_ID_TR, DF_age, TRT, STATUS, .drop = TRUE) %>% summarise(count = sum(count, na.rm=TRUE), Live_BA_mpha = if(all(is.na(Live_BA_mpha))) NA_real_ else mean(Live_BA_mpha, na.rm=TRUE),  PW=sum(PW), PW_R=sum(PW_R))
+
+stand_df_year<- subplot_df_year %>% filter(!is.na(STATUS)) %>% group_by(Stand_ID_TR, YEAR_dbl, TRT, STATUS, .drop = TRUE) %>% summarise(count = sum(count, na.rm=TRUE), Live_BA_mpha = if(all(is.na(Live_BA_mpha))) NA_real_ else mean(Live_BA_mpha, na.rm=TRUE), PW=sum(PW), PW_R=sum(PW_R))
 
 #adding the separate REP column
 stand_df_age<-stand_df_age %>% separate(Stand_ID_TR, c(NA,"REP"),"_",remove = FALSE)
+stand_df_year<-stand_df_year %>% separate(Stand_ID_TR, c(NA,"REP"),"_",remove = FALSE)
 #stand_df_age$REP<-as.factor(stand_df_age$REP)
 
 subplot_ABC<- subplot_df_age[subplot_df_age$TRT=="A"|subplot_df_age$TRT=="B"|subplot_df_age$TRT=="C",]
 stand_ABC<- stand_df_age[stand_df_age$TRT=="A"|stand_df_age$TRT=="B"|stand_df_age$TRT=="C",]
+
+subplot_ABC_year<- subplot_df_year[subplot_df_year$TRT=="A"|subplot_df_year$TRT=="B"|subplot_df_year$TRT=="C",]
+stand_ABC_year<- stand_df_year[stand_df_year$TRT=="A"|stand_df_year$TRT=="B"|stand_df_year$TRT=="C",]
 
 subplot_ABC$SEV<-ifelse(subplot_ABC$REP=="0","5",subplot_ABC$REP)
 stand_ABC$SEV<-ifelse(stand_ABC$REP=="0","5",stand_ABC$REP)
@@ -1396,6 +1403,17 @@ stand_ABC$Treatment<-ifelse(stand_ABC$TRT=="A",
                             "10RA",
                             ifelse(stand_ABC$TRT=="B",
                                "10CW", "DF"))
+
+subplot_ABC_year$SEV<-ifelse(subplot_ABC_year$REP=="0","5",subplot_ABC_year$REP)
+stand_ABC_year$SEV<-ifelse(stand_ABC_year$REP=="0","5",stand_ABC_year$REP)
+subplot_ABC_year$Treatment<-ifelse(subplot_ABC_year$TRT=="A",
+                            "10RA",
+                            ifelse(subplot_ABC_year$TRT=="B",
+                               "10CW", "DF"))
+stand_ABC_year$Treatment<-ifelse(stand_ABC_year$TRT=="A",
+                            "10RA",
+                            ifelse(stand_ABC_year$TRT=="B",
+                               "10CW", "DF"))
 #write_rds(subplot_df_age,"C:/Users/showa/Documents/GitHub/Apiary_LRR/subplot_df_age.Rds")
 #write_rds(stand_df_age,"C:/Users/showa/Documents/GitHub/Apiary_LRR/stand_level_df_age.Rds")
 #write_rds(subplot_ABC,"C:/Users/showa/Documents/GitHub/Apiary_LRR/subplot_level_ABC.Rds")
@@ -1405,7 +1423,10 @@ stand_ABC$Treatment<-ifelse(stand_ABC$TRT=="A",
 #write_csv(stand_df_age, "C:/Users/showa/Documents/GitHub/Apiary_LRR/stand_df_age.csv")
 #write_csv(subplot_ABC, "C:/Users/showa/Documents/GitHub/Apiary_LRR/subplot_level_ABC.csv")
 #write_csv(stand_ABC, "C:/Users/showa/Documents/GitHub/Apiary_LRR/stand_level_ABC.csv")
+```
 
+#Creating FVS_input and simple measured output
+```{r}
 #Creating FVS_input
 #A0 Treatment A REP "0" is being called Treatment 1 Stand 5,  A1 = Stand 2, A2= stand 3, A3= Stand 4, A4= Stand 5
 FVS_Prep<-filter(ABC_long_keep, FVS_age==0 & !is.na(Tree_status))
@@ -1474,9 +1495,71 @@ T3S5<- filter(FVS_Prep, Tnum=='30' & SEV==5)
 TMT3_STND5_FVS_TreeInit<-T3S5[,c("STAND_CN","STAND_ID","PLOT_CN","PLOT_ID","STANDPLOT_CN","STANDPLOT_ID","TREE_ID","HISTORY","DIAMETER","root_prop")]
 write_csv(TMT3_STND5_FVS_TreeInit, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs/TMT3_STND5_FVS_TreeInit.csv")
 
+output_prep<-filter(stand_ABC_year, STATUS=="1")
+#T1S2
+BA_T1S2<- filter(output_prep, TRT=="A" & SEV==2)
+BA_TMT1_STND2<-BA_T1S2[,c("Stand_ID_TR","REP","YEAR_dbl","TRT","count","Live_BA_mpha","SEV")]
+write_csv(BA_TMT1_STND2, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs/BA_TMT1_STND2.csv")
 
-#remember that T1S1 and T1S3 are missing
-###Do for remaining treatmetns and Stands.
+#T1S4
+BA_T1S4<- filter(output_prep, TRT=="A" & SEV==4)
+BA_TMT1_STND4<-BA_T1S4[,c("Stand_ID_TR","REP","YEAR_dbl","TRT","count","Live_BA_mpha","SEV")]
+write_csv(BA_TMT1_STND4, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs/BA_TMT1_STND4.csv")
+
+#BA_T1S5
+BA_BA_T1S5<- filter(output_prep, TRT=="A" & SEV==5)
+BA_TMT1_STND5<-BA_BA_T1S5[,c("Stand_ID_TR","REP","YEAR_dbl","TRT","count","Live_BA_mpha","SEV")]
+write_csv(BA_TMT1_STND5, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs/BA_TMT1_STND5.csv")
+
+#T2S1
+BA_T2S1<- filter(output_prep, TRT=="B" & SEV==1)
+BA_TMT2_STND1<-BA_T2S1[,c("Stand_ID_TR","REP","YEAR_dbl","TRT","count","Live_BA_mpha","SEV")]
+write_csv(BA_TMT2_STND1, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs/BA_TMT2_STND1.csv")
+
+#T2S2
+BA_T2S2<- filter(output_prep, TRT=="B" & SEV==2)
+BA_TMT2_STND2<-BA_T2S2[,c("Stand_ID_TR","REP","YEAR_dbl","TRT","count","Live_BA_mpha","SEV")]
+write_csv(BA_TMT2_STND2, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs/BA_TMT2_STND2.csv")
+
+#T2S3
+BA_T2S3<- filter(output_prep, TRT=="B" & SEV==3)
+BA_TMT2_STND3<-BA_T2S3[,c("Stand_ID_TR","REP","YEAR_dbl","TRT","count","Live_BA_mpha","SEV")]
+write_csv(BA_TMT2_STND3, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs/BA_TMT2_STND3.csv")
+
+#T2S4
+BA_T2S4<- filter(output_prep, TRT=="B" & SEV==4)
+BA_TMT2_STND4<-BA_T2S4[,c("Stand_ID_TR","REP","YEAR_dbl","TRT","count","Live_BA_mpha","SEV")]
+write_csv(BA_TMT2_STND4, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs/BA_TMT2_STND4.csv")
+
+#T2S5
+BA_T2S5<- filter(output_prep, TRT=="B" & SEV==5)
+BA_TMT2_STND5<-BA_T2S5[,c("Stand_ID_TR","REP","YEAR_dbl","TRT","count","Live_BA_mpha","SEV")]
+write_csv(BA_TMT2_STND5, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs/BA_TMT2_STND5.csv")
+
+#T3S1
+BA_T3S1<- filter(output_prep, TRT=="C" & SEV==1)
+BA_TMT3_STND1<-BA_T3S1[,c("Stand_ID_TR","REP","YEAR_dbl","TRT","count","Live_BA_mpha","SEV")]
+write_csv(BA_TMT3_STND1, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs/BA_TMT3_STND1.csv")
+
+#T3S2
+BA_T3S2<- filter(output_prep, TRT=="C" & SEV==2)
+BA_TMT3_STND2<-BA_T3S2[,c("Stand_ID_TR","REP","YEAR_dbl","TRT","count","Live_BA_mpha","SEV")]
+write_csv(BA_TMT3_STND2, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs/BA_TMT3_STND2.csv")
+
+#T3S3
+BA_T3S3<- filter(output_prep, TRT=="C" & SEV==3)
+BA_TMT3_STND3<-BA_T3S3[,c("Stand_ID_TR","REP","YEAR_dbl","TRT","count","Live_BA_mpha","SEV")]
+write_csv(BA_TMT3_STND3, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs/BA_TMT3_STND3.csv")
+
+#T3S4
+BA_T3S4<- filter(output_prep, TRT=="C" & SEV==4)
+BA_TMT3_STND4<-BA_T3S4[,c("Stand_ID_TR","REP","YEAR_dbl","TRT","count","Live_BA_mpha","SEV")]
+write_csv(BA_TMT3_STND4, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs/BA_TMT3_STND4.csv")
+
+#T3S5
+BA_T3S5<- filter(output_prep, TRT=="C" & SEV==5)
+BA_TMT3_STND5<-BA_T3S5[,c("Stand_ID_TR","REP","YEAR_dbl","TRT","count","Live_BA_mpha","SEV")]
+write_csv(BA_TMT3_STND5, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs/BA_TMT3_STND5.csv")
 
 ```
 
