@@ -12,13 +12,13 @@
 
 (The above list was revised from the following publication. The parameters that they used and justification for these options can be seen below: https://www.fs.fed.us/rm/pubs/rmrs_p054/rmrs_p054_055_067.pdf)
 
-• Armillaria root disease was identified as the root disease type (keyword
-RRTYPE = 3)
-• The root disease in the stand or plot was assumed to occur as one center since the
+- • Armillaria root disease was identified as the root disease type (keyword
+- RRTYPE = 3)
+- • The root disease in the stand or plot was assumed to occur as one center since the
 edges of the centers in the study area were not readily discernible on the ground
 (typical of root disease centers in mixed-conifer forests in central Oregon).
-• For individual variable-radius plot projections, the total size of the area to be modeled was approximated as 1 acre (keyword SAREA).
-• For stand projections, the total size of the area to be modeled was approximated as
+- • For individual variable-radius plot projections, the total size of the area to be modeled was approximated as 1 acre (keyword SAREA).
+- • For stand projections, the total size of the area to be modeled was approximated as
 a constant 15 acres (keyword SAREA = 15) to more adequately describe the study
 units compared to the default of 100 acres.
 • For projections, the acres in root disease (keyword RRINT) were assumed to be
