@@ -21,7 +21,7 @@ edges of the centers in the study area were not readily discernible on the groun
 - • For stand projections, the total size of the area to be modeled was approximated as
 a constant 15 acres (keyword SAREA = 15) to more adequately describe the study
 units compared to the default of 100 acres.
-• For projections, the acres in root disease (keyword RRINT) were assumed to be
+- • For projections, the acres in root disease (keyword RRINT) were assumed to be
 the stand size (15 acres) multiplied by the proportion of variable-radius plots in
 the stand where Armillaria root disease occurred (RDSR >1). Thus, if half of the
 plots had a RDSR >1, the area in root disease was set at 7.5 acres compared to the
@@ -30,16 +30,16 @@ acres in size with a range from 2–15 acres. Since projections are sensitive to
 acres in root disease in a stand and there was variation in the incidence of root
 disease between stands, this adjustment to the default was preferable to setting
 it to a constant for all stands (e.g., 15 acres).
-• For plot level projections, variable-radius plot were assumed to be a single root
+- • For plot level projections, variable-radius plot were assumed to be a single root
 disease center (keyword RRINT) except when there was no measured root disease
 on the plot (RDSR = 0 or 1). On plots with RDSR = 0 or 1, some root disease was
 assumed to occur within the modeled area because root disease was widespread
 throughout the rest of the stand. Since there was no electronically accessible information (the usual situation for vegetation management projects) with respect
 to the relative location of infected plots to uninfected plots, the default value of
 25% was used.
-• The density of infected trees was estimated from the damage codes on individual
+- • The density of infected trees was estimated from the damage codes on individual
 measured trees (keyword RRTREIN).
-• The model was run with default values for bark beetles since preferential bark
+- • The model was run with default values for bark beetles since preferential bark
 beetle activity was observed inside the root disease centers
 
 ## WRD Model Run
