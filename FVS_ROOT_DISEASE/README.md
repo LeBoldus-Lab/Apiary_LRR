@@ -1,21 +1,12 @@
 ## Parameters for 1990 WRD Run:
-- Excel file used was "FVS_TMT1_1990_WRD.xlsx"
+- Excel file used was "TMT1_STAND2_INPUT.xlsx"
 - Excel file was converted to database file here: https://forest.moscowfsl.wsu.edu/FVSDataConvert/
 - Phellinus (Coniferiporia) root disease was used for the root disease type. The keyword and number for this was RRTYPE = 4. 
-- Total stand size projections was estimated from the use of unpublished maps received from Hansen, shape files received from the forest service (insert name in acknoldegments) as well as ArcGIS Pro (insert version and reference here). 
-- Total roots disease area in acres was calculated by multiplying the percentage of plots within the stands where Coniferporia was found by the total stand size in acres. For e.g.:TMT 1 Stand 1 was 16.63 acres in size and LRR was found at 80% of the plots therefore 16.63 x .8 = 13.304 acres of total root disease within this stand or (insert hectares here). The keyword RRINT was used for this projection. (insert citation here). 
+- Total stand size projections being used is .25 acres. This takes into account the 5 plots which are each .05 acres in size. 
+- Total roots disease area in acres was calculated by using the data sheets provided from Weyco and the Forest Service. For TMT1_STAND2 this was 0.4. 
 - Number of root diesease centers were not readily detected on the ground during the final survey, therefore the stand was modeled as a one for the disease centere value.
-- Parameters for the RRInit keyword, proportion of roots infected 0.4 was estimated overall and used as the standard. This is taking into considerationg that 0.1 (10%) is considered light infection and that tree mortality will occur well before 100% of roots become infected depending on the disease type. Therefore proportion of root system infected was exstimated at 0.4 but was not based upon any type of measurements or data (insert citation for advice from Lance)
-- Default parameters were used in regards to bark beetles due to observations and trapping mechanisms that were implemented within the study area. Also consider adding in Hansen et. al paper about bark beetles if it refers to Marys Peak at all. 
-
-- ~~ ~~ (STRIKETHROUGH) 01 = Tree is within 30 feet of a root disease infected tree
-- ~~ ~~02 = Symptoms of root disease detected on the tree
-- ~~ ~~03 = Symptoms of root disease and crown deterioration detected
- - ~~ ~~Dam code of 62 for all trees that had signs/symptoms (severity code 02) or mortality (severity code 03).
- - ~~ ~~If the plot center tree was infected then every tree within that plot was coded with a 00,01 for that year.
-- ~~ ~~If tree was coded with a 02 or 03, an estimation of proximity was done and the previous two trees and the next two trees within the plot were assigned with a 00.
-- ~~ ~~If last tree in the plot was coded a 02 or 03 then trees #1 and #2 were coded with a 01 and vice versa if the last two trees within the plot were coded as 02 or 03.
-
+- Parameters for the RRInit keyword, proportion of roots infected 0.4 was estimated overall and used as the standard. This is taking into considerationg that 0.1 (10%) is considered light infection and that tree mortality will occur well before 100% of roots become infected depending on the disease type. Therefore proportion of root system infected was estimated at 0.4 but was not based upon any type of measurements or data (this conclusion is based upon the advice I received from Lance David).
+- Default parameters were used regarding bark beetles considering that the Douglas-fir beetle (Dendroctonus pseudotsugae Hopkins) occurs throughout the extensive range of Douglas-fir (Furniss and Kegley, 2014). Also consider adding in Hansen et. al paper about bark beetles if it refers to the Apiary site at all. 
 
 
 
@@ -97,4 +88,7 @@ Plant Association
 CHF211 TSHE/ACTR-OLY
 Stand age  
  
+ 
+
+
  
