@@ -42,51 +42,6 @@ measured trees (keyword RRTREIN).
 - • The model was run with default values for bark beetles since preferential bark
 beetle activity was observed inside the root disease centers
 
-## WRD Model Run
-- Excel files used was Decktop/LAST_TIME/TMT1/1990/$FILE.xlsx
-- Database file used was Decktop/LAST_TIME/TMT1/1990/WRD/FVS_TMT1_1990_WRD.db
-- Main output file used was Decktop/LAST_TIME/TMT1/1990/WRD/FVS_TMT1_1990_WRD.txt
-- Keyword: StdInfo 
-- National Forest: Siuslaw
-- Plant Association: CHF211 TSCH/ACTR-OLY
-- Root disease parameters were determined using the corresponding excel spreadsheet Desktop/Stand Size Per Acre - Woods Creek Study Area.xlsx
-
---------------------  Extensions -------------------- 
-
-WRD (Laminated Root Rot)
-Keywords: RRInit
-
-RRInit: Specify the number, size, and distribution of disease centers.
-Component title   
-RRInit: Specify the number, size, and distribution of disease centers.
-Disease center configuration  
-Disease centers randomly distributed
-Number of root disease centers to be located in the stand  
-1
-Number of infected trees/arcre in the root disease centers  
- 3
-Number of uninfected trees/arcre in the root disease centers  
- 7
-Average proportion of root infection  
-0.4
-Total root disease area (acres)  
- 13.30
-
---------------------  Extensions (continued) -------------------- 
-
-
-Base FVS system
-Keywords: StndInfo
-
-StdInfo: Describes the site characteristics where the stand is located.
-Component title   
-StdInfo: Describes the site characteristics where the stand is located.
-National Forest where stand is located.  
-Siuslaw
-Plant Association  
-CHF211 TSHE/ACTR-OLY
-Stand age  
- 
  
 
 
