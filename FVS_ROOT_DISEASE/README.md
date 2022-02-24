@@ -1,4 +1,4 @@
-## Parameters for 1990 WRD Run:
+## Parameters for Apiary Data Western Root Disease Model Runs:
 - Excel file used was "TMT1_STAND2_INPUT.xlsx"
 - Excel file was converted to database file here: https://forest.moscowfsl.wsu.edu/FVSDataConvert/
 - Phellinus (Coniferiporia) root disease was used for the root disease type. The keyword and number for this was RRTYPE = 4. 
