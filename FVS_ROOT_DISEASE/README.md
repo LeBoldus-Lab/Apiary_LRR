@@ -10,7 +10,7 @@
 
 
 
-(The above list was revised from the following publication. The parameters that they used and justification for these options can be seen below: https://www.fs.fed.us/rm/pubs/rmrs_p054/rmrs_p054_055_067.pdf)
+## (The above list was revised from the following publication. The parameters that they used and justification for these options can be seen below: https://www.fs.fed.us/rm/pubs/rmrs_p054/rmrs_p054_055_067.pdf)
 
 - • Armillaria root disease was identified as the root disease type (keyword
 - RRTYPE = 3)
