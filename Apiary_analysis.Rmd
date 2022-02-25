@@ -1350,7 +1350,7 @@ long_data_keep$Subplot_ID_TRS<-as.factor(paste(long_data_keep$TRT_code,long_data
   #excluding Live_BA_sq_m = 0 https://stackoverflow.com/questions/54805570/dplyr-summarise-keep-na-if-all-summarised-values-are-na/54805923
 #subplot_df<-long_data_keep %>% filter(!is.na(STATUS)) %>% group_by(Subplot_ID_TRS, YEAR_fac,TRT, STATUS, .drop = TRUE) %>% summarise(count = n(), Live_BA_sq_m = if(all(is.na(Live_BA_sq_m))) NA_real_ else sum(Live_BA_sq_m, na.rm=TRUE))
 #using DF age instead of year and adding PW and PW+root rot counts
-#converting BA to BA m^2/ha 1/20 acre + 0.02023428 hectares
+#converting BA to BA m^2/ha 1/20 acre = 0.02023428 hectares
 subplot_df_age<-long_data_keep %>% filter(!is.na(STATUS)) %>% group_by(Subplot_ID_TRS, DF_age,TRT, STATUS, .drop = TRUE) %>% summarise(count = n(), Live_BA_mpha = if(all(is.na(Live_BA_sq_m))) NA_real_ else sum(Live_BA_sq_m/0.02023428, na.rm=TRUE),PW=sum(!is.na(PW)), PW_R=sum(!is.na(PW_R)))
 subplot_df_year<-long_data_keep %>% filter(!is.na(STATUS)) %>% group_by(Subplot_ID_TRS, YEAR_dbl,TRT, STATUS, .drop = TRUE) %>% summarise(count = n(), Live_BA_mpha = if(all(is.na(Live_BA_sq_m))) NA_real_ else sum(Live_BA_sq_m/0.02023428, na.rm=TRUE),PW=sum(!is.na(PW)), PW_R=sum(!is.na(PW_R)))
 
