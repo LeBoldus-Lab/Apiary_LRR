@@ -1425,7 +1425,7 @@ stand_ABC_year$Treatment<-ifelse(stand_ABC_year$TRT=="A",
 #write_csv(stand_ABC, "C:/Users/showa/Documents/GitHub/Apiary_LRR/stand_level_ABC.csv")
 ```
 
-#Creating FVS_input and simple measured output
+#Creating FVS_input format
 ```{r}
 #Creating FVS_input
 #A0 Treatment A REP "0" is being called Treatment 1 Stand 5,  A1 = Stand 2, A2= stand 3, A3= Stand 4, A4= Stand 5
@@ -1442,6 +1442,10 @@ FVS_Prep$STANDPLOT_ID<-paste0(FVS_Prep$STAND_ID,"_000",FVS_Prep$PLOT_ID,sep="")
 FVS_Prep$TREE_ID<-FVS_Prep$TREE
 FVS_Prep$HISTORY<-ifelse(FVS_Prep$STATUS=="3","6",FVS_Prep$STATUS)
 FVS_Prep$DIAMETER<-(FVS_Prep$DBH_mm * 0.03937)
+```
+
+# Writing FVS in put files
+```{r}
 #T1S2
 T1S2<- filter(FVS_Prep, Tnum=='10' & SEV==2)
 TMT1_STND2_FVS_TreeInit<-T1S2[,c("STAND_CN","STAND_ID","PLOT_CN","PLOT_ID","STANDPLOT_CN","STANDPLOT_ID","TREE_ID","HISTORY","DIAMETER","root_prop")]
@@ -1494,7 +1498,10 @@ write_csv(TMT3_STND4_FVS_TreeInit, "C:/Users/showa/Documents/GitHub/Apiary_LRR/F
 T3S5<- filter(FVS_Prep, Tnum=='30' & SEV==5)
 TMT3_STND5_FVS_TreeInit<-T3S5[,c("STAND_CN","STAND_ID","PLOT_CN","PLOT_ID","STANDPLOT_CN","STANDPLOT_ID","TREE_ID","HISTORY","DIAMETER","root_prop")]
 write_csv(TMT3_STND5_FVS_TreeInit, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs/TMT3_STND5_FVS_TreeInit.csv")
+```
 
+# preparing and writing simple BA outputs
+```{r}
 output_prep<-filter(stand_ABC_year, STATUS=="1")
 #T1S2
 BA_T1S2<- filter(output_prep, TRT=="A" & SEV==2)
