@@ -433,7 +433,9 @@ long_data$Tree_status<-as.character(ifelse(long_data$STATUS=="1", "Alive",
                                      ifelse(long_data$STATUS=="3", "Dead", NA)))
 
 #and a suppression flag
-long_data$SUPP<-as.character(ifelse(long_data$DAMAGE=="400", "SUPP", NA))
+long_data$SUPP<-ifelse((long_data$STATUS=="3"|long_data$STATUS=="1"), (ifelse(long_data$DAMAGE=="400", "Suppressed", "Not")), NA)
+#combined suppressin and status
+long_data$SUP_MORT<- as.character(paste0(long_data$SUPP,long_data$Tree_status,sep=""))
 
 #and a root rot flag
 long_data$ROOT<-as.character(ifelse((long_data$DAMAGE=="806"|long_data$DAMAGE=="807"|long_data$DAMAGE=="808"), "ROT", NA))
@@ -501,7 +503,7 @@ long_data$FVS_age<-NA
 long_data$FVS_age<-ifelse(long_data$DF_age==10,0,ifelse(long_data$DF_age==12,0,ifelse(long_data$DF_age==26,16,ifelse(long_data$DF_age==35,25,ifelse(long_data$DF_age==36,24,ifelse(long_data$DF_age==45,35,NA))))))
 #subsetting to keep only relevant columns
 
-keep_cols<- c("Tree_ID","TREE","PLOT","REP","SUBPLOT","SUBPLOT_ID","TRT","TRT_code","YEAR_fac","YEAR_dbl","DF_age","Tree_status","DBH_mm","Live_BA_sq_m","STATUS","DAMAGE", "SUPP", "ROOT","PW","PW_R","FVS_age")
+keep_cols<- c("Tree_ID","TREE","PLOT","REP","SUBPLOT","SUBPLOT_ID","TRT","TRT_code","YEAR_fac","YEAR_dbl","DF_age","Tree_status","DBH_mm","Live_BA_sq_m","STATUS","DAMAGE", "SUPP", "ROOT","PW","PW_R","FVS_age","SUP_MORT")
 long_data_keep<-long_data[,names(long_data) %in% keep_cols]
 long_data_keep<-long_data_keep[,keep_cols]
 ABC_long_keep<-long_data_keep[long_data_keep$TRT_code=="A"|long_data_keep$TRT_code=="B"|long_data_keep$TRT_code=="C",]
@@ -559,7 +561,7 @@ ggplot(ABC_long_keep,aes(x=factor(DF_age),y=Live_BA_sq_m,fill=TRT))+geom_boxplot
 
 ```{r}
 #plotting viability as a function of DF_age across treatments
-ggplot(data=subset(long_data_keep, !is.na(Tree_status)) ,aes(x=factor(DF_age),fill=Tree_status))+
+ggplot(data=subset(ABC_long_keep, !is.na(Tree_status)) ,aes(x=factor(DF_age),fill=Tree_status))+
   geom_bar(position="fill")+scale_fill_viridis_d()+
   ylab("Mortality")+
   xlab("Douglas Fir Age (years)")+
@@ -571,7 +573,7 @@ ggplot(data=subset(long_data_keep, !is.na(Tree_status)) ,aes(x=factor(DF_age),fi
              )
 
 #attempting to plot damage type
-ggplot(data=subset(long_data_keep, !is.na(Tree_status)) ,aes(x=factor(DF_age),fill=DAMAGE))+
+ggplot(data=subset(ABC_long_keep, !is.na(Tree_status)) ,aes(x=factor(DF_age),fill=DAMAGE))+
   geom_bar(position="fill")+scale_fill_viridis_d()+
   ylab("Proportion of Trees")+
   xlab("Douglas Fir Age (years)")+
@@ -584,16 +586,13 @@ ggplot(data=subset(long_data_keep, !is.na(Tree_status)) ,aes(x=factor(DF_age),fi
 #ggsave("C:/Users/showa/Documents/GitHub/Apiary_LRR/Summary_Graphs/Damage_counts_by_subplot.pdf")
 
 #just suppression
-#ggplot(data=subset(long_data_keep, !is.na(Tree_status)) ,aes(x=factor(DF_age),fill=SUPP))+
-#  geom_bar(position="fill")+scale_fill_viridis_d()+
-#  ylab("Proportion of Trees")+
-#  xlab("Douglas Fir Age (years)")+
-#  scale_x_discrete(c("10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31","32","33","34","35"#,"36","37","38","39","40","41","42","43","44","45","46"), drop=FALSE, limits= #c("10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31","32","33","34","35","36","37","38","39#","40","41","42","43","44","45","46"), breaks=c("10","12","16","25","26","35","36","45")) +
-#  facet_wrap(~TRT+ REP 
-#             #scales = "free_x", # fix the x axis across facets.
-#             #space = "free_x",  # Let the width of facets vary and force all bars to have the same width.
-#             #switch = "x"
-#             )
+sup_plot_ABC<-ggplot(data=subset(ABC_long_keep, !is.na(SUPP)) ,aes(x=factor(DF_age),fill=SUPP))+
+  geom_bar(position="fill")+scale_fill_viridis_d()+
+  ylab("Proportion of Trees")+
+  xlab("Douglas Fir Age (years)")+
+  scale_x_discrete("Douglas Fir age", drop=FALSE, limits= c("10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31","32","33","34","35","36","37","38","39","40","41","42","43","44","45","46"), breaks=c("10","12","16","25","26","35","36","45")) +
+facet_grid(rows=vars(TRT),vars(REP), labeller = label_both)
+sup_plot_ABC
 #attempting to add counts labels over bars
 #ggplot(data=subset(long_data_keep, !is.na(Tree_status)) ,aes(x=factor(DF_age),fill=SUPP))+
 #  geom_bar(position="fill")+scale_fill_viridis_d()+
@@ -608,7 +607,7 @@ ggplot(data=subset(long_data_keep, !is.na(Tree_status)) ,aes(x=factor(DF_age),fi
 #             )
 #looking whether there are a lot of Alive suppressed trees in A1 and A3 reps. Which looks like NO.
 AxSxP<-long_data_keep %>% group_by(TRT, REP, DF_age, Tree_status, DAMAGE, .drop=FALSE) %>% summarise(count=n())
-
+AxSxP
 #then why are the trees so small in those reps?
 
 #subset by treatments and treatments with similar ages
