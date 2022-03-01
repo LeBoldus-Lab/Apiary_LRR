@@ -440,8 +440,8 @@ long_data$ROOT<-as.character(ifelse((long_data$DAMAGE=="806"|long_data$DAMAGE=="
 long_data$PW_R<-as.character(ifelse((long_data$DAMAGE=="806"|long_data$DAMAGE=="807"), 1, NA))
 long_data$PW<-as.character(ifelse((long_data$DAMAGE=="807"), 1, NA))
 #making live basal area calculation for each tree using status and diameter
-
-long_data$Live_BA_sq_m<-as.double(ifelse(long_data$STATUS=="1", (3.14159*(((long_data$DBH_mm/10)^2)/40000)) , NA))
+long_data$DBH_cm<-ifelse(long_data$STATUS=="1",long_data$DBH_mm/10 , NA)
+long_data$Live_BA_sq_m<-as.double(ifelse(long_data$STATUS=="1", (3.14159*(long_data$DBH_cm^2)/40000), NA))
 
 #creating DF_age variable based on treatment and estimated measurement year
 #long_data$DF_age<-as.numeric(ifelse(long_data$YEAR=="ODBH", #if old
@@ -1363,6 +1363,10 @@ subplot_df_year<-long_data_keep %>% filter(!is.na(STATUS)) %>% group_by(Subplot_
 #adding the separate TMT, BLOCK, and PLOT columns
 subplot_df_age<-subplot_df_age %>% separate(Subplot_ID_TRS, c("TRT","REP","SUBPLOT"),"_",remove = FALSE)
 subplot_df_year<-subplot_df_year %>% separate(Subplot_ID_TRS, c("TRT","REP","SUBPLOT"),"_",remove = FALSE)
+
+#adding sq ft/acr in addition to sq m/ha  1m/ha = 4.356 ft/a
+subplot_df_age$Live_BA_fpa<-subplot_df_age$Live_BA_mpha*4.356
+subplot_df_year$Live_BA_fpa<-subplot_df_year$Live_BA_mpha*4.356
 #subplot_df_age$TRT<-as.factor(subplot_df_age$TRT)
 #subplot_df_age$REP<-as.factor(subplot_df_age$REP)
 #subplot_df_age$SUBPLOT<-as.factor(subplot_df_age$SUBPLOT)
@@ -1403,6 +1407,8 @@ stand_ABC$Treatment<-ifelse(stand_ABC$TRT=="A",
                             "10RA",
                             ifelse(stand_ABC$TRT=="B",
                                "10CW", "DF"))
+#adding sq ft/acr in addition to sq m/ha  1m/ha = 4.356 ft/a
+stand_ABC$Live_BA_fpa<-stand_ABC$Live_BA_mpha*4.356
 
 subplot_ABC_year$SEV<-ifelse(subplot_ABC_year$REP=="0","5",subplot_ABC_year$REP)
 stand_ABC_year$SEV<-ifelse(stand_ABC_year$REP=="0","5",stand_ABC_year$REP)
@@ -1414,6 +1420,8 @@ stand_ABC_year$Treatment<-ifelse(stand_ABC_year$TRT=="A",
                             "10RA",
                             ifelse(stand_ABC_year$TRT=="B",
                                "10CW", "DF"))
+#adding sq ft/acr in addition to sq m/ha  1m/ha = 4.356 ft/a
+stand_ABC_year$Live_BA_fpa<-stand_ABC_year$Live_BA_mpha*4.356
 #write_rds(subplot_df_age,"C:/Users/showa/Documents/GitHub/Apiary_LRR/subplot_df_age.Rds")
 #write_rds(stand_df_age,"C:/Users/showa/Documents/GitHub/Apiary_LRR/stand_level_df_age.Rds")
 #write_rds(subplot_ABC,"C:/Users/showa/Documents/GitHub/Apiary_LRR/subplot_level_ABC.Rds")
@@ -1450,6 +1458,7 @@ FVS_Prep$DIAMETER<-(FVS_Prep$DBH_mm * 0.03937)
 T1S2<- filter(FVS_Prep, Tnum=='10' & SEV==2)
 TMT1_STND2_FVS_TreeInit<-T1S2[,c("STAND_CN","STAND_ID","PLOT_CN","PLOT_ID","STANDPLOT_CN","STANDPLOT_ID","TREE_ID","HISTORY","DIAMETER","root_prop")]
 write_csv(TMT1_STND2_FVS_TreeInit, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs/TMT1_STND2_FVS_TreeInit.csv")
+
 #T1S4
 T1S4<- filter(FVS_Prep, Tnum=='10' & SEV==4)
 TMT1_STND4_FVS_TreeInit<-T1S4[,c("STAND_CN","STAND_ID","PLOT_CN","PLOT_ID","STANDPLOT_CN","STANDPLOT_ID","TREE_ID","HISTORY","DIAMETER","root_prop")]
@@ -1503,69 +1512,70 @@ write_csv(TMT3_STND5_FVS_TreeInit, "C:/Users/showa/Documents/GitHub/Apiary_LRR/F
 # preparing and writing simple BA outputs
 ```{r}
 output_prep<-filter(stand_ABC_year, STATUS=="1")
+
 #T1S2
 BA_T1S2<- filter(output_prep, TRT=="A" & SEV==2)
-BA_TMT1_STND2<-BA_T1S2[,c("Stand_ID_TR","REP","YEAR_dbl","TRT","count","Live_BA_mpha","SEV")]
+BA_TMT1_STND2<-BA_T1S2[,c("Stand_ID_TR","REP","YEAR_dbl","TRT","count","Live_BA_mpha", "Live_BA_fpa","SEV")]
 write_csv(BA_TMT1_STND2, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs/BA_TMT1_STND2.csv")
 
 #T1S4
 BA_T1S4<- filter(output_prep, TRT=="A" & SEV==4)
-BA_TMT1_STND4<-BA_T1S4[,c("Stand_ID_TR","REP","YEAR_dbl","TRT","count","Live_BA_mpha","SEV")]
+BA_TMT1_STND4<-BA_T1S4[,c("Stand_ID_TR","REP","YEAR_dbl","TRT","count","Live_BA_mpha", "Live_BA_fpa","SEV")]
 write_csv(BA_TMT1_STND4, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs/BA_TMT1_STND4.csv")
 
 #BA_T1S5
 BA_BA_T1S5<- filter(output_prep, TRT=="A" & SEV==5)
-BA_TMT1_STND5<-BA_BA_T1S5[,c("Stand_ID_TR","REP","YEAR_dbl","TRT","count","Live_BA_mpha","SEV")]
+BA_TMT1_STND5<-BA_BA_T1S5[,c("Stand_ID_TR","REP","YEAR_dbl","TRT","count","Live_BA_mpha", "Live_BA_fpa","SEV")]
 write_csv(BA_TMT1_STND5, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs/BA_TMT1_STND5.csv")
 
 #T2S1
 BA_T2S1<- filter(output_prep, TRT=="B" & SEV==1)
-BA_TMT2_STND1<-BA_T2S1[,c("Stand_ID_TR","REP","YEAR_dbl","TRT","count","Live_BA_mpha","SEV")]
+BA_TMT2_STND1<-BA_T2S1[,c("Stand_ID_TR","REP","YEAR_dbl","TRT","count","Live_BA_mpha", "Live_BA_fpa","SEV")]
 write_csv(BA_TMT2_STND1, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs/BA_TMT2_STND1.csv")
 
 #T2S2
 BA_T2S2<- filter(output_prep, TRT=="B" & SEV==2)
-BA_TMT2_STND2<-BA_T2S2[,c("Stand_ID_TR","REP","YEAR_dbl","TRT","count","Live_BA_mpha","SEV")]
+BA_TMT2_STND2<-BA_T2S2[,c("Stand_ID_TR","REP","YEAR_dbl","TRT","count","Live_BA_mpha", "Live_BA_fpa","SEV")]
 write_csv(BA_TMT2_STND2, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs/BA_TMT2_STND2.csv")
 
 #T2S3
 BA_T2S3<- filter(output_prep, TRT=="B" & SEV==3)
-BA_TMT2_STND3<-BA_T2S3[,c("Stand_ID_TR","REP","YEAR_dbl","TRT","count","Live_BA_mpha","SEV")]
+BA_TMT2_STND3<-BA_T2S3[,c("Stand_ID_TR","REP","YEAR_dbl","TRT","count","Live_BA_mpha", "Live_BA_fpa","SEV")]
 write_csv(BA_TMT2_STND3, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs/BA_TMT2_STND3.csv")
 
 #T2S4
 BA_T2S4<- filter(output_prep, TRT=="B" & SEV==4)
-BA_TMT2_STND4<-BA_T2S4[,c("Stand_ID_TR","REP","YEAR_dbl","TRT","count","Live_BA_mpha","SEV")]
+BA_TMT2_STND4<-BA_T2S4[,c("Stand_ID_TR","REP","YEAR_dbl","TRT","count","Live_BA_mpha", "Live_BA_fpa","SEV")]
 write_csv(BA_TMT2_STND4, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs/BA_TMT2_STND4.csv")
 
 #T2S5
 BA_T2S5<- filter(output_prep, TRT=="B" & SEV==5)
-BA_TMT2_STND5<-BA_T2S5[,c("Stand_ID_TR","REP","YEAR_dbl","TRT","count","Live_BA_mpha","SEV")]
+BA_TMT2_STND5<-BA_T2S5[,c("Stand_ID_TR","REP","YEAR_dbl","TRT","count","Live_BA_mpha", "Live_BA_fpa","SEV")]
 write_csv(BA_TMT2_STND5, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs/BA_TMT2_STND5.csv")
 
 #T3S1
 BA_T3S1<- filter(output_prep, TRT=="C" & SEV==1)
-BA_TMT3_STND1<-BA_T3S1[,c("Stand_ID_TR","REP","YEAR_dbl","TRT","count","Live_BA_mpha","SEV")]
+BA_TMT3_STND1<-BA_T3S1[,c("Stand_ID_TR","REP","YEAR_dbl","TRT","count","Live_BA_mpha", "Live_BA_fpa","SEV")]
 write_csv(BA_TMT3_STND1, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs/BA_TMT3_STND1.csv")
 
 #T3S2
 BA_T3S2<- filter(output_prep, TRT=="C" & SEV==2)
-BA_TMT3_STND2<-BA_T3S2[,c("Stand_ID_TR","REP","YEAR_dbl","TRT","count","Live_BA_mpha","SEV")]
+BA_TMT3_STND2<-BA_T3S2[,c("Stand_ID_TR","REP","YEAR_dbl","TRT","count","Live_BA_mpha", "Live_BA_fpa","SEV")]
 write_csv(BA_TMT3_STND2, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs/BA_TMT3_STND2.csv")
 
 #T3S3
 BA_T3S3<- filter(output_prep, TRT=="C" & SEV==3)
-BA_TMT3_STND3<-BA_T3S3[,c("Stand_ID_TR","REP","YEAR_dbl","TRT","count","Live_BA_mpha","SEV")]
+BA_TMT3_STND3<-BA_T3S3[,c("Stand_ID_TR","REP","YEAR_dbl","TRT","count","Live_BA_mpha", "Live_BA_fpa","SEV")]
 write_csv(BA_TMT3_STND3, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs/BA_TMT3_STND3.csv")
 
 #T3S4
 BA_T3S4<- filter(output_prep, TRT=="C" & SEV==4)
-BA_TMT3_STND4<-BA_T3S4[,c("Stand_ID_TR","REP","YEAR_dbl","TRT","count","Live_BA_mpha","SEV")]
+BA_TMT3_STND4<-BA_T3S4[,c("Stand_ID_TR","REP","YEAR_dbl","TRT","count","Live_BA_mpha", "Live_BA_fpa","SEV")]
 write_csv(BA_TMT3_STND4, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs/BA_TMT3_STND4.csv")
 
 #T3S5
 BA_T3S5<- filter(output_prep, TRT=="C" & SEV==5)
-BA_TMT3_STND5<-BA_T3S5[,c("Stand_ID_TR","REP","YEAR_dbl","TRT","count","Live_BA_mpha","SEV")]
+BA_TMT3_STND5<-BA_T3S5[,c("Stand_ID_TR","REP","YEAR_dbl","TRT","count","Live_BA_mpha", "Live_BA_fpa","SEV")]
 write_csv(BA_TMT3_STND5, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs/BA_TMT3_STND5.csv")
 
 ```
