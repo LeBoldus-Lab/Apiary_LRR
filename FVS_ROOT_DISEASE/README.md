@@ -1,8 +1,10 @@
 ## Parameters for Apiary Data Western Root Disease Model Runs:
-- Excel file used was "TMT1_STAND2_INPUT.xlsx"
+### Treatment 1: Stand 2
+- Excel file used was "TMT1_STAND2_INPUT"
 - Phellinus (Coniferiporia) root disease was used for the root disease type. The keyword and number for this was RRTYPE = 4. 
 - Total stand size projections being used is .25 acres. This takes into account the 5 plots which are each .05 acres in size. 
 - Total roots disease area in acres was calculated by using the data sheets provided from Weyco and the Forest Service. For TMT1_STAND2 this was 0.4. 
+- Total root disease area in acres used is .10 (40% of .25 acres)
 - Number of root diesease centers were not readily detected on the ground during the final survey, therefore the stand was modeled as a one for the disease centere value.
 - Parameters for the RRInit keyword, proportion of roots infected 0.4 was estimated overall and used as the standard. This is taking into considerationg that 0.1 (10%) is considered light infection and that tree mortality will occur well before 100% of roots become infected depending on the disease type. Therefore proportion of root system infected was estimated at 0.4 but was not based upon any type of measurements or data (this conclusion is based upon the advice I received from Lance David).
 - Default parameters were used regarding bark beetles considering that the Douglas-fir beetle (Dendroctonus pseudotsugae Hopkins) occurs throughout the extensive range of Douglas-fir (Furniss and Kegley, 2014). Also consider adding in Hansen et. al paper about bark beetles if it refers to the Apiary site at all. 
@@ -15,6 +17,9 @@ In theory each stand has ~170 total trees.  Stands 1-5 have increasing levels of
 - Stand 3 = 51:119 
 - Stand 4 = 68:102
 - Stand 5 = 85:85
+
+### Screenshot of Treatment 1: Stand 2 Western Root Disease Model inputs
+![image](https://user-images.githubusercontent.com/49656044/156473250-79053011-be5e-4b66-bc2d-84757c00bf9a.png)
 
 
 
