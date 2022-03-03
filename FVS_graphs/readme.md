@@ -9,5 +9,4 @@
 
 # TMT3
 
-![image](https://user-images.githubusercontent.com/49656044/156547265-3a0018bf-7ddb-4019-b1e4-68d2f1675ba6.png)
-
+![image](https://user-images.githubusercontent.com/49656044/156637522-e895695d-c541-47ab-bd87-5682c20ecd70.png)
