@@ -8,7 +8,7 @@
 - Number of root diesease centers were not readily detected on the ground during the final survey, therefore the stand was modeled as a one for the disease centere value.
 - Parameters for the RRInit keyword, proportion of roots infected 0.4 was estimated overall and used as the standard. This is taking into considerationg that 0.1 (10%) is considered light infection and that tree mortality will occur well before 100% of roots become infected depending on the disease type. Therefore proportion of root system infected was estimated at 0.4 but was not based upon any type of measurements or data (this conclusion is based upon the advice I received from Lance David).
 - Default parameters were used regarding bark beetles considering that the Douglas-fir beetle (Dendroctonus pseudotsugae Hopkins) occurs throughout the extensive range of Douglas-fir (Furniss and Kegley, 2014). Also consider adding in Hansen et. al paper about bark beetles if it refers to the Apiary site at all. 
-           FUCK
+           - FUCK
 ## Number of infected trees in disease centers
 
 In theory each stand has ~170 total trees.  Stands 1-5 have increasing levels of LRR. So lets try the following for infecte:uninfected by stand. 
