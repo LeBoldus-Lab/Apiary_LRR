@@ -1494,15 +1494,15 @@ write_csv(TMT3_STND1_FVS_TreeInit, "C:/Users/showa/Documents/GitHub/Apiary_LRR/F
 T3S2<- filter(FVS_Prep, Tnum=='30' & SEV==2)
 TMT3_STND2_FVS_TreeInit<-T3S2[,c("STAND_CN","STAND_ID","PLOT_CN","PLOT_ID","STANDPLOT_CN","STANDPLOT_ID","TREE_ID","HISTORY","DIAMETER","root_prop")]
 write_csv(TMT3_STND2_FVS_TreeInit, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs/TMT3_STND2_FVS_TreeInit.csv")
-#T3S1
+#T3S3
 T3S3<- filter(FVS_Prep, Tnum=='30' & SEV==3)
 TMT3_STND3_FVS_TreeInit<-T3S3[,c("STAND_CN","STAND_ID","PLOT_CN","PLOT_ID","STANDPLOT_CN","STANDPLOT_ID","TREE_ID","HISTORY","DIAMETER","root_prop")]
-write_csv(TMT3_STND2_FVS_TreeInit, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs/TMT3_STND3_FVS_TreeInit.csv")
-#T3S1
+write_csv(TMT3_STND3_FVS_TreeInit, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs/TMT3_STND3_FVS_TreeInit.csv")
+#T3S4
 T3S4<- filter(FVS_Prep, Tnum=='30' & SEV==4)
 TMT3_STND4_FVS_TreeInit<-T3S4[,c("STAND_CN","STAND_ID","PLOT_CN","PLOT_ID","STANDPLOT_CN","STANDPLOT_ID","TREE_ID","HISTORY","DIAMETER","root_prop")]
 write_csv(TMT3_STND4_FVS_TreeInit, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs/TMT3_STND4_FVS_TreeInit.csv")
-#T3S1
+#T3S5
 T3S5<- filter(FVS_Prep, Tnum=='30' & SEV==5)
 TMT3_STND5_FVS_TreeInit<-T3S5[,c("STAND_CN","STAND_ID","PLOT_CN","PLOT_ID","STANDPLOT_CN","STANDPLOT_ID","TREE_ID","HISTORY","DIAMETER","root_prop")]
 write_csv(TMT3_STND5_FVS_TreeInit, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs/TMT3_STND5_FVS_TreeInit.csv")
