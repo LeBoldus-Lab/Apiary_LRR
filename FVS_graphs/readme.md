@@ -23,3 +23,6 @@
 
 ![image](https://user-images.githubusercontent.com/49656044/157104792-25758ca3-9b3d-4660-b0bc-7a12fb4792e4.png)
 
+# Sensitivity analysis
+
+![image](https://user-images.githubusercontent.com/49656044/157137878-db2c20f4-92b8-436f-988a-35ccccc11b91.png)
