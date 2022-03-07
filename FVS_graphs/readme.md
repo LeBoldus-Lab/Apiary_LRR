@@ -18,3 +18,8 @@
 # TMT2 with Western Root Disease Model 
 
 ![image](https://user-images.githubusercontent.com/49656044/156678598-d0effff8-17fa-42fd-8084-01bb8cc7a14f.png)
+
+# TMT1 with PNW Variant
+
+![image](https://user-images.githubusercontent.com/49656044/157104792-25758ca3-9b3d-4660-b0bc-7a12fb4792e4.png)
+
