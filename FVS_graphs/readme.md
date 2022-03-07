@@ -14,3 +14,7 @@
 # TMT1 with Western Root Disease Model
 
 ![image](https://user-images.githubusercontent.com/49656044/156646979-9b656b23-2bcc-4a9c-96ee-67029b2880b5.png)
+
+# TMT2 with Western Root Disease Model 
+
+![image](https://user-images.githubusercontent.com/49656044/156678598-d0effff8-17fa-42fd-8084-01bb8cc7a14f.png)
