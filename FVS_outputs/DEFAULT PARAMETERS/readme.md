@@ -9,3 +9,5 @@
 - 20 disease centers
 
 ![image](https://user-images.githubusercontent.com/49656044/160492477-4ff71a95-2216-40e0-9710-78cb54ef7001.png)
+
+![image](https://user-images.githubusercontent.com/49656044/160493830-ed072939-d5c6-4638-a185-9214731a7319.png)
