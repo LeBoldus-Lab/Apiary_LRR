@@ -1,4 +1,4 @@
-# Path to the Default FVS Output Files 
+# Path to the Default FVS Output Files Used
 - LeBoldus-Lab/Apiary_LRR/FVS_outputs/PNW_VARIANT/
 
 
