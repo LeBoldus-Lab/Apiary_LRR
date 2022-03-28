@@ -1,3 +1,7 @@
+# Path to the Default FVS Output Files 
+- LeBoldus-Lab/Apiary_LRR/FVS_outputs/PNW_VARIANT/
+
+
 # WRDM Parameters Used:
 - .0625 root disease area
 - 85:85 uninfected and infected
