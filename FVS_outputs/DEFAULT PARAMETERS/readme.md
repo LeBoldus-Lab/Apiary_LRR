@@ -8,6 +8,4 @@
 - 0.1 Proportion of root disease
 - 20 disease centers
 
-# Treatment 1: Stand 2
-
-![image](https://user-images.githubusercontent.com/49656044/160484504-49642d03-e933-4d1a-8e60-64c6a4ace33f.png)
+![image](https://user-images.githubusercontent.com/49656044/160492477-4ff71a95-2216-40e0-9710-78cb54ef7001.png)
