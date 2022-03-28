@@ -8,8 +8,14 @@
 - 0.1 Proportion of root disease
 - 20 disease centers
 
+# TMT 1
+
 ![image](https://user-images.githubusercontent.com/49656044/160492477-4ff71a95-2216-40e0-9710-78cb54ef7001.png)
 
 ![image](https://user-images.githubusercontent.com/49656044/160493830-ed072939-d5c6-4638-a185-9214731a7319.png)
 
 ![image](https://user-images.githubusercontent.com/49656044/160495237-73b12dfb-c99c-476c-add2-92e4494cfb95.png)
+
+# TMT 2
+
+![image](https://user-images.githubusercontent.com/49656044/160501598-1ce98336-de2e-4b1d-b30f-0f9cbb365d99.png)
