@@ -9,3 +9,9 @@
 - It would be nice to have some sort of way of automating the process for large data runs.
 - The automation might show a range of expected statistical outcomes.
 
+# TMT 1 
+
+![image](https://user-images.githubusercontent.com/49656044/160717279-e130e85b-9ac9-4a4a-acd8-8661f1816fee.png)
+
+
+# ALL THESE ARE IN R YOU JUST NEED TO COPY AND PASE AGAIN...
