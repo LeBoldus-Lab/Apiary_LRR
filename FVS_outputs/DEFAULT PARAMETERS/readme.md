@@ -17,8 +17,7 @@
 ![image](https://user-images.githubusercontent.com/49656044/160495237-73b12dfb-c99c-476c-add2-92e4494cfb95.png)
 
 # TMT 2
-
-![image](https://user-images.githubusercontent.com/49656044/160501598-1ce98336-de2e-4b1d-b30f-0f9cbb365d99.png)
+![image](https://user-images.githubusercontent.com/49656044/160714941-824c69c5-aec7-45c8-8b9b-6cb9fcbd4287.png)
 
 ![image](https://user-images.githubusercontent.com/49656044/160714114-28cf7c1a-7017-4cb1-bd35-678776b9bf17.png)
 
