@@ -14,4 +14,6 @@
 ![image](https://user-images.githubusercontent.com/49656044/160717279-e130e85b-9ac9-4a4a-acd8-8661f1816fee.png)
 
 
-# ALL THESE ARE IN R YOU JUST NEED TO COPY AND PASE AGAIN...
+# ALL THESE ARE IN R YOU JUST NEED TO COPY AND PASE AGAIN... ALSO CHANGE THE Y-AXIS TO 360 ON ALL OF THEM!!
+
+![image](https://user-images.githubusercontent.com/49656044/160717544-68de6be0-34eb-4984-99ac-f6df1d3a6335.png)
