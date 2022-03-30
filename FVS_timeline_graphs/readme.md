@@ -1,5 +1,5 @@
 # To make changes to basal area for different plots:
-- The only excel file that should need to be edited is the "AP_FVS_data_combined_TMT1_STND4.xlsx" file.
+- The only excel file that should need to be edited is the "AP_FVS_data_combined_TMT1_STND2.xlsx" file.
 
 
 # For example if you want to enter data from a new run and use TMT1 STAND4 you would edit the basal "TMT1_BA" for TMT1 STAND4
