@@ -1,0 +1,63 @@
+---
+title: "FVS"
+author: "Shawn"
+date: "March 30, 2022"
+output:
+  word_document: default
+  pdf_document: default
+---
+#Import the libraries
+```{r include=FALSE}
+# Load libraries we need for the assignment
+install.packages("fvsLoad")
+library(ggplot2)
+install.packages(tidyverse)
+install.packages(tidyr)
+library(tidyverse)
+library(dplyr)
+library(tidyr)
+library(readxl)
+
+```
+
+
+
+#TMT 1 STAND 2, PNW VARIANT, WRDM DEFAULT PARAMETERS
+
+```{r}
+
+fvs_data_combined_TMT1 <- read_excel("C:/Users/shawn/Desktop/LAST_TIME/R_final/AP_FVS_data_combined_TMT1_STND2_1.xlsx")
+
+
+fvs_data_combined <- read_excel("C:/Users/shawn/Desktop/LAST_TIME/R_final/AP_FVS_data_combined.xlsx")
+
+```
+
+
+
+
+
+#TMT 1 Stand 2 - Default Parameters
+
+```{r}
+library(ggplot2)
+library(cowplot)
+
+#install.packages(scales)
+#library(scales)
+#library(viridis)
+AVERAGE_BA <- as.numeric(fvs_data_combined$AVERAGE_BA)
+#as.numeric(fvs_data$FULL_Year)
+#as.numeric(fvs_data$Full_MgmtID)
+#(aes(fill = dose), show.legend = FALSE)
+ gg1 <- ggplot(data = fvs_data_combined_TMT1, aes(x = FULL_Year, y = TMT1_BA, color = GRAPH, group = GRAPH), position = position_dodge(0.3)) +  
+  geom_point(position = position_dodge(0.3)) +    
+   geom_line(position = position_dodge(0.3)) + ylim(10, 360) +
+    #geom_errorbar(data =  fvs_data_combined_TMT1, aes(ymin=TMT1_BA - TMT1_SE,  ymax=TMT1_BA + TMT1_SE), width=.2, position=position_dodge(0.2)) + 
+   scale_color_brewer(palette = "Dark2", name = "") + theme_classic()  + ggtitle("Treatment 1 Stand 2 - Default Parameters") + labs(x = "Year") +  ylab(expression(paste(BA~ft^2/ac)))   
+
+ output <- plot_grid (gg1 + theme(legend.position = "right"), labels = c(''),  hjust = -3.5, label_size = 20, ncol = 1) 
+print(output)
+ggsave("TMT1.png")
+ 
+```
