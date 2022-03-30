@@ -2,7 +2,8 @@
 
 # Directory Table of Contents
 
-- Input files to be used within FVS for doing model runs: 
+- Input files to be used within FVS for doing model runs:  LeBoldus-Lab /Apiary_LRR/FVS_input_files_for_model_runs
+- Default parameter output logs and resulting files: LeBoldus-Lab /Apiary_LRR/
 
 
 ## Analysis of LRR non-host rotation study from Apiary, Oregon
