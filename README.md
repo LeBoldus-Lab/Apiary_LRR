@@ -4,7 +4,7 @@
 
 - Input files to be used within FVS for doing model runs:  FVS_input_files_for_model_runs/
 - Default parameter output logs and resulting files: FVS_outputs/DEFAULT PARAMETERS/
-
+- Actual data calculations (i.e. Basal area): FVS_inputs/
 
 
 ## Analysis of LRR non-host rotation study from Apiary, Oregon
