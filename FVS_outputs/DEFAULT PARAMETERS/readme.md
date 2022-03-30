@@ -7,7 +7,7 @@
 # Suggestions for improvements:
 - More stringent default parameters for WRDM - Phellinus
 - It would be nice to have some sort of way of automating the process for large data runs and to show a range of expected values (i.e. a high and low of predicted values).
-- An approach that I thought of but not until towards the end of doing all these runs (*sigh*) is combining or daisy chaining all the different Treatments and Stands together into one excel file and then running them all at once and then. This approach likely would have saved me a lot of time...
+- An approach that I thought of but not until towards the end of doing all these runs (*sigh*) is combining or daisy chaining all the different Treatments and Stands together into one excel file and then running them all at once. This approach likely would have saved me a lot of time...
 - The automation might show a range of expected statistical outcomes with error bars.
 - Parameters that are measurable. Proportion of root infected? Hard to measure this especially for root diseases and it doesn't have much influence on the model? It seems like there could be better parameter settings. Perhaps number of wind blown trees in a plot for example?
 - Conversion from metric to imperial and then back to metric for publishing creates confusion, is time consuming, and is error prone.
