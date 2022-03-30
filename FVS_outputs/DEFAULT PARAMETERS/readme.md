@@ -19,7 +19,7 @@
 
 
 
-# ALL THESE ARE IN R YOU JUST NEED TO COPY AND PASE AGAIN... ALSO CHANGE THE Y-AXIS TO 360 ON ALL OF THEM!!
+# TMT 2
 
 ![image](https://user-images.githubusercontent.com/49656044/160755418-306b9516-1b2f-4843-8bd9-5b0b35ae80bf.png)
 
