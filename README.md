@@ -6,7 +6,7 @@
 - Default parameter output logs and resulting files: FVS_outputs/DEFAULT PARAMETERS/
 - Actual data calculations (i.e. Basal area): FVS_inputs/
 - Sensitivity analysis graph results: FVS_graphs/
-- R markdown and corresponding spreadsheet for making timeline graphs: FVS_timeline_graphs
+- R markdown and corresponding spreadsheet for making timeline graphs: FVS_timeline_graphs/
 
 ## Analysis of LRR non-host rotation study from Apiary, Oregon
 
