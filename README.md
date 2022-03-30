@@ -1,5 +1,11 @@
 # Apiary_LRR
-Analysis of LRR non-host rotation study from Apiary, Oregon
+
+# Directory Table of Contents
+
+- Input files to be used within FVS for doing model runs: 
+
+
+## Analysis of LRR non-host rotation study from Apiary, Oregon
 
 An unpublished exiperiment on management of LRR was setup within the Apiary area. The general design of the experiment has several treatment areas, i.) harvest Doug fir and plant Alder for 10 years then replant Doug fir (A plots) ii.) harvest Doug fir and plant cottonwood for 10 years then replant Doug fir (C plots). These same experimental designs were also replicated in other areas but the resistance species were left to grow for 20 years before Doug fir were replanted. From my understanding and interpretation, this study was never published and it sort of fell apart due to a transition between ownership of lands going form federal to private industries. Currently, new trials are going to be conducted however the alternative species that will be planted are conifers such as Coastal redwood and western red cedar. 
 
