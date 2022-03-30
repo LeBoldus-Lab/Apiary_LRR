@@ -16,6 +16,6 @@
 
 # ALL THESE ARE IN R YOU JUST NEED TO COPY AND PASE AGAIN... ALSO CHANGE THE Y-AXIS TO 360 ON ALL OF THEM!!
 
-![image](https://user-images.githubusercontent.com/49656044/160717544-68de6be0-34eb-4984-99ac-f6df1d3a6335.png)
+![image](https://user-images.githubusercontent.com/49656044/160755418-306b9516-1b2f-4843-8bd9-5b0b35ae80bf.png)
 
 ![image](https://user-images.githubusercontent.com/49656044/160755175-9b9a0ce1-7c34-4a6d-a8ff-f1cd969899c7.png)
