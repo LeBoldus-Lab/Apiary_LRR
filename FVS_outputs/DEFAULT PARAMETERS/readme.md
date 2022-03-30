@@ -34,5 +34,5 @@
 
 # TMT 3
 
-![image](https://user-images.githubusercontent.com/49656044/160891848-7f3de86a-7c62-4618-94ad-0ef19764cb46.png)
+![image](https://user-images.githubusercontent.com/49656044/160892970-e2637933-e6bd-4603-8b10-e804c9e8805b.png)
 
