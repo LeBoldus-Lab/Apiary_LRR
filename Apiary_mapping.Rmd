@@ -1,0 +1,75 @@
+---
+title: "Apiary_mapping"
+author: "David Showalter"
+date: "4/15/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+Importing packages into library
+
+```{r, message=FALSE}
+library(readxl)
+library(readr)
+library(tidyverse)
+library(ggplot2)
+library(sp)
+```
+
+## Importing transcribed compass points and tree measurements
+
+You can also embed plots, for example:
+
+```{r, echo=FALSE}
+por_compass_df<-read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/Poria_survey_70s.xlsx", sheet = "Poria_compass_points", range = "A1:AC83", col_names = TRUE)
+
+#subset four compass points for testing
+compass_test<-por_compass_df[1:4,]
+
+#first change "C" Y_1, Y_2, Y_3, Y_4 to "0"
+
+#then convert chain grid to computer grid
+#compass_test$comp_X_1 <- (-(compass_test$X_1 /2))+17 
+#Repeat for X_2, X_3, X_4
+
+#compass_test$comp_Y_1 <- (compass_test$Y_1 + 10) /2
+#Repeat for Y_2, Y_3, Y_4
+
+#convert Dist_1-4 from ft to grid units
+#compass_test$comp_Dist_1 <- compass_test$Dist_1 /132
+#repeat for 2-4
+
+#convert azimuth to radians? or will sin cos tan work with degrees
+
+#see this post for converting bearing and distance to coordinates
+
+#https://stackoverflow.com/questions/22064611/how-to-draw-rotated-axes-in-r/22067400#22067400
+
+get.coords <- function(a, d, x0, y0) {
+  a <- ifelse(a <= 90, 90 - a, 450 - a)
+  data.frame(x = x0 + d * cos(a / 180 * pi), 
+             y = y0+ d * sin(a / 180 * pi))
+}
+
+rotatedAxis <- function(x0, y0, a, d, symmetrical=FALSE, tickdist, ticklen, ...) {
+  if(isTRUE(symmetrical)) {
+    axends <- get.coords(c(a, a + 180), d, x0, y0)    
+    tick.d <- c(seq(0, d, tickdist), seq(-tickdist, -d, -tickdist))      
+  } else {
+    axends <- rbind(get.coords(a, d, x0, y0), c(x0, y0))
+    tick.d <- seq(0, d, tickdist)
+  }
+  invisible(lapply(apply(get.coords(a, d=tick.d, x0, y0), 1, function(x) {
+    get.coords(a + 90, c(-ticklen, ticklen), x[1], x[2])
+  }), function(x) lines(x$x, x$y, ...)))
+  lines(axends$x, axends$y, ...)
+}
+
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
