@@ -28,48 +28,97 @@ You can also embed plots, for example:
 ```{r, echo=FALSE}
 por_compass_df<-read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/Poria_survey_70s.xlsx", sheet = "Poria_compass_points", range = "A1:AC83", col_names = TRUE)
 
-#subset four compass points for testing
-compass_test<-por_compass_df[1:4,]
+#subset four compass points for testing including some with "C" and negative numbers
+compass_test<-por_compass_df[c(1:4, 35:37),]
 
 #first change "C" Y_1, Y_2, Y_3, Y_4 to "0"
+compass_test$Y_1 <- as.double(ifelse(compass_test$Y_1 == "C", "0", compass_test$Y_1))
+compass_test$Y_2 <- as.double(ifelse(compass_test$Y_2 == "C", "0", compass_test$Y_2))
+compass_test$Y_3 <- as.double(ifelse(compass_test$Y_3 == "C", "0", compass_test$Y_3))
+compass_test$Y_4 <- as.double(ifelse(compass_test$Y_4 == "C", "0", compass_test$Y_4))
+
+#make sure xs, ys, azimuths, distances are dbl not chr
+#glimpse(compass_test)
+compass_test$X_1 <- as.double(compass_test$X_1)
+compass_test$Y_1 <- as.double(compass_test$Y_1)
+compass_test$Y_2 <- as.double(compass_test$Y_2)
+compass_test$Dist_2 <- as.double(compass_test$Dist_2)
+compass_test$Azimuth_2 <- as.double(compass_test$Azimuth_2)
+compass_test$X_3 <- as.double(compass_test$X_3)
+compass_test$Y_3 <- as.double(compass_test$Y_3)
+compass_test$Dist_3 <- as.double(compass_test$Dist_3)
+compass_test$Azimuth_3 <- as.double(compass_test$Azimuth_3)
+compass_test$X_4 <- as.double(compass_test$X_4)
+compass_test$Y_4 <- as.double(compass_test$Y_4)
+compass_test$Dist_4 <- as.double(compass_test$Dist_4)
+compass_test$Azimuth_4 <- as.double(compass_test$Azimuth_4)
+#glimpse(compass_test)
 
 #then convert chain grid to computer grid
-#compass_test$comp_X_1 <- (-(compass_test$X_1 /2))+17 
-#Repeat for X_2, X_3, X_4
+compass_test$comp_X_1 <- (-(compass_test$X_1 /2))+17 
+compass_test$comp_X_2 <- (-(compass_test$X_2 /2))+17 
+compass_test$comp_X_3 <- (-(compass_test$X_3 /2))+17 
+compass_test$comp_X_4 <- (-(compass_test$X_4 /2))+17 
 
-#compass_test$comp_Y_1 <- (compass_test$Y_1 + 10) /2
-#Repeat for Y_2, Y_3, Y_4
+compass_test$comp_Y_1 <- (compass_test$Y_1 + 10) /2
+compass_test$comp_Y_2 <- (compass_test$Y_2 + 10) /2
+compass_test$comp_Y_3 <- (compass_test$Y_3 + 10) /2
+compass_test$comp_Y_4 <- (compass_test$Y_4 + 10) /2
 
+#create a distance grid measured in feet, based on the computer grid
+compass_test$ft_X_1 <- compass_test$comp_X_1 * 132
+compass_test$ft_X_2 <- compass_test$comp_X_2 * 132
+compass_test$ft_X_3 <- compass_test$comp_X_3 * 132
+compass_test$ft_X_4 <- compass_test$comp_X_4 * 132
+compass_test$ft_Y_1 <- compass_test$comp_Y_1 * 132
+compass_test$ft_Y_2 <- compass_test$comp_Y_2 * 132
+compass_test$ft_Y_3 <- compass_test$comp_Y_3 * 132
+compass_test$ft_Y_4 <- compass_test$comp_Y_4 * 132
+
+#calculate slope-corrected distances if necessary
+compass_test$Dist_1_cor<- ifelse(is.na(compass_test$'%_1'), compass_test$Dist_1, compass_test$Dist_1*cos(atan(compass_test$'%_1' /100)))
+compass_test$Dist_2_cor<- ifelse(is.na(compass_test$'%_2'), compass_test$Dist_2, compass_test$Dist_2*cos(atan(compass_test$'%_2' /100)))
+compass_test$Dist_3_cor<- ifelse(is.na(compass_test$'%_3'), compass_test$Dist_3, compass_test$Dist_3*cos(atan(compass_test$'%_3' /100)))
+compass_test$Dist_4_cor<- ifelse(is.na(compass_test$'%_4'), compass_test$Dist_4, compass_test$Dist_4*cos(atan(compass_test$'%_4' /100)))
+
+#Calculate cartesian coordinates for compass stations relative to ft grid (convert compass station chain coords to ft grid)
+
+#calculation cartesian coordinates for tree relative to compass stations
+
+#see this post for converting bearing and distance (polar) to Cartesian coordinates
+
+#https://www.r-bloggers.com/2007/10/convert-polar-coordinates-to-cartesian/
+
+polar2cart<-function(x,y,dist,bearing,as.deg=FALSE){
+  ## Translate Polar coordinates into Cartesian coordinates
+  ## based on starting location, distance, and bearing
+  ## as.deg indicates if the bearing is in degrees (T) or radians (F)
+  
+  if(as.deg){
+    ##if bearing is in degrees, convert to radians
+    bearing=bearing*pi/180
+  }
+  
+  newx<-x+dist*sin(bearing)  ##X
+  newy<-y+dist*cos(bearing)  ##Y
+  return(list("x"=newx,"y"=newy))
+}
+
+
+##Example
+
+oldloc=c(0,5) 
+bearing=200 #degrees
+dist=5
+
+newloc<-polar2cart(oldloc[1],oldloc[2],dist,bearing,TRUE)
+plot(oldloc[1],oldloc[2],xlim=c(-10,10),ylim=c(-10,10))
+points(newloc$x,newloc$y,col="red")
+
+#this may not be necessary
 #convert Dist_1-4 from ft to grid units
 #compass_test$comp_Dist_1 <- compass_test$Dist_1 /132
 #repeat for 2-4
-
-#convert azimuth to radians? or will sin cos tan work with degrees
-
-#see this post for converting bearing and distance to coordinates
-
-#https://stackoverflow.com/questions/22064611/how-to-draw-rotated-axes-in-r/22067400#22067400
-
-get.coords <- function(a, d, x0, y0) {
-  a <- ifelse(a <= 90, 90 - a, 450 - a)
-  data.frame(x = x0 + d * cos(a / 180 * pi), 
-             y = y0+ d * sin(a / 180 * pi))
-}
-
-rotatedAxis <- function(x0, y0, a, d, symmetrical=FALSE, tickdist, ticklen, ...) {
-  if(isTRUE(symmetrical)) {
-    axends <- get.coords(c(a, a + 180), d, x0, y0)    
-    tick.d <- c(seq(0, d, tickdist), seq(-tickdist, -d, -tickdist))      
-  } else {
-    axends <- rbind(get.coords(a, d, x0, y0), c(x0, y0))
-    tick.d <- seq(0, d, tickdist)
-  }
-  invisible(lapply(apply(get.coords(a, d=tick.d, x0, y0), 1, function(x) {
-    get.coords(a + 90, c(-ticklen, ticklen), x[1], x[2])
-  }), function(x) lines(x$x, x$y, ...)))
-  lines(axends$x, axends$y, ...)
-}
-
 ```
 
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
