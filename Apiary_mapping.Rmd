@@ -309,6 +309,15 @@ multiple_segments_1 <- data.frame(x0 = compass_test$ft_X_1,
          x1 = multiple_segments_3$x1,
          y1 = multiple_segments_3$y1)
 
+  multiple_segments_4 <- data.frame(x0 = compass_test$ft_X_4,   
+                       y0 = compass_test$ft_Y_4,
+                       x1 = new_4$x,
+                       y1 = new_4$y)
+                         
+ segments(x0 = multiple_segments_4$x0,                   
+         y0 = multiple_segments_4$y0,
+         x1 = multiple_segments_4$x1,
+         y1 = multiple_segments_4$y1)
 
 #results look funny.  Will check that inputs were transcribed correctly 
 
