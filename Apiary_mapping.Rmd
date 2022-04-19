@@ -232,7 +232,7 @@ compass_test$ft_Y_2 <- compass_test$comp_Y_2 * 132
 compass_test$ft_Y_3 <- compass_test$comp_Y_3 * 132
 compass_test$ft_Y_4 <- compass_test$comp_Y_4 * 132
 
-#calculate slope-corrected distances if necessary
+#calculate slope-corrected horizontal distances if necessary
 compass_test$Dist_1_cor<- ifelse(is.na(compass_test$'%_1'), compass_test$Dist_1, compass_test$Dist_1*cos(atan(compass_test$'%_1' /100)))
 compass_test$Dist_2_cor<- ifelse(is.na(compass_test$'%_2'), compass_test$Dist_2, compass_test$Dist_2*cos(atan(compass_test$'%_2' /100)))
 compass_test$Dist_3_cor<- ifelse(is.na(compass_test$'%_3'), compass_test$Dist_3, compass_test$Dist_3*cos(atan(compass_test$'%_3' /100)))
@@ -268,7 +268,7 @@ compass_test$ft_X_ave = rowMeans(compass_test[c("loc_X_1", "loc_X_2", "loc_X_3",
 compass_test$ft_Y_ave = rowMeans(compass_test[c("loc_Y_1", "loc_Y_2", "loc_Y_3","loc_Y_4")], na.rm=TRUE)
 ```
 
-#plot grid ref coordinate and compass points with bearing line
+#plot grid ref coordinate and compass points with bearing line to see how things are behaving
 ```{r, echo=FALSE}
 #plot reference and derived coordinates and connect them with a line
 plot(compass_test$ft_X_1,compass_test$ft_Y_1,xlim=c(0,1000),ylim=c(0,1000))
@@ -323,12 +323,7 @@ multiple_segments_1 <- data.frame(x0 = compass_test$ft_X_1,
          x1 = multiple_segments_4$x1,
          y1 = multiple_segments_4$y1)
 
-#results look funny.  Will check that inputs were transcribed correctly 
 
-#this may not be necessary
-#convert Dist_1-4 from ft to grid units
-#compass_test$comp_Dist_1 <- compass_test$Dist_1 /132
-#repeat for 2-4
 ```
 
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
