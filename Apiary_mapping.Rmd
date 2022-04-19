@@ -26,8 +26,8 @@ library(sp)
 You can also embed plots, for example:
 
 ```{r, echo=FALSE}
-por_compass_df<-read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/Poria_survey_70s.xlsx", sheet = "Poria_compass_points", range = "A1:AP83", col_names = TRUE)
-
+#por_compass_df<-read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/Poria_survey_70s.xlsx", sheet = "Poria_compass_points", range = "A1:AP83", col_names = TRUE)
+por_compass_df<-read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Poria_survey_70s.xlsx", sheet = "Poria_compass_points", range = "A1:AP83", col_names = TRUE)
 #subset four compass points for testing including some with "C" and negative numbers
 compass_test<-por_compass_df[c(1:4, 35:37),]
 
@@ -69,7 +69,10 @@ compass_test$Az_1_calc<- ifelse(compass_test$add_1==TRUE,  #if add is TRUE
                                 , ifelse(compass_test$add_1==FALSE, # if false, 
                                 compass_test$bear_ref_1 - compass_test$Deg_1 # then subtract deg from ref
                                 , NA # if neither TRUE nor FALSE, then NA
-                                ))  
+                                ))
+#convert neg degerees to pos
+compass_test$Az_1_calc<- ifelse(compass_test$Az_1_calc <0 , 360 + compass_test$Az_1_calc, compass_test$Az_1_calc)
+
 #replacing missing azimuths with calculated (if available)
 compass_test$Azimuth_1 <- ifelse(is.na(compass_test$Azimuth_1), compass_test$Az_1_calc,compass_test$Azimuth_1)
 
@@ -108,6 +111,7 @@ compass_test$Az_2_calc<- ifelse(compass_test$add_2==TRUE,  #if add is TRUE
                                 compass_test$bear_ref_2 - compass_test$Deg_2 # then subtract deg from ref
                                 , NA # if neither TRUE nor FALSE, then NA
                                 ))  
+compass_test$Az_2_calc<- ifelse(compass_test$Az_2_calc <0 , 360 + compass_test$Az_2_calc, compass_test$Az_2_calc)
 compass_test$Azimuth_2 <- ifelse(is.na(compass_test$Azimuth_2), compass_test$Az_2_calc,compass_test$Azimuth_2)
 compass_test$bear_ref_3<- ifelse(compass_test$Dir_3 =="N", #test is north
                               0 #if yes, then 0 deg
@@ -143,6 +147,7 @@ compass_test$Az_3_calc<- ifelse(compass_test$add_3==TRUE,  #if add is TRUE
                                 compass_test$bear_ref_3 - compass_test$Deg_3 # then subtract deg from ref
                                 , NA # if neither TRUE nor FALSE, then NA
                                 ))  
+compass_test$Az_3_calc<- ifelse(compass_test$Az_3_calc <0 , 360 + compass_test$Az_3_calc, compass_test$Az_3_calc)
 compass_test$Azimuth_3 <- ifelse(is.na(compass_test$Azimuth_3), compass_test$Az_3_calc,compass_test$Azimuth_3)
 compass_test$bear_ref_4<- ifelse(compass_test$Dir_4 =="N", #test is north
                               0 #if yes, then 0 deg
@@ -178,6 +183,7 @@ compass_test$Az_4_calc<- ifelse(compass_test$add_4==TRUE,  #if add is TRUE
                                 compass_test$bear_ref_4 - compass_test$Deg_4 # then subtract deg from ref
                                 , NA # if neither TRUE nor FALSE, then NA
                                 ))  
+compass_test$Az_4_calc<- ifelse(compass_test$Az_4_calc <0 , 360 + compass_test$Az_4_calc, compass_test$Az_4_calc)
 compass_test$Azimuth_4 <- ifelse(is.na(compass_test$Azimuth_4), compass_test$Az_4_calc,compass_test$Azimuth_4)
 
 
@@ -233,55 +239,53 @@ compass_test$Dist_3_cor<- ifelse(is.na(compass_test$'%_3'), compass_test$Dist_3,
 compass_test$Dist_4_cor<- ifelse(is.na(compass_test$'%_4'), compass_test$Dist_4, compass_test$Dist_4*cos(atan(compass_test$'%_4' /100)))
 
 
-##########################REVERSE THE BEARINGS SINCE THE MEASUREMENT WAS FROM THE COMPASS TO THE GRID##########################
-compass_test$Azimuth_1_flip <-compass_test$Azimuth_1 + 180
-compass_test$Azimuth_2_flip <-compass_test$Azimuth_2 + 180
-compass_test$Azimuth_3_flip <-compass_test$Azimuth_3 + 180
-compass_test$Azimuth_4_flip <-compass_test$Azimuth_4 + 180
+#REVERSE (180) THE BEARINGS SINCE THE MEASUREMENT WAS FROM THE COMPASS TO THE GRID AND X-positive on Grid is 225 relative to north. SO NET IS - 45
+compass_test$Azimuth_1_flip <-compass_test$Azimuth_1 -45
+compass_test$Azimuth_2_flip <-compass_test$Azimuth_2 -45
+compass_test$Azimuth_3_flip <-compass_test$Azimuth_3 -45
+compass_test$Azimuth_4_flip <-compass_test$Azimuth_4 -45
 
+```
+
+#Converting from polar to cartesian coordinate and plotting 
+
+```{r, echo=FALSE}
 #Calculate cartesian coordinates for compass stations relative to ft grid (convert compass station chain coords to ft grid)
 
 #calculation cartesian coordinates for tree relative to compass stations
-
 #see this post for converting bearing and distance (polar) to Cartesian coordinates
-
 #https://www.r-bloggers.com/2007/10/convert-polar-coordinates-to-cartesian/
-#define function
-polar2cart<-function(x,y,dist,bearing,as.deg=FALSE){
-  ## Translate Polar coordinates into Cartesian coordinates
-  ## based on starting location, distance, and bearing
-  ## as.deg indicates if the bearing is in degrees (T) or radians (F)
-  
-  if(as.deg){
-    ##if bearing is in degrees, convert to radians
-    bearing=bearing*pi/180
-  }
-  
-  newx<-x+dist*sin(bearing)  ##X
-  newy<-y+dist*cos(bearing)  ##Y
-  return(list("x"=newx,"y"=newy))
-}
+compass_test$loc_X_1 <- compass_test$ft_X_1+compass_test$Dist_1_cor*sin(compass_test$Azimuth_1_flip*pi/180)
+compass_test$loc_Y_1 <- compass_test$ft_Y_1+compass_test$Dist_1_cor*cos(compass_test$Azimuth_1_flip*pi/180)
+compass_test$loc_X_2 <- compass_test$ft_X_2+compass_test$Dist_2_cor*sin(compass_test$Azimuth_2_flip*pi/180)
+compass_test$loc_Y_2 <- compass_test$ft_Y_2+compass_test$Dist_2_cor*cos(compass_test$Azimuth_2_flip*pi/180)
+compass_test$loc_X_3 <- compass_test$ft_X_3+compass_test$Dist_3_cor*sin(compass_test$Azimuth_3_flip*pi/180)
+compass_test$loc_Y_3 <- compass_test$ft_Y_3+compass_test$Dist_3_cor*cos(compass_test$Azimuth_3_flip*pi/180)
+compass_test$loc_X_4 <- compass_test$ft_X_4+compass_test$Dist_4_cor*sin(compass_test$Azimuth_4_flip*pi/180)
+compass_test$loc_Y_4 <- compass_test$ft_Y_4+compass_test$Dist_4_cor*cos(compass_test$Azimuth_4_flip*pi/180)
 
-#run function on each station using degrees=true
-new_1<-polar2cart(compass_test$ft_X_1, compass_test$ft_Y_1, compass_test$Dist_1_cor, compass_test$Azimuth_1_flip, TRUE)
-new_2<-polar2cart(compass_test$ft_X_2, compass_test$ft_Y_2, compass_test$Dist_2_cor, compass_test$Azimuth_2_flip, TRUE)
-new_3<-polar2cart(compass_test$ft_X_3, compass_test$ft_Y_3, compass_test$Dist_3_cor, compass_test$Azimuth_3_flip, TRUE)
-new_4<-polar2cart(compass_test$ft_X_4, compass_test$ft_Y_4, compass_test$Dist_4_cor, compass_test$Azimuth_4_flip, TRUE)
+compass_test$ft_X_ave = rowMeans(compass_test[c("loc_X_1", "loc_X_2", "loc_X_3","loc_X_4")], na.rm=TRUE)
+compass_test$ft_Y_ave = rowMeans(compass_test[c("loc_Y_1", "loc_Y_2", "loc_Y_3","loc_Y_4")], na.rm=TRUE)
+```
+
+#plot grid ref coordinate and compass points with bearing line
+```{r, echo=FALSE}
 #plot reference and derived coordinates and connect them with a line
 plot(compass_test$ft_X_1,compass_test$ft_Y_1,xlim=c(0,1000),ylim=c(0,1000))
-points(new_1$x,new_1$y,col="red")
+points(compass_test$loc_X_1,compass_test$loc_Y_1,col="red")
 points(compass_test$ft_X_2,compass_test$ft_Y_2)
-points(new_2$x,new_2$y,col="blue")
+points(compass_test$loc_X_2,compass_test$loc_Y_2,col="blue")
 points(compass_test$ft_X_3,compass_test$ft_Y_3)
-points(new_3$x,new_3$y,col="green")
+points(compass_test$loc_X_3,compass_test$loc_Y_3,col="green")
 points(compass_test$ft_X_4,compass_test$ft_Y_4)
-points(new_4$x,new_4$y,col="gray")
+points(compass_test$loc_X_4,compass_test$loc_Y_4,col="gray")
+points(compass_test$ft_X_ave,compass_test$ft_Y_ave,col="yellow", cex= 3)
 
 # Create data frame with line-values
 multiple_segments_1 <- data.frame(x0 = compass_test$ft_X_1,   
                        y0 = compass_test$ft_Y_1,
-                       x1 = new_1$x,
-                       y1 = new_1$y)
+                       x1 = compass_test$loc_X_1,
+                       y1 = compass_test$loc_Y_1)
                          
  # Draw multiple lines                       
  segments(x0 = multiple_segments_1$x0,                   
@@ -291,8 +295,8 @@ multiple_segments_1 <- data.frame(x0 = compass_test$ft_X_1,
 
  multiple_segments_2 <- data.frame(x0 = compass_test$ft_X_2,   
                        y0 = compass_test$ft_Y_2,
-                       x1 = new_2$x,
-                       y1 = new_2$y)
+                       x1 = compass_test$loc_X_2,
+                       y1 = compass_test$loc_Y_2)
                          
  segments(x0 = multiple_segments_2$x0,                   
          y0 = multiple_segments_2$y0,
@@ -301,8 +305,8 @@ multiple_segments_1 <- data.frame(x0 = compass_test$ft_X_1,
  
  multiple_segments_3 <- data.frame(x0 = compass_test$ft_X_3,   
                        y0 = compass_test$ft_Y_3,
-                       x1 = new_3$x,
-                       y1 = new_3$y)
+                       x1 = compass_test$loc_X_3,
+                       y1 = compass_test$loc_Y_3)
                          
  segments(x0 = multiple_segments_3$x0,                   
          y0 = multiple_segments_3$y0,
@@ -311,8 +315,8 @@ multiple_segments_1 <- data.frame(x0 = compass_test$ft_X_1,
 
   multiple_segments_4 <- data.frame(x0 = compass_test$ft_X_4,   
                        y0 = compass_test$ft_Y_4,
-                       x1 = new_4$x,
-                       y1 = new_4$y)
+                       x1 = compass_test$loc_X_4,
+                       y1 = compass_test$loc_Y_4)
                          
  segments(x0 = multiple_segments_4$x0,                   
          y0 = multiple_segments_4$y0,
