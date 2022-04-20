@@ -33,217 +33,217 @@ compass_test<-por_compass_df[c(1:4, 35:37),]
 
 #convert bearings to fill in missing azimuths
 
-compass_test$bear_ref_1<- ifelse(compass_test$Dir_1 =="N", #test is north
+por_compass_df$bear_ref_1<- ifelse(por_compass_df$Dir_1 =="N", #test is north
                               0 #if yes, then 0 deg
                               , #if not, then
-                              ifelse(compass_test$Dir_1 =="E", #test is east
+                              ifelse(por_compass_df$Dir_1 =="E", #test is east
                                      90 #if yes, then 90 deg
                               , #if not, then
-                              ifelse(compass_test$Dir_1 =="S", #test is south
+                              ifelse(por_compass_df$Dir_1 =="S", #test is south
                                      180 #if yes, then 180 deg
                               , #if not, then
-                              ifelse(compass_test$Dir_1 =="W", #test is west
+                              ifelse(por_compass_df$Dir_1 =="W", #test is west
                                      270 #if yes, then 270 deg
                               , #if not, then
                               NA #fill as NA since there is nothing in "direction" field
                               ))))
 
 #determining weather to add or subtract the degree adjustment
-compass_test$add_1<- ifelse(compass_test$Dir_1 =="N", #test dir is north
-                           ifelse(compass_test$Adj_1 =="E", # if dir north, then test adj is east
+por_compass_df$add_1<- ifelse(por_compass_df$Dir_1 =="N", #test dir is north
+                           ifelse(por_compass_df$Adj_1 =="E", # if dir north, then test adj is east
                               TRUE, FALSE) #if adj is east then add, if not then subtract  
-                            , ifelse(compass_test$Dir_1 =="E", #if not north then test dir is east
-                           ifelse(compass_test$Adj_1 =="E",# if dir east, then test adj is south
+                            , ifelse(por_compass_df$Dir_1 =="E", #if not north then test dir is east
+                           ifelse(por_compass_df$Adj_1 =="E",# if dir east, then test adj is south
                               TRUE, FALSE) #if adj is south then add, if not then subtract
-                            , ifelse(compass_test$Dir_1 =="S", #if not east then test dir is south
-                           ifelse(compass_test$Adj_1 =="W",# if dir south, then test adj is west
+                            , ifelse(por_compass_df$Dir_1 =="S", #if not east then test dir is south
+                           ifelse(por_compass_df$Adj_1 =="W",# if dir south, then test adj is west
                               TRUE, FALSE) #if adj is west then add, if not then subtract
-                            , ifelse(compass_test$Dir_1 =="W", #if not south then test dir is west
-                           ifelse(compass_test$Adj_1 =="N",# if dir west, then test adj is north
+                            , ifelse(por_compass_df$Dir_1 =="W", #if not south then test dir is west
+                           ifelse(por_compass_df$Adj_1 =="N",# if dir west, then test adj is north
                               TRUE, FALSE) #if adj is west then add, if not then subtract
                            , NA #if Dir_1 is not NESW then return NA
                            ))))
 #run the calculation
-compass_test$Az_1_calc<- ifelse(compass_test$add_1==TRUE,  #if add is TRUE
-                                compass_test$bear_ref_1 + compass_test$Deg_1 #then add deg to ref
-                                , ifelse(compass_test$add_1==FALSE, # if false, 
-                                compass_test$bear_ref_1 - compass_test$Deg_1 # then subtract deg from ref
+por_compass_df$Az_1_calc<- ifelse(por_compass_df$add_1==TRUE,  #if add is TRUE
+                                por_compass_df$bear_ref_1 + por_compass_df$Deg_1 #then add deg to ref
+                                , ifelse(por_compass_df$add_1==FALSE, # if false, 
+                                por_compass_df$bear_ref_1 - por_compass_df$Deg_1 # then subtract deg from ref
                                 , NA # if neither TRUE nor FALSE, then NA
                                 ))
 #convert neg degerees to pos
-compass_test$Az_1_calc<- ifelse(compass_test$Az_1_calc <0 , 360 + compass_test$Az_1_calc, compass_test$Az_1_calc)
+por_compass_df$Az_1_calc<- ifelse(por_compass_df$Az_1_calc <0 , 360 + por_compass_df$Az_1_calc, por_compass_df$Az_1_calc)
 
 #replacing missing azimuths with calculated (if available)
-compass_test$Azimuth_1 <- ifelse(is.na(compass_test$Azimuth_1), compass_test$Az_1_calc,compass_test$Azimuth_1)
+por_compass_df$Azimuth_1 <- ifelse(is.na(por_compass_df$Azimuth_1), por_compass_df$Az_1_calc,por_compass_df$Azimuth_1)
 
 #repeat for 2-4
-compass_test$bear_ref_2<- ifelse(compass_test$Dir_2 =="N", #test is north
+por_compass_df$bear_ref_2<- ifelse(por_compass_df$Dir_2 =="N", #test is north
                               0 #if yes, then 0 deg
                               , #if not, then
-                              ifelse(compass_test$Dir_2 =="E", #test is east
+                              ifelse(por_compass_df$Dir_2 =="E", #test is east
                                      90 #if yes, then 90 deg
                               , #if not, then
-                              ifelse(compass_test$Dir_2 =="S", #test is south
+                              ifelse(por_compass_df$Dir_2 =="S", #test is south
                                      180 #if yes, then 180 deg
                               , #if not, then
-                              ifelse(compass_test$Dir_2 =="W", #test is west
+                              ifelse(por_compass_df$Dir_2 =="W", #test is west
                                      270 #if yes, then 270 deg
                               , #if not, then
                               NA #fill as NA since there is nothing in "direction" field
                               ))))
-compass_test$add_2<- ifelse(compass_test$Dir_2 =="N", #test dir is north
-                           ifelse(compass_test$Adj_2 =="E", # if dir north, then test adj is east
+por_compass_df$add_2<- ifelse(por_compass_df$Dir_2 =="N", #test dir is north
+                           ifelse(por_compass_df$Adj_2 =="E", # if dir north, then test adj is east
                               TRUE, FALSE) #if adj is east then add, if not then subtract  
-                            , ifelse(compass_test$Dir_2 =="E", #if not north then test dir is east
-                           ifelse(compass_test$Adj_2 =="E",# if dir east, then test adj is south
+                            , ifelse(por_compass_df$Dir_2 =="E", #if not north then test dir is east
+                           ifelse(por_compass_df$Adj_2 =="E",# if dir east, then test adj is south
                               TRUE, FALSE) #if adj is south then add, if not then subtract
-                            , ifelse(compass_test$Dir_2 =="S", #if not east then test dir is south
-                           ifelse(compass_test$Adj_2 =="W",# if dir south, then test adj is west
+                            , ifelse(por_compass_df$Dir_2 =="S", #if not east then test dir is south
+                           ifelse(por_compass_df$Adj_2 =="W",# if dir south, then test adj is west
                               TRUE, FALSE) #if adj is west then add, if not then subtract
-                            , ifelse(compass_test$Dir_2 =="W", #if not south then test dir is west
-                           ifelse(compass_test$Adj_2 =="N",# if dir west, then test adj is north
+                            , ifelse(por_compass_df$Dir_2 =="W", #if not south then test dir is west
+                           ifelse(por_compass_df$Adj_2 =="N",# if dir west, then test adj is north
                               TRUE, FALSE) #if adj is west then add, if not then subtract
                            , NA #if Dir_2 is not NESW then return NA
                            ))))
-compass_test$Az_2_calc<- ifelse(compass_test$add_2==TRUE,  #if add is TRUE
-                                compass_test$bear_ref_2 + compass_test$Deg_2 #then add deg to ref
-                                , ifelse(compass_test$add_2==FALSE, # if false, 
-                                compass_test$bear_ref_2 - compass_test$Deg_2 # then subtract deg from ref
+por_compass_df$Az_2_calc<- ifelse(por_compass_df$add_2==TRUE,  #if add is TRUE
+                                por_compass_df$bear_ref_2 + por_compass_df$Deg_2 #then add deg to ref
+                                , ifelse(por_compass_df$add_2==FALSE, # if false, 
+                                por_compass_df$bear_ref_2 - por_compass_df$Deg_2 # then subtract deg from ref
                                 , NA # if neither TRUE nor FALSE, then NA
                                 ))  
-compass_test$Az_2_calc<- ifelse(compass_test$Az_2_calc <0 , 360 + compass_test$Az_2_calc, compass_test$Az_2_calc)
-compass_test$Azimuth_2 <- ifelse(is.na(compass_test$Azimuth_2), compass_test$Az_2_calc,compass_test$Azimuth_2)
-compass_test$bear_ref_3<- ifelse(compass_test$Dir_3 =="N", #test is north
+por_compass_df$Az_2_calc<- ifelse(por_compass_df$Az_2_calc <0 , 360 + por_compass_df$Az_2_calc, por_compass_df$Az_2_calc)
+por_compass_df$Azimuth_2 <- ifelse(is.na(por_compass_df$Azimuth_2), por_compass_df$Az_2_calc,por_compass_df$Azimuth_2)
+por_compass_df$bear_ref_3<- ifelse(por_compass_df$Dir_3 =="N", #test is north
                               0 #if yes, then 0 deg
                               , #if not, then
-                              ifelse(compass_test$Dir_3 =="E", #test is east
+                              ifelse(por_compass_df$Dir_3 =="E", #test is east
                                      90 #if yes, then 90 deg
                               , #if not, then
-                              ifelse(compass_test$Dir_3 =="S", #test is south
+                              ifelse(por_compass_df$Dir_3 =="S", #test is south
                                      180 #if yes, then 180 deg
                               , #if not, then
-                              ifelse(compass_test$Dir_3 =="W", #test is west
+                              ifelse(por_compass_df$Dir_3 =="W", #test is west
                                      270 #if yes, then 270 deg
                               , #if not, then
                               NA #fill as NA since there is nothing in "direction" field
                               ))))
-compass_test$add_3<- ifelse(compass_test$Dir_3 =="N", #test dir is north
-                           ifelse(compass_test$Adj_3 =="E", # if dir north, then test adj is east
+por_compass_df$add_3<- ifelse(por_compass_df$Dir_3 =="N", #test dir is north
+                           ifelse(por_compass_df$Adj_3 =="E", # if dir north, then test adj is east
                               TRUE, FALSE) #if adj is east then add, if not then subtract  
-                            , ifelse(compass_test$Dir_3 =="E", #if not north then test dir is east
-                           ifelse(compass_test$Adj_3 =="E",# if dir east, then test adj is south
+                            , ifelse(por_compass_df$Dir_3 =="E", #if not north then test dir is east
+                           ifelse(por_compass_df$Adj_3 =="E",# if dir east, then test adj is south
                               TRUE, FALSE) #if adj is south then add, if not then subtract
-                            , ifelse(compass_test$Dir_3 =="S", #if not east then test dir is south
-                           ifelse(compass_test$Adj_3 =="W",# if dir south, then test adj is west
+                            , ifelse(por_compass_df$Dir_3 =="S", #if not east then test dir is south
+                           ifelse(por_compass_df$Adj_3 =="W",# if dir south, then test adj is west
                               TRUE, FALSE) #if adj is west then add, if not then subtract
-                            , ifelse(compass_test$Dir_3 =="W", #if not south then test dir is west
-                           ifelse(compass_test$Adj_3 =="N",# if dir west, then test adj is north
+                            , ifelse(por_compass_df$Dir_3 =="W", #if not south then test dir is west
+                           ifelse(por_compass_df$Adj_3 =="N",# if dir west, then test adj is north
                               TRUE, FALSE) #if adj is west then add, if not then subtract
                            , NA #if Dir_3 is not NESW then return NA
                            ))))
-compass_test$Az_3_calc<- ifelse(compass_test$add_3==TRUE,  #if add is TRUE
-                                compass_test$bear_ref_3 + compass_test$Deg_3 #then add deg to ref
-                                , ifelse(compass_test$add_3==FALSE, # if false, 
-                                compass_test$bear_ref_3 - compass_test$Deg_3 # then subtract deg from ref
+por_compass_df$Az_3_calc<- ifelse(por_compass_df$add_3==TRUE,  #if add is TRUE
+                                por_compass_df$bear_ref_3 + por_compass_df$Deg_3 #then add deg to ref
+                                , ifelse(por_compass_df$add_3==FALSE, # if false, 
+                                por_compass_df$bear_ref_3 - por_compass_df$Deg_3 # then subtract deg from ref
                                 , NA # if neither TRUE nor FALSE, then NA
                                 ))  
-compass_test$Az_3_calc<- ifelse(compass_test$Az_3_calc <0 , 360 + compass_test$Az_3_calc, compass_test$Az_3_calc)
-compass_test$Azimuth_3 <- ifelse(is.na(compass_test$Azimuth_3), compass_test$Az_3_calc,compass_test$Azimuth_3)
-compass_test$bear_ref_4<- ifelse(compass_test$Dir_4 =="N", #test is north
+por_compass_df$Az_3_calc<- ifelse(por_compass_df$Az_3_calc <0 , 360 + por_compass_df$Az_3_calc, por_compass_df$Az_3_calc)
+por_compass_df$Azimuth_3 <- ifelse(is.na(por_compass_df$Azimuth_3), por_compass_df$Az_3_calc,por_compass_df$Azimuth_3)
+por_compass_df$bear_ref_4<- ifelse(por_compass_df$Dir_4 =="N", #test is north
                               0 #if yes, then 0 deg
                               , #if not, then
-                              ifelse(compass_test$Dir_4 =="E", #test is east
+                              ifelse(por_compass_df$Dir_4 =="E", #test is east
                                      90 #if yes, then 90 deg
                               , #if not, then
-                              ifelse(compass_test$Dir_4 =="S", #test is south
+                              ifelse(por_compass_df$Dir_4 =="S", #test is south
                                      180 #if yes, then 180 deg
                               , #if not, then
-                              ifelse(compass_test$Dir_4 =="W", #test is west
+                              ifelse(por_compass_df$Dir_4 =="W", #test is west
                                      270 #if yes, then 270 deg
                               , #if not, then
                               NA #fill as NA since there is nothing in "direction" field
                               ))))
-compass_test$add_4<- ifelse(compass_test$Dir_4 =="N", #test dir is north
-                           ifelse(compass_test$Adj_4 =="E", # if dir north, then test adj is east
+por_compass_df$add_4<- ifelse(por_compass_df$Dir_4 =="N", #test dir is north
+                           ifelse(por_compass_df$Adj_4 =="E", # if dir north, then test adj is east
                               TRUE, FALSE) #if adj is east then add, if not then subtract  
-                            , ifelse(compass_test$Dir_4 =="E", #if not north then test dir is east
-                           ifelse(compass_test$Adj_4 =="E",# if dir east, then test adj is south
+                            , ifelse(por_compass_df$Dir_4 =="E", #if not north then test dir is east
+                           ifelse(por_compass_df$Adj_4 =="E",# if dir east, then test adj is south
                               TRUE, FALSE) #if adj is south then add, if not then subtract
-                            , ifelse(compass_test$Dir_4 =="S", #if not east then test dir is south
-                           ifelse(compass_test$Adj_4 =="W",# if dir south, then test adj is west
+                            , ifelse(por_compass_df$Dir_4 =="S", #if not east then test dir is south
+                           ifelse(por_compass_df$Adj_4 =="W",# if dir south, then test adj is west
                               TRUE, FALSE) #if adj is west then add, if not then subtract
-                            , ifelse(compass_test$Dir_4 =="W", #if not south then test dir is west
-                           ifelse(compass_test$Adj_4 =="N",# if dir west, then test adj is north
+                            , ifelse(por_compass_df$Dir_4 =="W", #if not south then test dir is west
+                           ifelse(por_compass_df$Adj_4 =="N",# if dir west, then test adj is north
                               TRUE, FALSE) #if adj is west then add, if not then subtract
                            , NA #if Dir_4 is not NESW then return NA
                            ))))
-compass_test$Az_4_calc<- ifelse(compass_test$add_4==TRUE,  #if add is TRUE
-                                compass_test$bear_ref_4 + compass_test$Deg_4 #then add deg to ref
-                                , ifelse(compass_test$add_4==FALSE, # if false, 
-                                compass_test$bear_ref_4 - compass_test$Deg_4 # then subtract deg from ref
+por_compass_df$Az_4_calc<- ifelse(por_compass_df$add_4==TRUE,  #if add is TRUE
+                                por_compass_df$bear_ref_4 + por_compass_df$Deg_4 #then add deg to ref
+                                , ifelse(por_compass_df$add_4==FALSE, # if false, 
+                                por_compass_df$bear_ref_4 - por_compass_df$Deg_4 # then subtract deg from ref
                                 , NA # if neither TRUE nor FALSE, then NA
                                 ))  
-compass_test$Az_4_calc<- ifelse(compass_test$Az_4_calc <0 , 360 + compass_test$Az_4_calc, compass_test$Az_4_calc)
-compass_test$Azimuth_4 <- ifelse(is.na(compass_test$Azimuth_4), compass_test$Az_4_calc,compass_test$Azimuth_4)
+por_compass_df$Az_4_calc<- ifelse(por_compass_df$Az_4_calc <0 , 360 + por_compass_df$Az_4_calc, por_compass_df$Az_4_calc)
+por_compass_df$Azimuth_4 <- ifelse(is.na(por_compass_df$Azimuth_4), por_compass_df$Az_4_calc,por_compass_df$Azimuth_4)
 
 
 
 #first change "C" Y_1, Y_2, Y_3, Y_4 to "0"
-compass_test$Y_1 <- as.double(ifelse(compass_test$Y_1 == "C", "0", compass_test$Y_1))
-compass_test$Y_2 <- as.double(ifelse(compass_test$Y_2 == "C", "0", compass_test$Y_2))
-compass_test$Y_3 <- as.double(ifelse(compass_test$Y_3 == "C", "0", compass_test$Y_3))
-compass_test$Y_4 <- as.double(ifelse(compass_test$Y_4 == "C", "0", compass_test$Y_4))
+por_compass_df$Y_1 <- as.double(ifelse(por_compass_df$Y_1 == "C", "0", por_compass_df$Y_1))
+por_compass_df$Y_2 <- as.double(ifelse(por_compass_df$Y_2 == "C", "0", por_compass_df$Y_2))
+por_compass_df$Y_3 <- as.double(ifelse(por_compass_df$Y_3 == "C", "0", por_compass_df$Y_3))
+por_compass_df$Y_4 <- as.double(ifelse(por_compass_df$Y_4 == "C", "0", por_compass_df$Y_4))
 
 #make sure xs, ys, azimuths, distances are dbl not chr
-#glimpse(compass_test)
-compass_test$X_1 <- as.double(compass_test$X_1)
-compass_test$Y_1 <- as.double(compass_test$Y_1)
-compass_test$Y_2 <- as.double(compass_test$Y_2)
-compass_test$Dist_2 <- as.double(compass_test$Dist_2)
-compass_test$Azimuth_2 <- as.double(compass_test$Azimuth_2)
-compass_test$X_3 <- as.double(compass_test$X_3)
-compass_test$Y_3 <- as.double(compass_test$Y_3)
-compass_test$Dist_3 <- as.double(compass_test$Dist_3)
-compass_test$Azimuth_3 <- as.double(compass_test$Azimuth_3)
-compass_test$X_4 <- as.double(compass_test$X_4)
-compass_test$Y_4 <- as.double(compass_test$Y_4)
-compass_test$Dist_4 <- as.double(compass_test$Dist_4)
-compass_test$Azimuth_4 <- as.double(compass_test$Azimuth_4)
-#glimpse(compass_test)
+#glimpse(por_compass_df)
+por_compass_df$X_1 <- as.double(por_compass_df$X_1)
+por_compass_df$Y_1 <- as.double(por_compass_df$Y_1)
+por_compass_df$Y_2 <- as.double(por_compass_df$Y_2)
+por_compass_df$Dist_2 <- as.double(por_compass_df$Dist_2)
+por_compass_df$Azimuth_2 <- as.double(por_compass_df$Azimuth_2)
+por_compass_df$X_3 <- as.double(por_compass_df$X_3)
+por_compass_df$Y_3 <- as.double(por_compass_df$Y_3)
+por_compass_df$Dist_3 <- as.double(por_compass_df$Dist_3)
+por_compass_df$Azimuth_3 <- as.double(por_compass_df$Azimuth_3)
+por_compass_df$X_4 <- as.double(por_compass_df$X_4)
+por_compass_df$Y_4 <- as.double(por_compass_df$Y_4)
+por_compass_df$Dist_4 <- as.double(por_compass_df$Dist_4)
+por_compass_df$Azimuth_4 <- as.double(por_compass_df$Azimuth_4)
+#glimpse(por_compass_df)
 
 #then convert chain grid to computer grid
-compass_test$comp_X_1 <- (-(compass_test$X_1 /2))+17 
-compass_test$comp_X_2 <- (-(compass_test$X_2 /2))+17 
-compass_test$comp_X_3 <- (-(compass_test$X_3 /2))+17 
-compass_test$comp_X_4 <- (-(compass_test$X_4 /2))+17 
+por_compass_df$comp_X_1 <- (-(por_compass_df$X_1 /2))+17 
+por_compass_df$comp_X_2 <- (-(por_compass_df$X_2 /2))+17 
+por_compass_df$comp_X_3 <- (-(por_compass_df$X_3 /2))+17 
+por_compass_df$comp_X_4 <- (-(por_compass_df$X_4 /2))+17 
 
-compass_test$comp_Y_1 <- (compass_test$Y_1 + 10) /2
-compass_test$comp_Y_2 <- (compass_test$Y_2 + 10) /2
-compass_test$comp_Y_3 <- (compass_test$Y_3 + 10) /2
-compass_test$comp_Y_4 <- (compass_test$Y_4 + 10) /2
+por_compass_df$comp_Y_1 <- (por_compass_df$Y_1 + 10) /2
+por_compass_df$comp_Y_2 <- (por_compass_df$Y_2 + 10) /2
+por_compass_df$comp_Y_3 <- (por_compass_df$Y_3 + 10) /2
+por_compass_df$comp_Y_4 <- (por_compass_df$Y_4 + 10) /2
 
 #create a distance grid measured in feet, based on the computer grid
-compass_test$ft_X_1 <- compass_test$comp_X_1 * 132
-compass_test$ft_X_2 <- compass_test$comp_X_2 * 132
-compass_test$ft_X_3 <- compass_test$comp_X_3 * 132
-compass_test$ft_X_4 <- compass_test$comp_X_4 * 132
-compass_test$ft_Y_1 <- compass_test$comp_Y_1 * 132
-compass_test$ft_Y_2 <- compass_test$comp_Y_2 * 132
-compass_test$ft_Y_3 <- compass_test$comp_Y_3 * 132
-compass_test$ft_Y_4 <- compass_test$comp_Y_4 * 132
+por_compass_df$ft_X_1 <- por_compass_df$comp_X_1 * 132
+por_compass_df$ft_X_2 <- por_compass_df$comp_X_2 * 132
+por_compass_df$ft_X_3 <- por_compass_df$comp_X_3 * 132
+por_compass_df$ft_X_4 <- por_compass_df$comp_X_4 * 132
+por_compass_df$ft_Y_1 <- por_compass_df$comp_Y_1 * 132
+por_compass_df$ft_Y_2 <- por_compass_df$comp_Y_2 * 132
+por_compass_df$ft_Y_3 <- por_compass_df$comp_Y_3 * 132
+por_compass_df$ft_Y_4 <- por_compass_df$comp_Y_4 * 132
 
 #calculate slope-corrected horizontal distances if necessary
-compass_test$Dist_1_cor<- ifelse(is.na(compass_test$'%_1'), compass_test$Dist_1, compass_test$Dist_1*cos(atan(compass_test$'%_1' /100)))
-compass_test$Dist_2_cor<- ifelse(is.na(compass_test$'%_2'), compass_test$Dist_2, compass_test$Dist_2*cos(atan(compass_test$'%_2' /100)))
-compass_test$Dist_3_cor<- ifelse(is.na(compass_test$'%_3'), compass_test$Dist_3, compass_test$Dist_3*cos(atan(compass_test$'%_3' /100)))
-compass_test$Dist_4_cor<- ifelse(is.na(compass_test$'%_4'), compass_test$Dist_4, compass_test$Dist_4*cos(atan(compass_test$'%_4' /100)))
+por_compass_df$Dist_1_cor<- ifelse(is.na(por_compass_df$'%_1'), por_compass_df$Dist_1, por_compass_df$Dist_1*cos(atan(por_compass_df$'%_1' /100)))
+por_compass_df$Dist_2_cor<- ifelse(is.na(por_compass_df$'%_2'), por_compass_df$Dist_2, por_compass_df$Dist_2*cos(atan(por_compass_df$'%_2' /100)))
+por_compass_df$Dist_3_cor<- ifelse(is.na(por_compass_df$'%_3'), por_compass_df$Dist_3, por_compass_df$Dist_3*cos(atan(por_compass_df$'%_3' /100)))
+por_compass_df$Dist_4_cor<- ifelse(is.na(por_compass_df$'%_4'), por_compass_df$Dist_4, por_compass_df$Dist_4*cos(atan(por_compass_df$'%_4' /100)))
 
 
 #REVERSE (180) THE BEARINGS SINCE THE MEASUREMENT WAS FROM THE COMPASS TO THE GRID AND X-positive on Grid is 225 relative to north. SO NET IS - 45
-compass_test$Azimuth_1_flip <-compass_test$Azimuth_1 -45
-compass_test$Azimuth_2_flip <-compass_test$Azimuth_2 -45
-compass_test$Azimuth_3_flip <-compass_test$Azimuth_3 -45
-compass_test$Azimuth_4_flip <-compass_test$Azimuth_4 -45
+por_compass_df$Azimuth_1_flip <-por_compass_df$Azimuth_1 -45
+por_compass_df$Azimuth_2_flip <-por_compass_df$Azimuth_2 -45
+por_compass_df$Azimuth_3_flip <-por_compass_df$Azimuth_3 -45
+por_compass_df$Azimuth_4_flip <-por_compass_df$Azimuth_4 -45
 
 ```
 
@@ -255,73 +255,73 @@ compass_test$Azimuth_4_flip <-compass_test$Azimuth_4 -45
 #calculation cartesian coordinates for tree relative to compass stations
 #see this post for converting bearing and distance (polar) to Cartesian coordinates
 #https://www.r-bloggers.com/2007/10/convert-polar-coordinates-to-cartesian/
-compass_test$loc_X_1 <- compass_test$ft_X_1+compass_test$Dist_1_cor*sin(compass_test$Azimuth_1_flip*pi/180)
-compass_test$loc_Y_1 <- compass_test$ft_Y_1+compass_test$Dist_1_cor*cos(compass_test$Azimuth_1_flip*pi/180)
-compass_test$loc_X_2 <- compass_test$ft_X_2+compass_test$Dist_2_cor*sin(compass_test$Azimuth_2_flip*pi/180)
-compass_test$loc_Y_2 <- compass_test$ft_Y_2+compass_test$Dist_2_cor*cos(compass_test$Azimuth_2_flip*pi/180)
-compass_test$loc_X_3 <- compass_test$ft_X_3+compass_test$Dist_3_cor*sin(compass_test$Azimuth_3_flip*pi/180)
-compass_test$loc_Y_3 <- compass_test$ft_Y_3+compass_test$Dist_3_cor*cos(compass_test$Azimuth_3_flip*pi/180)
-compass_test$loc_X_4 <- compass_test$ft_X_4+compass_test$Dist_4_cor*sin(compass_test$Azimuth_4_flip*pi/180)
-compass_test$loc_Y_4 <- compass_test$ft_Y_4+compass_test$Dist_4_cor*cos(compass_test$Azimuth_4_flip*pi/180)
+por_compass_df$loc_X_1 <- por_compass_df$ft_X_1+por_compass_df$Dist_1_cor*sin(por_compass_df$Azimuth_1_flip*pi/180)
+por_compass_df$loc_Y_1 <- por_compass_df$ft_Y_1+por_compass_df$Dist_1_cor*cos(por_compass_df$Azimuth_1_flip*pi/180)
+por_compass_df$loc_X_2 <- por_compass_df$ft_X_2+por_compass_df$Dist_2_cor*sin(por_compass_df$Azimuth_2_flip*pi/180)
+por_compass_df$loc_Y_2 <- por_compass_df$ft_Y_2+por_compass_df$Dist_2_cor*cos(por_compass_df$Azimuth_2_flip*pi/180)
+por_compass_df$loc_X_3 <- por_compass_df$ft_X_3+por_compass_df$Dist_3_cor*sin(por_compass_df$Azimuth_3_flip*pi/180)
+por_compass_df$loc_Y_3 <- por_compass_df$ft_Y_3+por_compass_df$Dist_3_cor*cos(por_compass_df$Azimuth_3_flip*pi/180)
+por_compass_df$loc_X_4 <- por_compass_df$ft_X_4+por_compass_df$Dist_4_cor*sin(por_compass_df$Azimuth_4_flip*pi/180)
+por_compass_df$loc_Y_4 <- por_compass_df$ft_Y_4+por_compass_df$Dist_4_cor*cos(por_compass_df$Azimuth_4_flip*pi/180)
 
-compass_test$ft_X_ave = rowMeans(compass_test[c("loc_X_1", "loc_X_2", "loc_X_3","loc_X_4")], na.rm=TRUE)
-compass_test$ft_Y_ave = rowMeans(compass_test[c("loc_Y_1", "loc_Y_2", "loc_Y_3","loc_Y_4")], na.rm=TRUE)
+por_compass_df$ft_X_ave = rowMeans(por_compass_df[c("loc_X_1", "loc_X_2", "loc_X_3","loc_X_4")], na.rm=TRUE)
+por_compass_df$ft_Y_ave = rowMeans(por_compass_df[c("loc_Y_1", "loc_Y_2", "loc_Y_3","loc_Y_4")], na.rm=TRUE)
 ```
 
 #plot grid ref coordinate and compass points with bearing line to see how things are behaving
 ```{r, echo=FALSE}
 #plot reference and derived coordinates and connect them with a line
-plot(compass_test$ft_X_1,compass_test$ft_Y_1,xlim=c(0,1000),ylim=c(0,1000))
-points(compass_test$loc_X_1,compass_test$loc_Y_1,col="red")
-points(compass_test$ft_X_2,compass_test$ft_Y_2)
-points(compass_test$loc_X_2,compass_test$loc_Y_2,col="blue")
-points(compass_test$ft_X_3,compass_test$ft_Y_3)
-points(compass_test$loc_X_3,compass_test$loc_Y_3,col="green")
-points(compass_test$ft_X_4,compass_test$ft_Y_4)
-points(compass_test$loc_X_4,compass_test$loc_Y_4,col="gray")
-points(compass_test$ft_X_ave,compass_test$ft_Y_ave,col="yellow", cex= 3)
+plot(por_compass_df$ft_X_1,por_compass_df$ft_Y_1,xlim=c(0,1800),ylim=c(0,1500))
+#points(por_compass_df$loc_X_1,por_compass_df$loc_Y_1,col="red")
+points(por_compass_df$ft_X_2,por_compass_df$ft_Y_2)
+#points(por_compass_df$loc_X_2,por_compass_df$loc_Y_2,col="blue")
+points(por_compass_df$ft_X_3,por_compass_df$ft_Y_3)
+#points(por_compass_df$loc_X_3,por_compass_df$loc_Y_3,col="green")
+points(por_compass_df$ft_X_4,por_compass_df$ft_Y_4)
+#points(por_compass_df$loc_X_4,por_compass_df$loc_Y_4,col="gray")
+points(por_compass_df$ft_X_ave,por_compass_df$ft_Y_ave,col="black", cex = 2.5)
 
 # Create data frame with line-values
-multiple_segments_1 <- data.frame(x0 = compass_test$ft_X_1,   
-                       y0 = compass_test$ft_Y_1,
-                       x1 = compass_test$loc_X_1,
-                       y1 = compass_test$loc_Y_1)
+#multiple_segments_1 <- data.frame(x0 = por_compass_df$ft_X_1,   
+#                       y0 = por_compass_df$ft_Y_1,
+#                       x1 = por_compass_df$loc_X_1,
+#                      y1 = por_compass_df$loc_Y_1)
                          
  # Draw multiple lines                       
- segments(x0 = multiple_segments_1$x0,                   
-         y0 = multiple_segments_1$y0,
-         x1 = multiple_segments_1$x1,
-         y1 = multiple_segments_1$y1)
+# segments(x0 = multiple_segments_1$x0,                   
+#         y0 = multiple_segments_1$y0,
+#         x1 = multiple_segments_1$x1,
+#         y1 = multiple_segments_1$y1)
 
- multiple_segments_2 <- data.frame(x0 = compass_test$ft_X_2,   
-                       y0 = compass_test$ft_Y_2,
-                       x1 = compass_test$loc_X_2,
-                       y1 = compass_test$loc_Y_2)
-                         
- segments(x0 = multiple_segments_2$x0,                   
-         y0 = multiple_segments_2$y0,
-         x1 = multiple_segments_2$x1,
-         y1 = multiple_segments_2$y1)
- 
- multiple_segments_3 <- data.frame(x0 = compass_test$ft_X_3,   
-                       y0 = compass_test$ft_Y_3,
-                       x1 = compass_test$loc_X_3,
-                       y1 = compass_test$loc_Y_3)
-                         
- segments(x0 = multiple_segments_3$x0,                   
-         y0 = multiple_segments_3$y0,
-         x1 = multiple_segments_3$x1,
-         y1 = multiple_segments_3$y1)
+# multiple_segments_2 <- data.frame(x0 = por_compass_df$ft_X_2,   
+#                       y0 = por_compass_df$ft_Y_2,
+#                       x1 = por_compass_df$loc_X_2,
+#                       y1 = por_compass_df$loc_Y_2)
+#                         
+# segments(x0 = multiple_segments_2$x0,                   
+#         y0 = multiple_segments_2$y0,
+#         x1 = multiple_segments_2$x1,
+#         y1 = multiple_segments_2$y1)
+# 
+# multiple_segments_3 <- data.frame(x0 = por_compass_df$ft_X_3,   
+#                       y0 = por_compass_df$ft_Y_3,
+#                       x1 = por_compass_df$loc_X_3,
+#                       y1 = por_compass_df$loc_Y_3)
+#                         
+# segments(x0 = multiple_segments_3$x0,                   
+#         y0 = multiple_segments_3$y0,
+#         x1 = multiple_segments_3$x1,
+#         y1 = multiple_segments_3$y1)
 
-  multiple_segments_4 <- data.frame(x0 = compass_test$ft_X_4,   
-                       y0 = compass_test$ft_Y_4,
-                       x1 = compass_test$loc_X_4,
-                       y1 = compass_test$loc_Y_4)
-                         
- segments(x0 = multiple_segments_4$x0,                   
-         y0 = multiple_segments_4$y0,
-         x1 = multiple_segments_4$x1,
-         y1 = multiple_segments_4$y1)
+#  multiple_segments_4 <- data.frame(x0 = por_compass_df$ft_X_4,   
+#                       y0 = por_compass_df$ft_Y_4,
+#                       x1 = por_compass_df$loc_X_4,
+#                      y1 = por_compass_df$loc_Y_4)
+#                         
+# segments(x0 = multiple_segments_4$x0,                   
+#         y0 = multiple_segments_4$y0,
+#         x1 = multiple_segments_4$x1,
+#         y1 = multiple_segments_4$y1)
 
 
 ```
