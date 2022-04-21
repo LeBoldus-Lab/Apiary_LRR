@@ -18,7 +18,7 @@ library(readxl)
 library(readr)
 library(tidyverse)
 library(ggplot2)
-library(sp)
+library(ggforce)
 ```
 
 ## Importing transcribed compass points and tree measurements
@@ -26,10 +26,10 @@ library(sp)
 You can also embed plots, for example:
 
 ```{r, echo=FALSE}
-#por_compass_df<-read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/Poria_survey_70s.xlsx", sheet = "Poria_compass_points", range = "A1:AP83", col_names = TRUE)
-por_compass_df<-read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Poria_survey_70s.xlsx", sheet = "Poria_compass_points", range = "A1:AP83", col_names = TRUE)
+por_compass_df<-read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/Poria_survey_70s.xlsx", sheet = "Poria_compass_points", range = "A1:AP83", col_names = TRUE)
+#por_compass_df<-read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Poria_survey_70s.xlsx", sheet = "Poria_compass_points", range = "A1:AP83", col_names = TRUE)
 #subset four compass points for testing including some with "C" and negative numbers
-compass_test<-por_compass_df[c(1:4, 35:37),]
+#compass_test<-por_compass_df[c(1:4, 35:37),]
 
 #convert bearings to fill in missing azimuths
 
@@ -326,4 +326,108 @@ points(por_compass_df$ft_X_ave,por_compass_df$ft_Y_ave,col="black", cex = 2.5)
 
 ```
 
+#importing recorded cut stump compass points
+```{r, echo=FALSE}
+cut_compass_df<-read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/Poria_survey_70s.xlsx", sheet = "Cut_stump_compass_points", range = "A1:G43", col_names = TRUE)
+#glimpse(cut_compass_df)
+#first change "C" "0"
+cut_compass_df$Y_1 <- as.double(ifelse(cut_compass_df$Y_1 == "C", "0", cut_compass_df$Y_1))
+#then convert chain grid to computer grid
+cut_compass_df$comp_X_1 <- (-(cut_compass_df$X_1 /2))+17 
+cut_compass_df$comp_Y_1 <- (cut_compass_df$Y_1 + 10) /2
+#create a distance grid measured in feet, based on the computer grid
+cut_compass_df$ft_X_1 <- cut_compass_df$comp_X_1 * 132
+cut_compass_df$ft_Y_1 <- cut_compass_df$comp_Y_1 * 132
+#REVERSE (180) THE BEARINGS SINCE THE MEASUREMENT WAS FROM THE COMPASS TO THE GRID AND X-positive on Grid is 225 relative to north. SO NET IS - 45
+cut_compass_df$Azimuth_1_flip <-cut_compass_df$Azimuth_1 +135
+#polar to cartesian
+cut_compass_df$loc_X_1 <- cut_compass_df$ft_X_1+cut_compass_df$Dist_1*sin(cut_compass_df$Azimuth_1_flip*pi/180)
+cut_compass_df$loc_Y_1 <- cut_compass_df$ft_Y_1+cut_compass_df$Dist_1*cos(cut_compass_df$Azimuth_1_flip*pi/180)
+
+plot(por_compass_df$ft_X_1,por_compass_df$ft_Y_1,xlim=c(0,1800),ylim=c(0,1800))
+points(por_compass_df$ft_X_2,por_compass_df$ft_Y_2)
+points(por_compass_df$ft_X_3,por_compass_df$ft_Y_3)
+points(por_compass_df$ft_X_4,por_compass_df$ft_Y_4)
+points(cut_compass_df$loc_X_1,cut_compass_df$loc_Y_1, col="red")
+points(por_compass_df$ft_X_ave,por_compass_df$ft_Y_ave,col="blue", cex=2)
+```
+
+#importing subplot centers and creating circles
+```{r, echo=FALSE}
+subplot_df<-read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/Poria_survey_70s.xlsx", sheet = "Image_J_subplot_locations", range = "A1:H121", col_names = TRUE)
+glimpse(subplot_df)
+#then convert chain grid to computer grid
+subplot_df$comp_X_1 <- (-(subplot_df$ref_x /2))+17 
+subplot_df$comp_Y_1 <- (subplot_df$ref_y + 10) /2
+#create a distance grid measured in feet, based on the computer grid
+subplot_df$ft_X_1 <- subplot_df$comp_X_1 * 132
+subplot_df$ft_Y_1 <- subplot_df$comp_Y_1 * 132
+#polar to cartesian
+subplot_df$loc_X_1 <- subplot_df$ft_X_1+subplot_df$ft*sin(subplot_df$azi*pi/180)
+subplot_df$loc_Y_1 <- subplot_df$ft_Y_1+subplot_df$ft*cos(subplot_df$azi*pi/180)
+
+ggplot() +
+geom_circle(aes(x0 = loc_X_1, y0 = loc_Y_1, r = 26.3), data = subplot_df)
+
+#this didn't work well. Probably an error in the image J import by not setting distance scale using grid line and not adjusting angle for tilted pictures.
+
+#try inputting the written chain and compass subplot locations?
+#make a key for old vs new plot names
+#sanity check using map as I input
+```
+
+#importing plot corners
+```{r, echo=FALSE}
+plot_df<-read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/Poria_survey_70s.xlsx", sheet = "Plot_corners", range = "E1:W26", col_names = TRUE)
+glimpse(plot_df)
+#convert chain grid to computer grid
+datapoly<-plot_df[,1:3]
+#create new DF with positions changed to feet from SE corner. repeat for all 8 possible vertices
+
+ids <- factor(c("A0","C0","B0","D0","E0","B3","E2","A4","A2","D1","B4","C4","E4","E3","A3","C2","E1","C3","D3","C1","D4","A1","B2","D2","B1"))
+values <- data.frame(
+  id = ids,
+  TRT = c("A","C","B","D","E","B","E","A","A","D","B","C","E","E","A","C","E","C","D","C","D","A","B","D","B")
+)
+
+#finish the following
+#finish copying x values for each plot and filling with NA to 8 entries
+#copy x values for each plot and filling with NA to 8 entries
+
+x= c(32,32.5,28,28,30,30,NA,NA,NA,28,28.55,28.55,26,26,NA,NA,NA,)
+x_ft=((-(x /2))+17)*132
+y=c()
+y_ft=((-(y /2))+17)*132
+positions <- data.frame(
+  id = rep(ids, each = 8),
+  value =rep(trts, each = 8),
+  x =x_ft,
+  y = y_ft
+)
+datapoly <- merge(values, positions, by = c("id"))
+
+p <- ggplot(datapoly, aes(x = x, y = y)) +
+  geom_polygon(aes(fill = TRT, group = id))
+
+```
+
+#importing poria trees
+```{r, echo=FALSE}
+
+
+```
+
+#importing cut stump trees
+```{r, echo=FALSE}
+#import the recorded trees relative to compass points
+#import tree locations derived from image_J map
+
+
+```
+
+#ggplot approach to plotting objects
+```{r, echo=FALSE}
+
+
+```
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
