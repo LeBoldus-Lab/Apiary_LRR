@@ -354,26 +354,63 @@ points(por_compass_df$ft_X_ave,por_compass_df$ft_Y_ave,col="blue", cex=2)
 
 #importing subplot centers and creating circles
 ```{r, echo=FALSE}
-subplot_df<-read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/Poria_survey_70s.xlsx", sheet = "Image_J_subplot_locations", range = "A1:H121", col_names = TRUE)
-glimpse(subplot_df)
-#then convert chain grid to computer grid
-subplot_df$comp_X_1 <- (-(subplot_df$ref_x /2))+17 
-subplot_df$comp_Y_1 <- (subplot_df$ref_y + 10) /2
-#create a distance grid measured in feet, based on the computer grid
-subplot_df$ft_X_1 <- subplot_df$comp_X_1 * 132
-subplot_df$ft_Y_1 <- subplot_df$comp_Y_1 * 132
-#polar to cartesian
-subplot_df$loc_X_1 <- subplot_df$ft_X_1+subplot_df$ft*sin(subplot_df$azi*pi/180)
-subplot_df$loc_Y_1 <- subplot_df$ft_Y_1+subplot_df$ft*cos(subplot_df$azi*pi/180)
-
-ggplot() +
-geom_circle(aes(x0 = loc_X_1, y0 = loc_Y_1, r = 26.3), data = subplot_df)
+#first attempt using image J and plotted paper map
+#subplot_df<-read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/Poria_survey_70s.xlsx", sheet = "Image_J_subplot_locations", range = "A1:H121", #col_names = TRUE)
+#glimpse(subplot_df)
+##then convert chain grid to computer grid
+#subplot_df$comp_X_1 <- (-(subplot_df$ref_x /2))+17 
+#subplot_df$comp_Y_1 <- (subplot_df$ref_y + 10) /2
+##create a distance grid measured in feet, based on the computer grid
+#subplot_df$ft_X_1 <- subplot_df$comp_X_1 * 132
+#subplot_df$ft_Y_1 <- subplot_df$comp_Y_1 * 132
+##polar to cartesian
+#subplot_df$loc_X_1 <- subplot_df$ft_X_1+subplot_df$ft*sin(subplot_df$azi*pi/180)
+#subplot_df$loc_Y_1 <- subplot_df$ft_Y_1+subplot_df$ft*cos(subplot_df$azi*pi/180)
+#
+#ggplot() +
+#geom_circle(aes(x0 = loc_X_1, y0 = loc_Y_1, r = 26.3), data = subplot_df)
 
 #this didn't work well. Probably an error in the image J import by not setting distance scale using grid line and not adjusting angle for tilted pictures.
 
-#try inputting the written chain and compass subplot locations?
-#make a key for old vs new plot names
-#sanity check using map as I input
+#first attempt inputting the written chain and compass subplot locations
+subplot_df<-read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/Poria_survey_70s.xlsx", sheet = "Recorded_subplot_locations", range = "A1:U126", col_names = TRUE)
+#glimpse(subplot_df)
+##then convert chain grid to computer grid
+subplot_df$comp_X_1 <- (-(subplot_df$chain_x /2))+17 
+subplot_df$comp_Y_1 <- (subplot_df$chain_y + 10) /2
+subplot_df$comp_X_2 <- (-(subplot_df$chain_x2 /2))+17 
+subplot_df$comp_Y_2 <- (subplot_df$chain_y2 + 10) /2
+subplot_df$comp_X_New <- (-(subplot_df$nchain_x /2))+17 
+subplot_df$comp_Y_New <- (subplot_df$nchain_y + 10) /2
+##create a distance grid measured in feet, based on the computer grid
+subplot_df$ft_X_1 <- subplot_df$comp_X_1 * 132
+subplot_df$ft_Y_1 <- subplot_df$comp_Y_1 * 132
+subplot_df$ft_X_2 <- subplot_df$comp_X_2 * 132
+subplot_df$ft_Y_2 <- subplot_df$comp_Y_2 * 132
+subplot_df$ft_X_New <- subplot_df$comp_X_New * 132
+subplot_df$ft_Y_New <- subplot_df$comp_Y_New * 132
+
+subplot_df$Azimuth_1_flip <-subplot_df$azi +135
+subplot_df$Azimuth_2_flip <-subplot_df$azi2 +135
+subplot_df$Azimuth_New_flip <-subplot_df$nazi +135
+
+##polar to cartesian
+subplot_df$loc_X_1 <- subplot_df$ft_X_1+subplot_df$ft*sin(subplot_df$Azimuth_1_flip*pi/180)
+subplot_df$loc_Y_1 <- subplot_df$ft_Y_1+subplot_df$ft*cos(subplot_df$Azimuth_1_flip*pi/180)
+subplot_df$loc_X_2 <- subplot_df$ft_X_2+subplot_df$ft2*sin(subplot_df$Azimuth_2_flip*pi/180)
+subplot_df$loc_Y_2 <- subplot_df$ft_Y_2+subplot_df$ft2*cos(subplot_df$Azimuth_2_flip*pi/180)
+subplot_df$loc_X_New <- subplot_df$ft_X_New+subplot_df$nft*sin(subplot_df$Azimuth_New_flip*pi/180)
+subplot_df$loc_Y_New <- subplot_df$ft_Y_New+subplot_df$nft*cos(subplot_df$Azimuth_New_flip*pi/180)
+
+plot(por_compass_df$ft_X_1,por_compass_df$ft_Y_1,xlim=c(100,600),ylim=c(100,600))
+points(por_compass_df$ft_X_2,por_compass_df$ft_Y_2)
+points(por_compass_df$ft_X_3,por_compass_df$ft_Y_3)
+points(por_compass_df$ft_X_4,por_compass_df$ft_Y_4)
+points(subplot_df$loc_X_1,subplot_df$loc_Y_1, col="green", cex=2)
+points(subplot_df$loc_X_2,subplot_df$loc_Y_2, col="orange", cex=2)
+points(subplot_df$loc_X_New,subplot_df$loc_Y_New,col="blue", cex=2)
+
+#this still looks a little funny. Perhaps draw plot lines and revisit.
 ```
 
 #importing plot corners
@@ -394,9 +431,37 @@ values <- data.frame(
 #finish copying x values for each plot and filling with NA to 8 entries
 #copy x values for each plot and filling with NA to 8 entries
 
-x= c(32,32.5,28,28,30,30,NA,NA,NA,28,28.55,28.55,26,26,NA,NA,NA,)
+
+
+x= c(32,32.5,28,28,30,30,NA,NA, 
+     30,26,24,22.94,22.94,28,28,30,
+     28,28.55,28.55,26,26,NA,NA,NA,
+     28.55,28.55,32.25,32.5,22.94,22.94,NA,NA,
+     32.5,30.5,26,26,NA,NA,NA,NA,
+     20,22.94,22.94,20,NA,NA,NA,NA,
+     26,26,24.2,19.28,19.28,22.94,22.94,NA,
+     19.28,19.28,16.5,16.5,NA,NA,NA,NA,
+     16.5,16.5,16.73,16.73,14,14,13.62,13.62,
+     16.73,14,14,16.73,NA,NA,NA,NA,
+     14,14,13,10,9.12,12,12,NA,
+     12,12,10.5,9.12,9.55,NA,NA,NA,
+     9.55,9.24,14,14,NA,NA,NA,NA,
+     13.62,9.24,8,8,12,12,13.62,NA,
+     8,8,12,12,NA,NA,NA,NA,
+     12,12,14.55,14.55,14,12.49,12.49,NA,
+     14.55,14.55,18,18,NA,NA,NA,NA,
+     18,18,22,22,NA,NA,NA,NA,
+     22,22,18.65,17.04,17.04,NA,NA,NA,
+     17.04,17.04,16.23,16.23,14,14,14.55,14.55,
+     12.49,12.49,9.7,9.7,NA,NA,NA,NA,
+     9.7,9.7,8,8,10,12,14,14,
+     16.23,16.23,14,14,18,18.65,18.65,17.04,
+     22,18.65,18.65,20,20,22,NA,NA,
+     26,20,20.75,22,24,26,NA,NA)
 x_ft=((-(x /2))+17)*132
-y=c()
+y=c(
+  
+)
 y_ft=((-(y /2))+17)*132
 positions <- data.frame(
   id = rep(ids, each = 8),
