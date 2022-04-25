@@ -491,18 +491,33 @@ positions <- data.frame(
   y = y_ft
 )
 datapoly <- merge(values, positions, by = c("id"))
-p <- ggplot(subplot_df,aes(x0 = loc_X_1, y0 = loc_Y_1, r = 26.3)) +
-    scale_x_continuous("Grid ft NW",breaks = seq(0,1716,132))+
+p <- ggplot() +
+  geom_label(data=subplot_df, x=subplot_df$loc_X_1, y= subplot_df$loc_Y_1,label= subplot_df$subplot, label.size = NA, size=3, alpha=0.5)+
+  scale_x_continuous("Grid ft NW",breaks = seq(0,1716,132))+
   scale_y_continuous("Grid ft SW",breaks = seq(0,1452,132))+
   theme_bw()+
   theme(panel.grid.major = element_line(colour="black", size=0.5))+
-  geom_circle()
-p
+  geom_circle(data=subplot_df,aes(x0 = subplot_df$loc_X_1, y0 = subplot_df$loc_Y_1, r = 26.3))
+p  
+
+
 q<-ggplot(datapoly, aes(x = x, y = y, fill= TRT, group= id))+
   geom_polygon(colour="black", size= 1.25)+
-  scale_fill_viridis_d(alpha=0.3)
+  scale_fill_viridis_d(alpha=0.3)+
+  scale_x_continuous("Grid ft NW",breaks = seq(0,1716,132))+
+  scale_y_continuous("Grid ft SW",breaks = seq(0,1452,132))+
+  theme_bw()+
+  theme(panel.grid.major = element_line(colour="black", size=0.5))
 q
-#I'm having trouble combining P and Q
+
+plot_sub_grid<- p+  geom_polygon(aes(x = datapoly$x, y = datapoly$y, fill= datapoly$TRT, group= datapoly$id), colour="black", size= 1.25)+
+  scale_fill_viridis_d(alpha=0.3)+ labs(fill = "Rotation\nTreatment")
+plot_sub_grid
+
+#pdf("C:/Users/showa/Documents/GitHub/Apiary_LRR/Summary_Graphs_update/Site_map_plots_subplots_grid.pdf", height= 9.75, width = 14.25)
+#  plot_sub_grid
+#dev.off()
+
 ```
 
 #importing poria trees
