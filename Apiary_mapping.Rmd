@@ -514,7 +514,7 @@ plot_sub_grid<- p+  geom_polygon(aes(x = datapoly$x, y = datapoly$y, fill= datap
 plot_sub_grid
 
 #pdf("C:/Users/showa/Documents/GitHub/Apiary_LRR/Summary_Graphs_update/Site_map_plots_subplots_grid.pdf", height= 9.75, width = 14.25)
-#  plot_sub_grid
+#plot_sub_grid
 #dev.off()
 
 ```
@@ -529,11 +529,12 @@ plot_sub_grid
 ```{r, echo=FALSE}
 #import the recorded trees relative to compass points
 #import tree locations derived from image_J map
+#impute diameters for image J trees based on nearest plot with data
 
 
 ```
 
-#ggplot approach to plotting objects
+#BLANK
 ```{r, echo=FALSE}
 
 
