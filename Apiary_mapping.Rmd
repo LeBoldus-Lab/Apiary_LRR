@@ -521,6 +521,82 @@ plot_sub_grid
 
 #importing poria trees
 ```{r, echo=FALSE}
+por_tree_df<-read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/Poria_survey_70s.xlsx", sheet = "Poria_trees", range = "A1:O759", col_names = TRUE)
+#compass_test<-por_compass_df[c(1:4, 35:37),]
+
+#convert bearings to fill in missing azimuths
+
+por_tree_df$bear<- ifelse(por_tree_df$Dir =="N", #test is north
+                              0 #if yes, then 0 deg
+                              , #if not, then
+                              ifelse(por_tree_df$Dir =="E", #test is east
+                                     90 #if yes, then 90 deg
+                              , #if not, then
+                              ifelse(por_tree_df$Dir =="S", #test is south
+                                     180 #if yes, then 180 deg
+                              , #if not, then
+                              ifelse(por_tree_df$Dir =="W", #test is west
+                                     270 #if yes, then 270 deg
+                              , #if not, then
+                              NA #fill as NA since there is nothing in "direction" field
+                              ))))
+
+#determining weather to add or subtract the degree adjustment
+por_tree_df$add<- ifelse(por_tree_df$Dir =="N", #test dir is north
+                           ifelse(por_tree_df$Adj =="E", # if dir north, then test adj is east
+                              TRUE, FALSE) #if adj is east then add, if not then subtract  
+                            , ifelse(por_tree_df$Dir =="E", #if not north then test dir is east
+                           ifelse(por_tree_df$Adj =="E",# if dir east, then test adj is south
+                              TRUE, FALSE) #if adj is south then add, if not then subtract
+                            , ifelse(por_tree_df$Dir =="S", #if not east then test dir is south
+                           ifelse(por_tree_df$Adj =="W",# if dir south, then test adj is west
+                              TRUE, FALSE) #if adj is west then add, if not then subtract
+                            , ifelse(por_tree_df$Dir =="W", #if not south then test dir is west
+                           ifelse(por_tree_df$Adj =="N",# if dir west, then test adj is north
+                              TRUE, FALSE) #if adj is west then add, if not then subtract
+                           , NA #if Dir_1 is not NESW then return NA
+                           ))))
+#run the calculation
+por_tree_df$Az_calc<- ifelse(por_tree_df$add==TRUE,  #if add is TRUE
+                                por_tree_df$bear + por_tree_df$Deg #then add deg to ref
+                                , ifelse(por_tree_df$add==FALSE, # if false, 
+                                por_tree_df$bear - por_tree_df$Deg # then subtract deg from ref
+                                , NA # if neither TRUE nor FALSE, then NA
+                                ))
+#convert neg degerees to pos
+por_tree_df$Az_calc<- ifelse(por_tree_df$Az_calc <0 , 360 + por_tree_df$Az_calc, por_tree_df$Az_calc)
+
+#replacing missing azimuths with calculated (if available)
+por_tree_df$Azimuth <- ifelse(is.na(por_tree_df$Azimuth), por_tree_df$Az_calc,por_tree_df$Azimuth)
+
+#Adding Block compass points for Poria survey
+#making smaller df with relevant info
+por_comp_loc<-por_compass_df[,c("Block","ft_X_ave","ft_Y_ave")]
+#merge(dat1, dat2, by.x = 2, by.y = 0, all.x = TRUE)
+por_tree_w_ref<-merge(por_tree_df, por_comp_loc, by.x = "Block", by.y = "Block", all.x = TRUE)
+#adjust N to grid Y positive
+por_tree_w_ref$Azimuth_flip <-por_tree_w_ref$Azimuth +135
+#polar to cartesian
+por_tree_w_ref$loc_X <- por_tree_w_ref$ft_X_ave+por_tree_w_ref$Dist*sin(por_tree_w_ref$Azimuth_flip*pi/180)
+por_tree_w_ref$loc_Y <- por_tree_w_ref$ft_Y_ave+por_tree_w_ref$Dist*cos(por_tree_w_ref$Azimuth_flip*pi/180)
+
+
+
+plot(por_compass_df$ft_X_1,por_compass_df$ft_Y_1,xlim=c(0,1800),ylim=c(0,1800))
+points(por_compass_df$ft_X_ave,por_compass_df$ft_Y_ave,col="blue", cex=2)
+points(por_tree_w_ref$loc_X,por_tree_w_ref$loc_Y, col="black")
+
+p <- ggplot() +
+  geom_label(data=subplot_df, x=subplot_df$loc_X_final, y= subplot_df$loc_Y_final,label= subplot_df$subplot, label.size = NA, size=3, alpha=0.5)+
+  scale_x_continuous("Grid ft NW",breaks = seq(0,1716,132))+
+  scale_y_continuous("Grid ft SW",breaks = seq(0,1452,132))+
+  theme_bw()+
+  theme(panel.grid.major = element_line(colour="black", size=0.5))+
+  geom_circle(data=subplot_df,aes(x0 = subplot_df$loc_X_final, y0 = subplot_df$loc_Y_final, r = 26.3))
+incidence<-p + geom_point(aes(x=por_tree_w_ref$loc_X,y=por_tree_w_ref$loc_Y, shape=por_tree_w_ref$Age_class, ), alpha=0.6)+ labs(shape = "Mortality\nRecency\nClass")
+incidence
+
+```
 
 
 ```
