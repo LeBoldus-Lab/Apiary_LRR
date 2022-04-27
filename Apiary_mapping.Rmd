@@ -599,8 +599,6 @@ incidence
 ```
 
 
-```
-
 #importing cut stump trees
 ```{r, echo=FALSE}
 #import the recorded trees relative to compass points
@@ -612,7 +610,10 @@ incidence
 
 #BLANK
 ```{r, echo=FALSE}
-
+#Generate FVS inputs to include initial incidence trees with species, status, diameter
+#seedlings should have Dam 62 Sev 00 species DF
+#stumps <10Y with with Dam 62, Sev 03, ITH 6, DBH
+#manually assign number of centers based on estimate.
 
 ```
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
