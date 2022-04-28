@@ -427,7 +427,7 @@ points(subplot_df$loc_X_final,subplot_df$loc_Y_final,col="blue", cex=2)
 ids <- factor(c("A0","C0","B0","D0","E0","B3","E2","A4","A2","D1","B4","C4","E4","E3","A3","C2","E1","C3","D3","C1","D4","A1","B2","D2","B1"))
 values <- data.frame(
   id = ids,
-  TRT = c("A RA12","C DF","B CW12","D RA25","E CW25","B CW12","E CW25","A RA12","A RA12","D RA25","B CW12","C DF","E CW25","E CW25","A RA12","C DF","E CW25","C DF","D RA25","C DF","D RA25","A RA12","B CW12","D RA25","B CW12")
+  TRT = c("A: RA12","C: DF","B: CW12","D: RA25","E: CW25","B: CW12","E: CW25","A: RA12","A: RA12","D: RA25","B: CW12","C: DF","E: CW25","E: CW25","A: RA12","C: DF","E: CW25","C: DF","D: RA25","C: DF","D: RA25","A: RA12","B: CW12","D: RA25","B: CW12")
 )
 #X coordinates for all vertices, fill to 8 entries with NA
 x= c(32.25,32.75,28,28,30,30,NA,NA, #A0
@@ -586,6 +586,12 @@ plot(por_compass_df$ft_X_1,por_compass_df$ft_Y_1,xlim=c(0,1800),ylim=c(0,1800))
 points(por_compass_df$ft_X_ave,por_compass_df$ft_Y_ave,col="blue", cex=2)
 points(por_tree_w_ref$loc_X,por_tree_w_ref$loc_Y, col="black")
 
+#make more informative mortality names.
+por_tree_w_ref$Age_class<-ifelse(por_tree_w_ref$Age_class=="A", "Live with Symptoms", 
+                                 ifelse(por_tree_w_ref$Age_class=="B", "Dead <10 years",
+                                   ifelse(por_tree_w_ref$Age_class=="C", "Dead >10 years", NA)))
+por_tree_w_ref$Age_class<-factor(por_tree_w_ref$Age_class, levels=c("Dead >10 years","Dead <10 years","Live with Symptoms"), ordered = TRUE)
+
 p <- ggplot() +
   geom_label(data=subplot_df, x=subplot_df$loc_X_final, y= subplot_df$loc_Y_final,label= subplot_df$subplot, label.size = NA, size=3, alpha=0.5)+
   scale_x_continuous("Grid ft NW",breaks = seq(0,1716,132))+
@@ -593,7 +599,7 @@ p <- ggplot() +
   theme_bw()+
   theme(panel.grid.major = element_line(colour="black", size=0.5))+
   geom_circle(data=subplot_df,aes(x0 = subplot_df$loc_X_final, y0 = subplot_df$loc_Y_final, r = 26.3))
-incidence<-p + geom_point(aes(x=por_tree_w_ref$loc_X,y=por_tree_w_ref$loc_Y, shape=por_tree_w_ref$Age_class, ), alpha=0.6)+ labs(shape = "Mortality\nRecency\nClass")
+incidence<-p + geom_point(aes(x=por_tree_w_ref$loc_X,y=por_tree_w_ref$loc_Y, shape=por_tree_w_ref$Age_class, ), alpha=0.6)+ labs(shape = "LRR Status")+ scale_shape_discrete(na.translate = F)
 incidence
 
 ```
@@ -602,6 +608,50 @@ incidence
 #importing cut stump trees
 ```{r, echo=FALSE}
 #import the recorded trees relative to compass points
+cut_tree_df<-read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/Poria_survey_70s.xlsx", sheet = "Cut_stump_trees", range = "A1:G179", col_names = TRUE)
+#compass_test<-por_compass_df[c(1:4, 35:37),]
+
+#Adding Block compass points for Poria survey
+#making smaller df with relevant info
+cut_comp_loc<-cut_compass_df[,c("Block","loc_X_1","loc_Y_1")]
+#merge(dat1, dat2, by.x = 2, by.y = 0, all.x = TRUE)
+cut_tree_w_ref<-merge(cut_tree_df, cut_comp_loc, by.x = "Block", by.y = "Block", all.x = TRUE)
+#adjust N to grid Y positive
+cut_tree_w_ref$Azimuth_flip <-cut_tree_w_ref$Azimuth +135
+#polar to cartesian
+cut_tree_w_ref$loc_X <- cut_tree_w_ref$loc_X_1+cut_tree_w_ref$Dist*sin(cut_tree_w_ref$Azimuth_flip*pi/180)
+cut_tree_w_ref$loc_Y <- cut_tree_w_ref$loc_Y_1+cut_tree_w_ref$Dist*cos(cut_tree_w_ref$Azimuth_flip*pi/180)
+
+
+plot(por_compass_df$ft_X_1,por_compass_df$ft_Y_1,xlim=c(0,1800),ylim=c(0,1800))
+points(cut_compass_df$loc_X_1,cut_compass_df$loc_Y_1,col="blue", cex=2)
+points(cut_tree_w_ref$loc_X,cut_tree_w_ref$loc_Y, col="black")
+
+cut_tree_w_ref$Age_class<-"Live, cut stump detection"
+cut_tree_w_ref_merge<-cut_tree_w_ref[,c("Block","Species","Age_class","loc_X","loc_Y")]
+por_tree_w_ref_merge<-por_tree_w_ref[,c("Block","Species","Age_class","loc_X","loc_Y")]
+por_and_cut<-rbind(por_tree_w_ref_merge, cut_tree_w_ref_merge)
+por_and_cut$Age_class<-factor(por_and_cut$Age_class, levels=c("Live, cut stump detection","Live with Symptoms","Dead <10 years","Dead >10 years"), ordered = TRUE)
+
+#draw polygons for blocks
+block_polys<-ggplot()+geom_polygon(aes(x = datapoly$x, y = datapoly$y, fill= datapoly$TRT, group= datapoly$id), colour="black", size= 1.25)+
+  scale_fill_viridis_d(alpha=0.3)+ labs(fill = "Rotation\nTreatment")
+#add subplots and grid
+subplots_and_grid <- block_polys +
+  geom_label(data=subplot_df, x=subplot_df$loc_X_final, y= subplot_df$loc_Y_final,label= subplot_df$subplot, label.size = NA, size=3, alpha=0.0)+
+  scale_x_continuous("Grid ft NW",breaks = seq(0,1716,132))+
+  scale_y_continuous("Grid ft SW",breaks = seq(0,1452,132))+
+  theme_bw()+
+  theme(panel.grid.major = element_line(colour="black", size=0.5),panel.grid.minor = element_blank())+
+  geom_circle(data=subplot_df,aes(x0 = subplot_df$loc_X_final, y0 = subplot_df$loc_Y_final, r = 26.3))
+#add initial incidence
+incidence<-subplots_and_grid+ geom_point(aes(x=por_and_cut$loc_X,y=por_and_cut$loc_Y, shape=por_and_cut$Age_class, ), alpha=0.6)+ labs(shape = "LRR Status")+
+scale_shape_discrete(na.translate = F) +
+  # Add arrow
+geom_segment(aes(x = 10, y = 1310, xend = 100, yend = 1220),
+                  arrow = arrow(length = unit(0.3, "cm"), type="closed"))+
+geom_text(aes(x=112,y=1212,label="N", fontface = "bold"))
+incidence
 #import tree locations derived from image_J map
 #impute diameters for image J trees based on nearest plot with data
 
