@@ -599,7 +599,7 @@ p <- ggplot() +
   theme_bw()+
   theme(panel.grid.major = element_line(colour="black", size=0.5))+
   geom_circle(data=subplot_df,aes(x0 = subplot_df$loc_X_final, y0 = subplot_df$loc_Y_final, r = 26.3))
-incidence<-p + geom_point(aes(x=por_tree_w_ref$loc_X,y=por_tree_w_ref$loc_Y, shape=por_tree_w_ref$Age_class, ), alpha=0.6)+ labs(shape = "LRR Status")+ scale_shape_discrete(na.translate = F)
+incidence<-p + geom_point(aes(x=por_tree_w_ref$loc_X,y=por_tree_w_ref$loc_Y, shape=por_tree_w_ref$Age_class, ), alpha=0.6)+ labs(shape = "Pre-harvest\nLRR Incidence")+ scale_shape_discrete(na.translate = F)
 incidence
 
 ```
@@ -635,7 +635,7 @@ por_and_cut$Age_class<-factor(por_and_cut$Age_class, levels=c("Live, cut stump d
 
 #draw polygons for blocks
 block_polys<-ggplot()+geom_polygon(aes(x = datapoly$x, y = datapoly$y, fill= datapoly$TRT, group= datapoly$id), colour="black", size= 1.25)+
-  scale_fill_viridis_d(alpha=0.3)+ labs(fill = "Rotation\nTreatment")
+  scale_fill_viridis_d(alpha=0.5)+ labs(fill = "Rotation\nTreatment")
 #add subplots and grid
 subplots_and_grid <- block_polys +
   geom_label(data=subplot_df, x=subplot_df$loc_X_final, y= subplot_df$loc_Y_final,label= subplot_df$subplot, label.size = NA, size=3, alpha=0.0)+
@@ -643,16 +643,32 @@ subplots_and_grid <- block_polys +
   scale_y_continuous("Grid ft SW",breaks = seq(0,1452,132))+
   theme_bw()+
   theme(panel.grid.major = element_line(colour="black", size=0.5),panel.grid.minor = element_blank())+
+  #theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank())+
   geom_circle(data=subplot_df,aes(x0 = subplot_df$loc_X_final, y0 = subplot_df$loc_Y_final, r = 26.3))
 #add initial incidence
-incidence<-subplots_and_grid+ geom_point(aes(x=por_and_cut$loc_X,y=por_and_cut$loc_Y, shape=por_and_cut$Age_class, ), alpha=0.6)+ labs(shape = "LRR Status")+
-scale_shape_discrete(na.translate = F) +
+incidence<-subplots_and_grid+ geom_point(aes(x=por_and_cut$loc_X,y=por_and_cut$loc_Y, shape=por_and_cut$Age_class, ), alpha=0.6)+ labs(shape = "Pre-establisment\nLRR Incidence")+
+scale_shape_discrete(na.translate = F, labels=c("Live tree, cut\nstump detection","Live tree with\nsymptoms","Dead <10 years","Dead >10 years")) +
   # Add arrow
 geom_segment(aes(x = 10, y = 1310, xend = 100, yend = 1220),
                   arrow = arrow(length = unit(0.3, "cm"), type="closed"))+
 geom_text(aes(x=112,y=1212,label="N", fontface = "bold"))
 incidence
-#import tree locations derived from image_J map
+
+#pdf("C:/Users/showa/Documents/GitHub/Apiary_LRR/Summary_Graphs_update/Map_with_incidence.pdf", height= 19.5, width = 28.5)
+#incidence
+#dev.off()
+
+#addingn block numbers to map for reference
+block_num<-read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/Poria_survey_70s.xlsx", sheet = "Block_numbers", range = "A1:C99", col_names = TRUE)
+block_num$X<-(block_num$LLX+0.5)*132
+block_num$Y<-(block_num$LLY+0.5)*132
+map_block_num<-incidence + geom_text(data=block_num, x=block_num$X, y=block_num$Y,label=block_num$Block, size=10, alpha=0.2, fontface="bold")
+map_block_num
+
+#pdf("C:/Users/showa/Documents/GitHub/Apiary_LRR/Summary_Graphs_update/Map_with_incidence_and_block_numbers.pdf", height= 19.5, width = 28.5)
+#map_block_num
+#dev.off()
+ #import tree locations derived from image_J map
 #impute diameters for image J trees based on nearest plot with data
 
 
