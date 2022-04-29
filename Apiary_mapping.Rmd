@@ -21,12 +21,13 @@ library(ggplot2)
 library(ggforce)
 ```
 
-## Importing transcribed compass points and tree measurements
+## Importing transcribed compass points and converting units
 
-You can also embed plots, for example:
+Initial incidence measurements were made from a single refrence point within a grid block.  First we must establish the location of this reference point within the block, relative to as many as 4 chain grid intersections. When multiple bearings to chain points are given, the calculated location is averaged.
 
 ```{r, echo=FALSE}
 por_compass_df<-read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/Poria_survey_70s.xlsx", sheet = "Poria_compass_points", range = "A1:AP83", col_names = TRUE)
+#path for lab computer
 #por_compass_df<-read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Poria_survey_70s.xlsx", sheet = "Poria_compass_points", range = "A1:AP83", col_names = TRUE)
 #subset four compass points for testing including some with "C" and negative numbers
 #compass_test<-por_compass_df[c(1:4, 35:37),]
@@ -70,7 +71,7 @@ por_compass_df$Az_1_calc<- ifelse(por_compass_df$add_1==TRUE,  #if add is TRUE
                                 por_compass_df$bear_ref_1 - por_compass_df$Deg_1 # then subtract deg from ref
                                 , NA # if neither TRUE nor FALSE, then NA
                                 ))
-#convert neg degerees to pos
+#convert neg degrees to positive
 por_compass_df$Az_1_calc<- ifelse(por_compass_df$Az_1_calc <0 , 360 + por_compass_df$Az_1_calc, por_compass_df$Az_1_calc)
 
 #replacing missing azimuths with calculated (if available)
@@ -354,24 +355,6 @@ points(por_compass_df$ft_X_ave,por_compass_df$ft_Y_ave,col="blue", cex=2)
 
 #importing subplot centers and creating circles
 ```{r, echo=FALSE}
-#first attempt using image J and plotted paper map
-#subplot_df<-read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/Poria_survey_70s.xlsx", sheet = "Image_J_subplot_locations", range = "A1:H121", #col_names = TRUE)
-#glimpse(subplot_df)
-##then convert chain grid to computer grid
-#subplot_df$comp_X_1 <- (-(subplot_df$ref_x /2))+17 
-#subplot_df$comp_Y_1 <- (subplot_df$ref_y + 10) /2
-##create a distance grid measured in feet, based on the computer grid
-#subplot_df$ft_X_1 <- subplot_df$comp_X_1 * 132
-#subplot_df$ft_Y_1 <- subplot_df$comp_Y_1 * 132
-##polar to cartesian
-#subplot_df$loc_X_1 <- subplot_df$ft_X_1+subplot_df$ft*sin(subplot_df$azi*pi/180)
-#subplot_df$loc_Y_1 <- subplot_df$ft_Y_1+subplot_df$ft*cos(subplot_df$azi*pi/180)
-#
-#ggplot() +
-#geom_circle(aes(x0 = loc_X_1, y0 = loc_Y_1, r = 26.3), data = subplot_df)
-
-#this didn't work well. Probably an error in the image J import by not setting distance scale using grid line and not adjusting angle for tilted pictures.
-
 #first attempt inputting the written chain and compass subplot locations
 subplot_df<-read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/Poria_survey_70s.xlsx", sheet = "Recorded_subplot_locations", range = "A1:U126", col_names = TRUE)
 #glimpse(subplot_df)
@@ -684,6 +667,9 @@ map_block_num
   IJ_stumps$Age_class<-"Live, cut stump detection"
   IJ_stumps$Species<-"DF"
   IJ_stumps_merge<-IJ_stumps[,c("Block","Species","Age_class","loc_X","loc_Y")]
+    #impute diameters for image J trees based on nearest plot with data
+cut_diameters<-as.vector(cut_tree_w_ref[['Diameter']])
+IJ_stumps_merge$Diameter<-sample(cut_diameters, 64, replace = TRUE)
   por_and_cut_IJ<-rbind(por_and_cut, IJ_stumps_merge)
   por_and_cut_IJ$Age_class<-factor(por_and_cut_IJ$Age_class, levels=c("Live, cut stump detection","Live with Symptoms","Dead <10 years","Dead >10 years"), ordered = TRUE)
   #make the map
@@ -719,27 +705,13 @@ sp<-subplot_df[,c("subplot","loc_X_final","loc_Y_final")]
 colnames(sp)=c("subplot","h","k")
 
 trees<-por_and_cut_IJ
-colnames(trees)=c("Block","Species","Age_class","x","y")
+colnames(trees)=c("Block","Species","Age_class","x","y","Diameter")
 trees$entry<-1:nrow(trees)
-#test_sp<-sp[c(49:50),]
-#test_trees<-subset(trees, trees$Block=="16"|trees$Block=="18")
-#rownames(test_trees)<-1:40
-#in.subplot <- function(x,y,s,h,k) {
-#  ifelse(isTRUE(27>=sqrt((x-h)^2 + (y-k)^2)), s,NA)
-#}
-#
-#test_tree_list<- split(test_trees[,c("x","y")], seq(nrow(test_trees)))
-#
-#result <- vector(mode="character", length=nrow(test_trees))
-# for (j in 1:nrow(test_sp)){for (i in 1:nrow(test_trees)){
-#result[i]<-ifelse(isTRUE(27>=sqrt((test_trees[i,"x"]-test_sp[j,"h"])^2 + (test_trees[i,"y"]-test_sp[j,"k"])^2)),paste("Entry",i,"in #subplot",test_sp[j,"subplot"],sep=" "), "out")
-#}}
-#
 result_df <- data.frame()
 entry <- data.frame()
 sub_p <- data.frame()
  for (j in 1:nrow(sp)){for (i in 1:nrow(trees)){
-entry<-ifelse(isTRUE(27>=sqrt((trees[i,"x"]-sp[j,"h"])^2 + (trees[i,"y"]-sp[j,"k"])^2)),i, NA)
+entry<-ifelse(isTRUE(27>=sqrt((trees[i,"x"]-sp[j,"h"])^2 + (trees[i,"y"]-sp[j,"k"])^2)),trees[i,"entry"], NA)
 sub_p<-ifelse(isTRUE(27>=sqrt((trees[i,"x"]-sp[j,"h"])^2 + (trees[i,"y"]-sp[j,"k"])^2)),sp[j,"subplot"], NA)
 add<-cbind(entry,sub_p)
 result_df<-rbind(result_df,add)
@@ -749,14 +721,7 @@ trees_w_subp<-merge(trees,filter_result,by.x = "entry", by.y = "entry", all.x = 
 ```
 
 ```{r, echo=FALSE}
-#impute diameters for image J trees based on nearest plot with data
-cut_histo<-ggplot()+geom_histogram(data=cut_tree_w_ref, aes(Diameter))
-cut_histo
-cut_diameters<-as.vector(cut_tree_w_ref['Diameter'])
-IJ_stumps$Diam_imp<-sample(cut_diameters, size=64, replace = TRUE)
-IJ_histo<-ggplot()+geom_histogram(data=IJ_stumps, aes(Diam_imp))
-cut_histo
-IJ_histo
+
 ```
 
 #BLANK
