@@ -23,7 +23,7 @@ library(ggforce)
 
 ## Importing transcribed compass points and converting units
 
-Initial incidence measurements were made from a single refrence point within a grid block.  First we must establish the location of this reference point within the block, relative to as many as 4 chain grid intersections. When multiple bearings to chain points are given, the calculated location is averaged.
+Initial LRR incidence measurements pre-harvvest were made from a single reference point within each 2-chain grid block.  First we must establish the location of this reference point within each block, relative to as many as 4 chain grid intersections. When multiple azimuths/bearings to chain points are given, the calculated location is averaged.
 
 ```{r, echo=FALSE}
 por_compass_df<-read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/Poria_survey_70s.xlsx", sheet = "Poria_compass_points", range = "A1:AP83", col_names = TRUE)
@@ -282,7 +282,7 @@ points(por_compass_df$ft_X_4,por_compass_df$ft_Y_4)
 #points(por_compass_df$loc_X_4,por_compass_df$loc_Y_4,col="gray")
 points(por_compass_df$ft_X_ave,por_compass_df$ft_Y_ave,col="black", cex = 2.5)
 
-# Create data frame with line-values
+# Create data frame with line-values which can be used to map bearings from grid corners to compass reference points
 #multiple_segments_1 <- data.frame(x0 = por_compass_df$ft_X_1,   
 #                       y0 = por_compass_df$ft_Y_1,
 #                       x1 = por_compass_df$loc_X_1,
@@ -328,6 +328,8 @@ points(por_compass_df$ft_X_ave,por_compass_df$ft_Y_ave,col="black", cex = 2.5)
 ```
 
 #importing recorded cut stump compass points
+
+Similar measurements were made post-harvest to identify LRR symptoms in cut stumps that hadn't been observed in the first harvest. Compass stations were referenced with one chain grid corner.
 ```{r, echo=FALSE}
 cut_compass_df<-read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/Poria_survey_70s.xlsx", sheet = "Cut_stump_compass_points", range = "A1:G43", col_names = TRUE)
 #glimpse(cut_compass_df)
@@ -354,6 +356,8 @@ points(por_compass_df$ft_X_ave,por_compass_df$ft_Y_ave,col="blue", cex=2)
 ```
 
 #importing subplot centers and creating circles
+Centers for circular 1/20 acre observation subplots were mapped relative to one or more chain grid corners. Some subplots had to be moved after initial pre-establishment harvest to acomodate road changes or other disturbance. 
+
 ```{r, echo=FALSE}
 #first attempt inputting the written chain and compass subplot locations
 subplot_df<-read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/Poria_survey_70s.xlsx", sheet = "Recorded_subplot_locations", range = "A1:U126", col_names = TRUE)
@@ -401,6 +405,8 @@ points(subplot_df$loc_X_final,subplot_df$loc_Y_final,col="blue", cex=2)
 ```
 
 #importing plot corners
+
+Plots were defined by corners referenced to the chain grid.  Initially input from excel, later coded in a different structure to facilitate using with geom_polygon()
 ```{r, echo=FALSE}
 #plot_df<-read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/Poria_survey_70s.xlsx", sheet = "Plot_corners", range = "E1:W26", col_names = TRUE)
 #glimpse(plot_df)
@@ -473,6 +479,11 @@ positions <- data.frame(
   y = y_ft
 )
 datapoly <- merge(values, positions, by = c("id"))
+```
+
+#plotting plots, subplots, and chain grid
+
+```{r, echo=FALSE}
 p <- ggplot() +
   geom_label(data=subplot_df, x=subplot_df$loc_X_final, y= subplot_df$loc_Y_final,label= subplot_df$subplot, label.size = NA, size=3, alpha=0.5)+
   scale_x_continuous("Grid ft NW",breaks = seq(0,1716,132))+
@@ -503,8 +514,10 @@ plot_sub_grid
 ```
 
 #importing poria trees
+Species, condition, and diameter measuremetns for poria killed trees were recorded relative to the compass reference points from above.
+
 ```{r, echo=FALSE}
-por_tree_df<-read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/Poria_survey_70s.xlsx", sheet = "Poria_trees", range = "A1:O754", col_names = TRUE)
+por_tree_df<-read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/Poria_survey_70s.xlsx", sheet = "Poria_trees", range = "A1:O757", col_names = TRUE)
 #compass_test<-por_compass_df[c(1:4, 35:37),]
 
 #convert bearings to fill in missing azimuths
@@ -589,6 +602,8 @@ incidence
 
 
 #importing cut stump trees
+Smilarly, species, condition, and diameter measuremetns for cut-stump detected LRR  trees were recorded relative to the compass reference points from above. One book of raw data was missing for blocks in the E corner of the site. The analog plotter map from Everett was photographed and ImageJ was used to calculate azimuth and distance for the missing trees. Trees calculated using ImageJ did not have recorded diameters, so diameter entries for other cut-stump detections were randomly assigned using the sample() function. 
+
 ```{r, echo=FALSE}
 #import the recorded trees relative to compass points
 cut_tree_df<-read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/Poria_survey_70s.xlsx", sheet = "Cut_stump_trees", range = "A1:G179", col_names = TRUE)
@@ -617,6 +632,11 @@ por_tree_w_ref_merge<-por_tree_w_ref[,c("Block","Species","Age_class","loc_X","l
 colnames(por_tree_w_ref_merge)<-c("Block","Species","Age_class","loc_X","loc_Y","Diameter")
 por_and_cut<-rbind(por_tree_w_ref_merge, cut_tree_w_ref_merge)
 por_and_cut$Age_class<-factor(por_and_cut$Age_class, levels=c("Live, cut stump detection","Live with Symptoms","Dead <10 years","Dead >10 years"), ordered = TRUE)
+```
+
+#adding Inialy LRR incidence trees to site map
+
+```{r, echo=FALSE}
 
 #draw polygons for blocks
 block_polys<-ggplot()+geom_polygon(aes(x = datapoly$x, y = datapoly$y, fill= datapoly$TRT, group= datapoly$id), colour="black", size= 1.25)+
@@ -643,7 +663,7 @@ incidence
 #incidence
 #dev.off()
 
-#addingn block numbers to map for reference
+#adding block numbers to map for reference
 block_num<-read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/Poria_survey_70s.xlsx", sheet = "Block_numbers", range = "A1:C99", col_names = TRUE)
 block_num$X<-(block_num$LLX+0.5)*132
 block_num$Y<-(block_num$LLY+0.5)*132
@@ -655,7 +675,7 @@ map_block_num
 #dev.off()
 
 #import tree locations derived from image_J map
-  IJ_stumps<-read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/Poria_survey_70s.xlsx", sheet = "Image_J_cut_stump", range = "A1:L65", col_names = TRUE)
+  IJ_stumps<-read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/Poria_survey_70s.xlsx", sheet = "Image_J_cut_stump", range = "A1:L73", col_names = TRUE)
   IJ_stumps$ref_X_ft<-IJ_stumps$ref_x*132
   IJ_stumps$ref_Y_ft<-IJ_stumps$ref_y*132
   #adjust N to grid Y positive
@@ -669,7 +689,7 @@ map_block_num
   IJ_stumps_merge<-IJ_stumps[,c("Block","Species","Age_class","loc_X","loc_Y")]
     #impute diameters for image J trees based on nearest plot with data
 cut_diameters<-as.vector(cut_tree_w_ref[['Diameter']])
-IJ_stumps_merge$Diameter<-sample(cut_diameters, 64, replace = TRUE)
+IJ_stumps_merge$Diameter<-sample(cut_diameters, 72, replace = TRUE)
   por_and_cut_IJ<-rbind(por_and_cut, IJ_stumps_merge)
   por_and_cut_IJ$Age_class<-factor(por_and_cut_IJ$Age_class, levels=c("Live, cut stump detection","Live with Symptoms","Dead <10 years","Dead >10 years"), ordered = TRUE)
   #make the map
@@ -699,6 +719,9 @@ IJ_stumps_merge$Diameter<-sample(cut_diameters, 64, replace = TRUE)
   
 ```
 
+#Calculating wheither initial incidence trees fall within each subplot
+For loop was written to test all subplot x LRR tree combinations for whether the tree point was within the 27' radius of the subplot.
+
 ```{r, echo=FALSE}
 #run a loop to test if trees are within a subplot
 sp<-subplot_df[,c("subplot","loc_X_final","loc_Y_final")]
@@ -708,30 +731,38 @@ trees<-por_and_cut_IJ
 colnames(trees)=c("Block","Species","Age_class","x","y","Diameter")
 trees$entry<-1:nrow(trees)
 result_df <- data.frame()
-entry <- data.frame()
-sub_p <- data.frame()
+#entry <- data.frame()
+#sub_p <- data.frame()
+# for (j in 1:nrow(sp)){for (i in 1:nrow(trees)){
+#entry<-ifelse(isTRUE(27>=sqrt((trees[i,"x"]-sp[j,"h"])^2 + (trees[i,"y"]-sp[j,"k"])^2)),trees[i,"entry"], NA)
+#sub_p<-ifelse(isTRUE(27>=sqrt((trees[i,"x"]-sp[j,"h"])^2 + (trees[i,"y"]-sp[j,"k"])^2)),sp[j,"subplot"], NA)
+#add<-cbind(entry,sub_p)
+#result_df<-rbind(result_df,add)
+#}}
+
  for (j in 1:nrow(sp)){for (i in 1:nrow(trees)){
-entry<-ifelse(isTRUE(27>=sqrt((trees[i,"x"]-sp[j,"h"])^2 + (trees[i,"y"]-sp[j,"k"])^2)),trees[i,"entry"], NA)
-sub_p<-ifelse(isTRUE(27>=sqrt((trees[i,"x"]-sp[j,"h"])^2 + (trees[i,"y"]-sp[j,"k"])^2)),sp[j,"subplot"], NA)
-add<-cbind(entry,sub_p)
-result_df<-rbind(result_df,add)
+output<-c(ifelse(isTRUE(27>=sqrt((trees[i,"x"]-sp[j,"h"])^2 + (trees[i,"y"]-sp[j,"k"])^2)),trees[i,"entry"], NA), 
+          ifelse(isTRUE(27>=sqrt((trees[i,"x"]-sp[j,"h"])^2 + (trees[i,"y"]-sp[j,"k"])^2)),sp[j,"subplot"], NA))
+result_df <- rbind(result_df,output)
+
 }}
+colnames(result_df)<-c("entry","sub_p")
 filter_result<-subset(result_df, !is.na(result_df$entry))
-trees_w_subp<-merge(trees,filter_result,by.x = "entry", by.y = "entry", all.x = TRUE)
+trees_w_subp<-merge(trees,filter_result,by= "entry", all.x = TRUE)
+trees_less_10_sub<-subset(trees_w_subp, trees_w_subp$Age_class!="Dead >10 years")
+sp_trees_less_10<-subset(trees_less_10_sub, !is.na(trees_less_10_sub$sub_p))
+ggplot()+ geom_point(aes(x=trees_w_subp$x,y=trees_w_subp$y,size=trees_w_subp$Diameter, color=factor(trees_w_subp$Age_class)), alpha=0.5)
+ggplot()+ geom_point(aes(x=sp_trees_less_10$x,y=sp_trees_less_10$y,size=sp_trees_less_10$Diameter, color=factor(sp_trees_less_10$Age_class)), alpha=0.5) + geom_circle(data=subplot_df,aes(x0 = subplot_df$loc_X_final, y0 = subplot_df$loc_Y_final, r = 26.3)) +geom_label(data=subplot_df, x=subplot_df$loc_X_final, y= subplot_df$loc_Y_final,label= subplot_df$subplot, label.size = NA, size=3, alpha=0.0)
 ```
 
-```{r, echo=FALSE}
-
-```
-
-#BLANK
+#Creating FVS inputs of LRR stumps to combine with FVS inputs of planted trees
 ```{r, echo=FALSE}
 #extract columns necessary for FVS from poria, cut stump, and IJ cut stump dataframes
 
 
-#Generate FVS inputs to include initial incidence trees with species, status, diameter
+#Generate FVS inputs to include initial incidence trees with species, history, severity, diameter
 #seedlings should have Dam 62 Sev 00 species DF
-#stumps <10Y with with Dam 62, Sev 03, ITH 6, DBH
+#stumps <10Y  with Dam 62, Sev 03, ITH 6, DBH, species
 #manually assign number of centers based on estimate.
 
 ```
