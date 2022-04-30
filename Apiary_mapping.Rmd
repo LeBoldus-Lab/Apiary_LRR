@@ -753,6 +753,11 @@ trees_less_10_sub<-subset(trees_w_subp, trees_w_subp$Age_class!="Dead >10 years"
 sp_trees_less_10<-subset(trees_less_10_sub, !is.na(trees_less_10_sub$sub_p))
 ggplot()+ geom_point(aes(x=trees_w_subp$x,y=trees_w_subp$y,size=trees_w_subp$Diameter, color=factor(trees_w_subp$Age_class)), alpha=0.5)
 ggplot()+ geom_point(aes(x=sp_trees_less_10$x,y=sp_trees_less_10$y,size=sp_trees_less_10$Diameter, color=factor(sp_trees_less_10$Age_class)), alpha=0.5) + geom_circle(data=subplot_df,aes(x0 = subplot_df$loc_X_final, y0 = subplot_df$loc_Y_final, r = 26.3)) +geom_label(data=subplot_df, x=subplot_df$loc_X_final, y= subplot_df$loc_Y_final,label= subplot_df$subplot, label.size = NA, size=3, alpha=0.0)
+
+#save RDS so I don't have to redo the loop
+#saveRDS(sp_trees_less_10,"C:/Users/showa/Documents/GitHub/Apiary_LRR/Initial_LRR_trees_dead_less_than_10_year_in_subplots.Rds")
+#saveRDS(trees_less_10_sub,"C:/Users/showa/Documents/GitHub/Apiary_LRR/Initial_LRR_trees_dead_less_than_10_year.Rds")
+#saveRDS(trees_w_subp,"C:/Users/showa/Documents/GitHub/Apiary_LRR/Initial_LRR_trees_in_or_out_subplots.Rds")
 ```
 
 #Creating FVS inputs of LRR stumps to combine with FVS inputs of planted trees
