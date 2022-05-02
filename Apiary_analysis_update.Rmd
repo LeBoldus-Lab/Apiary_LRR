@@ -20,6 +20,7 @@ library(readxl)
 library(readr)
 library(tidyverse)
 library(ggplot2)
+library(xlsx)
 ```
 
 ## Importing data
@@ -1229,118 +1230,236 @@ stand_df_year$Live_BA_fpa<-stand_df_year$Live_BA_mpha*4.356
 #FVS_Prep$HISTORY<-ifelse(FVS_Prep$STATUS=="3","6",FVS_Prep$STATUS)
 #FVS_Prep$DIAMETER<-(FVS_Prep$DBH_mm * 0.03937)
 
+
+
+
+#importing sample FVS_Input sheets to get the right format
+FVS_GroupAddFilesAndKeywords <- read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/FVS_inputs/FVS_Input_Template.xlsx", sheet = "FVS_GroupAddFilesAndKeywords", range = "A1:C1", col_names = TRUE)
+FVS_StandInit <- read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/FVS_inputs/FVS_Input_Template.xlsx", sheet = "FVS_StandInit", range = "A1:BP1", col_names = TRUE)
+FVS_TreeInit <- read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/FVS_inputs/FVS_Input_Template.xlsx", sheet = "FVS_TreeInit", range = "A1:AM1", col_names = TRUE)
+FVS_PlotInit <- read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/FVS_inputs/FVS_Input_Template.xlsx", sheet = "FVS_PlotInit", range = "A1:BU1", col_names = TRUE)
 #A0 Treatment A REP "0" is being called Treatment 1 Stand 5,  A1 = Stand 1, A2= stand 2, A3= Stand 3, A4= Stand 4
+#lessA1A3<-readRDS(file="C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/raw_data/long_data_keep_lessA1A3.Rds")
+#Calculate necessary ID variables
 FVS_Prep<-filter(lessA1A3, FVS_age==0 & !is.na(Tree_status))
-FVS_Prep$Tnum<-as.numeric(ifelse(FVS_Prep$TRT_code=="A",10,
-                                 ifelse(FVS_Prep$TRT_code=="B",20,
-                                  ifelse(FVS_Prep$TRT_code=="C",30,
-                                         ifelse(FVS_Prep$TRT_code=="D",40,
-                                        50)))))
-FVS_Prep$SEV<-ifelse(FVS_Prep$REP==0,5,FVS_Prep$REP)
-#FVS_Prep$root_prop<-FVS_Prep$SEV * 0.2
-FVS_Prep$STAND_CN<-paste0(FVS_Prep$Tnum,FVS_Prep$SEV,sep="")
-FVS_Prep$STAND_ID<-paste0(FVS_Prep$Tnum,FVS_Prep$SEV,FVS_Prep$SEV,sep="")
-FVS_Prep$PLOT_ID<-FVS_Prep$SUBPLOT
-FVS_Prep$PLOT_CN<-paste0(FVS_Prep$STAND_ID,FVS_Prep$PLOT_ID,sep="")
-FVS_Prep$STANDPLOT_CN<-paste0(FVS_Prep$STAND_CN,"_000",FVS_Prep$PLOT_ID,sep="")
-FVS_Prep$STANDPLOT_ID<-paste0(FVS_Prep$STAND_ID,"_000",FVS_Prep$PLOT_ID,sep="")
-FVS_Prep$TREE_ID<-FVS_Prep$TREE
-FVS_Prep$HISTORY<-ifelse(FVS_Prep$STATUS=="3","6",FVS_Prep$STATUS)
-FVS_Prep$DIAMETER<-(FVS_Prep$DBH_mm * 0.03937)
+FVS_Prep$Tnum<-as.numeric(ifelse(FVS_Prep$TRT_code=="A",1,
+                                 ifelse(FVS_Prep$TRT_code=="B",2,
+                                  ifelse(FVS_Prep$TRT_code=="C",3,
+                                         ifelse(FVS_Prep$TRT_code=="D",4,
+                                        5)))))
+FVS_Prep$BLOCK<-as.numeric(ifelse(FVS_Prep$REP==0,5,FVS_Prep$REP))
+FVS_Prep$StandNum<-as.numeric(((FVS_Prep$Tnum -1)*5)+FVS_Prep$BLOCK)
+FVS_Prep$PlotNum<-as.numeric(((FVS_Prep$Tnum -1)*25)+as.numeric(FVS_Prep$SUBPLOT))
+#create an input file based on template and input data
+FVS_TreeInit_Test = data.frame(matrix(nrow = nrow(FVS_Prep), ncol = ncol(FVS_TreeInit))) 
+# assign column names
+colnames(FVS_TreeInit_Test) = colnames(FVS_TreeInit)
+#populate
+FVS_TreeInit_Test$STAND_CN<-FVS_Prep$StandNum
+FVS_TreeInit_Test$STAND_ID<-FVS_Prep$StandNum
+FVS_TreeInit_Test$PLOT_ID<-FVS_Prep$PlotNum
+FVS_TreeInit_Test$PLOT_CN<-FVS_Prep$PlotNum
+FVS_TreeInit_Test$STANDPLOT_CN<-paste0(FVS_Prep$StandNum,FVS_Prep$PlotNum,sep="")
+FVS_TreeInit_Test$STANDPLOT_ID<-paste0(FVS_Prep$StandNum,FVS_Prep$PlotNum,sep="")
+FVS_TreeInit_Test$TREE_ID<-FVS_Prep$Tree_ID
+FVS_TreeInit_Test$HISTORY<-ifelse(FVS_Prep$STATUS=="3","7",FVS_Prep$STATUS)
+FVS_TreeInit_Test$DIAMETER<-(FVS_Prep$DBH_mm * 0.03937)
+FVS_TreeInit_Test$SPECIES<-"DF"
+
 ```
 
-# Writing FVS in put files
+#including cut stumps in FVS inputs
+
+```{r, echo=FALSE}
+trees_less_10_sub<-readRDS("C:/Users/showa/Documents/GitHub/Apiary_LRR/Initial_LRR_trees_dead_less_than_10_year.Rds")
+#trees_less_10_sub<-readRDS("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Initial_LRR_trees_dead_less_than_10_year.Rds")
+
+sp_trees_less_10<-readRDS("C:/Users/showa/Documents/GitHub/Apiary_LRR/Initial_LRR_trees_dead_less_than_10_year_in_subplots.Rds")
+
+#sp_trees_less_10<-readRDS("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Initial_LRR_trees_dead_less_than_10_year_in_subplots.Rds")
+
+#adding damage code =62 for LRR, history=7 dead and update column names to FVS format
+sp_trees_less_10$HISTORY<-7
+sp_trees_less_10$DAMAGE1<-62
+names(sp_trees_less_10)[names(sp_trees_less_10) == 'Diameter'] <- 'DIAMETER'
+names(sp_trees_less_10)[names(sp_trees_less_10) == 'Species'] <- 'SPECIES'
+#can then subset sp_trees_less_10 based on subplots to generate outputs
+#Calculate necessary ID variables
+FVS_Stump_Prep<-sp_trees_less_10
+#split subplot ID to get TRT BLOCK and SUBPLOP IDS
+df<-data.frame(str_split_fixed(FVS_Stump_Prep$sub_p, "", 3))
+colnames(df)<- c("TRT_code","BLOCK","SUBPLOT")
+df$BLOCK<-as.numeric(df$BLOCK)
+df$SUBPLOT<-as.numeric(df$SUBPLOT)
+FVS_Stump_Prep<-cbind(FVS_Stump_Prep,df)
+FVS_Stump_Prep$Tnum<-as.numeric(ifelse(FVS_Stump_Prep$TRT_code=="A",1,
+                                 ifelse(FVS_Stump_Prep$TRT_code=="B",2,
+                                  ifelse(FVS_Stump_Prep$TRT_code=="C",3,
+                                         ifelse(FVS_Stump_Prep$TRT_code=="D",4,
+                                        5)))))
+FVS_Stump_Prep$StandNum<-as.numeric(((FVS_Stump_Prep$Tnum -1)*5)+FVS_Stump_Prep$BLOCK)
+FVS_Stump_Prep$PlotNum<-as.numeric(((FVS_Stump_Prep$Tnum -1)*25)+as.numeric(FVS_Stump_Prep$SUBPLOT))
+#create an input file based on template and input data
+FVS_TreeInit_Test2 = data.frame(matrix(nrow = nrow(FVS_Stump_Prep), ncol = ncol(FVS_TreeInit))) 
+# assign column names
+colnames(FVS_TreeInit_Test2) = colnames(FVS_TreeInit)
+#populate
+FVS_TreeInit_Test2$STAND_CN<-FVS_Stump_Prep$StandNum
+FVS_TreeInit_Test2$STAND_ID<-FVS_Stump_Prep$StandNum
+FVS_TreeInit_Test2$PLOT_ID<-FVS_Stump_Prep$PlotNum
+FVS_TreeInit_Test2$PLOT_CN<-FVS_Stump_Prep$PlotNum
+FVS_TreeInit_Test2$STANDPLOT_CN<-paste0(FVS_Stump_Prep$StandNum,FVS_Stump_Prep$PlotNum,sep="")
+FVS_TreeInit_Test2$STANDPLOT_ID<-paste0(FVS_Stump_Prep$StandNum,FVS_Stump_Prep$PlotNum,sep="")
+FVS_TreeInit_Test2$TREE_ID<-FVS_Stump_Prep$entry
+FVS_TreeInit_Test2$HISTORY<-7
+FVS_TreeInit_Test2$DIAMETER<-(FVS_Stump_Prep$DIAMETER)
+FVS_TreeInit_Test2$SPECIES<-FVS_Stump_Prep$SPECIES
+#add stumps to seedlings input
+FVS_TreeInit_Test<-rbind(FVS_TreeInit_Test,FVS_TreeInit_Test2)
+
+####GENERATE PLOT AND STAND INPUTS
+
+
+#once seedling positions have been input (perhaps just start with DF treatment C)
+#run a loop to test if seedlings are within 30 ft of an infested tree and use to populate DAMAGE & SEVERITY codes
+#us example below as a place to start
+  #sp<-subplot_df[,c("subplot","loc_X_final","loc_Y_final")]
+  #colnames(sp)=c("subplot","h","k")
+  #
+  #trees<-por_and_cut_IJ
+  #colnames(trees)=c("Block","Species","Age_class","x","y","Diameter")
+  #trees$entry<-1:nrow(trees)
+  #result_df <- data.frame()
+  #
+  # for (j in 1:nrow(sp)){for (i in 1:nrow(trees)){
+  #output<-c(ifelse(isTRUE(27>=sqrt((trees[i,"x"]-sp[j,"h"])^2 + (trees[i,"y"]-sp[j,"k"])^2)),trees[i,"entry"], NA), 
+  #          ifelse(isTRUE(27>=sqrt((trees[i,"x"]-sp[j,"h"])^2 + (trees[i,"y"]-sp[j,"k"])^2)),sp[j,"subplot"], NA))
+  #result_df <- rbind(result_df,output)
+  #
+  #}}
+  #colnames(result_df)<-c("entry","sub_p")
+  #filter_result<-subset(result_df, !is.na(result_df$entry))
+  #trees_w_subp<-merge(trees,filter_result,by= "entry", all.x = TRUE)
+  #trees_less_10_sub<-subset(trees_w_subp, trees_w_subp$Age_class!="Dead >10 years")
+  #sp_trees_less_10<-subset(trees_less_10_sub, !is.na(trees_less_10_sub$sub_p))
+
+#extract columns necessary for FVS from poria, cut stump, and IJ cut stump dataframes
+
+#Generate FVS inputs to include initial incidence trees with species, history, severity, diameter
+#seedlings already have a history designation (7 dead or 1 alive) based on stats codes,this should stay
+#seedlings within 30 ft of infected stump, regardless of history,  should have Dam 62, Sev 01
+#seedlings not within 30 ft of infected stump, regardless of history,  should have no Dam, no Sev, 
+#stumps <10Y since mortality should have  Dam 62 ITH 7, DBH, species, subplot_ID
+#Need to manually assign whether or not each subplot is within a disease centers and add subplot number to PLREAD IF USING 1 DISEASE CETNER
+#Or I need to estimate the number of disease centers in each subplot
+
+```
+
+#write FVS input files
+```{r,echo=FALSE}
+#use the commands below to write xlsx workbooks with multiple sheets which match the FVS_input structure
+#use paste() and R objects to customize output file name
+#could also make a list of the object names for each sheet and then run a for loop to process multiple inputs.
+#or could generate one large input using the STAND and PLOT structure and then just select the relevant stands within FVS when performing the runs.
+write.xlsx(FVS_GroupAddFilesAndKeywords, file="C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/FVS_inputs/FVS_Input_Test.xlsx", sheetName="FVS_GroupAddFilesAndKeywords", row.names=FALSE, showNA = FALSE)
+write.xlsx(FVS_StandInit_Test, file="C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/FVS_inputs/FVS_Input_Test.xlsx", sheetName="FVS_StandInit", append=TRUE, row.names=FALSE, showNA = FALSE)
+write.xlsx(FVS_TreeInit_Test, file="C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/FVS_inputs/FVS_Input_Test.xlsx", sheetName="FVS_TreeInit", append=TRUE, row.names=FALSE, showNA = FALSE)
+write.xlsx(FVS_PlotInit_Test, file="C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/FVS_inputs/FVS_Input_Test.xlsx", sheetName="FVS_PlotInit", append=TRUE, row.names=FALSE, showNA = FALSE)
+```
+
+
+# Writing basic FVS in put files (Shawn's runs)
 ```{r}
 #T1S2
-T1S2<- filter(FVS_Prep, Tnum=='10' & SEV==2)
+T1S2<- filter(FVS_Prep, Tnum=='10' & BLOCK==2)
 TMT1_STND2_FVS_TreeInit<-T1S2[,c("STAND_CN","STAND_ID","PLOT_CN","PLOT_ID","STANDPLOT_CN","STANDPLOT_ID","TREE_ID","HISTORY","DIAMETER")]
 write_csv(TMT1_STND2_FVS_TreeInit, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs_update/TMT1_STND2_FVS_TreeInit.csv")
 #T1S4
-T1S4<- filter(FVS_Prep, Tnum=='10' & SEV==4)
+T1S4<- filter(FVS_Prep, Tnum=='10' & BLOCK==4)
 TMT1_STND4_FVS_TreeInit<-T1S4[,c("STAND_CN","STAND_ID","PLOT_CN","PLOT_ID","STANDPLOT_CN","STANDPLOT_ID","TREE_ID","HISTORY","DIAMETER")]
 write_csv(TMT1_STND4_FVS_TreeInit, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs_update/TMT1_STND4_FVS_TreeInit.csv")
 #T1S5
-T1S5<- filter(FVS_Prep, Tnum=='10' & SEV==5)
+T1S5<- filter(FVS_Prep, Tnum=='10' & BLOCK==5)
 TMT1_STND5_FVS_TreeInit<-T1S5[,c("STAND_CN","STAND_ID","PLOT_CN","PLOT_ID","STANDPLOT_CN","STANDPLOT_ID","TREE_ID","HISTORY","DIAMETER")]
 write_csv(TMT1_STND5_FVS_TreeInit, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs_update/TMT1_STND5_FVS_TreeInit.csv")
 #T2S1
-T2S1<- filter(FVS_Prep, Tnum=='20' & SEV==1)
+T2S1<- filter(FVS_Prep, Tnum=='20' & BLOCK==1)
 TMT2_STND1_FVS_TreeInit<-T2S1[,c("STAND_CN","STAND_ID","PLOT_CN","PLOT_ID","STANDPLOT_CN","STANDPLOT_ID","TREE_ID","HISTORY","DIAMETER")]
 write_csv(TMT2_STND1_FVS_TreeInit, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs_update/TMT2_STND1_FVS_TreeInit.csv")
 #T2S2
-T2S2<- filter(FVS_Prep, Tnum=='20' & SEV==2)
+T2S2<- filter(FVS_Prep, Tnum=='20' & BLOCK==2)
 TMT2_STND2_FVS_TreeInit<-T2S2[,c("STAND_CN","STAND_ID","PLOT_CN","PLOT_ID","STANDPLOT_CN","STANDPLOT_ID","TREE_ID","HISTORY","DIAMETER")]
 write_csv(TMT2_STND2_FVS_TreeInit, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs_update/TMT2_STND2_FVS_TreeInit.csv")
 #T2S3
-T2S3<- filter(FVS_Prep, Tnum=='20' & SEV==3)
+T2S3<- filter(FVS_Prep, Tnum=='20' & BLOCK==3)
 TMT2_STND3_FVS_TreeInit<-T2S3[,c("STAND_CN","STAND_ID","PLOT_CN","PLOT_ID","STANDPLOT_CN","STANDPLOT_ID","TREE_ID","HISTORY","DIAMETER")]
 write_csv(TMT2_STND3_FVS_TreeInit, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs_update/TMT2_STND3_FVS_TreeInit.csv")
 #T2S4
-T2S4<- filter(FVS_Prep, Tnum=='20' & SEV==4)
+T2S4<- filter(FVS_Prep, Tnum=='20' & BLOCK==4)
 TMT2_STND4_FVS_TreeInit<-T2S4[,c("STAND_CN","STAND_ID","PLOT_CN","PLOT_ID","STANDPLOT_CN","STANDPLOT_ID","TREE_ID","HISTORY","DIAMETER")]
 write_csv(TMT2_STND4_FVS_TreeInit, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs_update/TMT2_STND4_FVS_TreeInit.csv")
 #T2S5
-T2S5<- filter(FVS_Prep, Tnum=='20' & SEV==5)
+T2S5<- filter(FVS_Prep, Tnum=='20' & BLOCK==5)
 TMT2_STND5_FVS_TreeInit<-T2S5[,c("STAND_CN","STAND_ID","PLOT_CN","PLOT_ID","STANDPLOT_CN","STANDPLOT_ID","TREE_ID","HISTORY","DIAMETER")]
 write_csv(TMT2_STND5_FVS_TreeInit, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs_update/TMT2_STND5_FVS_TreeInit.csv")
 #T3S1
-T3S1<- filter(FVS_Prep, Tnum=='30' & SEV==1)
+T3S1<- filter(FVS_Prep, Tnum=='30' & BLOCK==1)
 TMT3_STND1_FVS_TreeInit<-T3S1[,c("STAND_CN","STAND_ID","PLOT_CN","PLOT_ID","STANDPLOT_CN","STANDPLOT_ID","TREE_ID","HISTORY","DIAMETER")]
 write_csv(TMT3_STND1_FVS_TreeInit, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs_update/TMT3_STND1_FVS_TreeInit.csv")
 #T3S2
-T3S2<- filter(FVS_Prep, Tnum=='30' & SEV==2)
+T3S2<- filter(FVS_Prep, Tnum=='30' & BLOCK==2)
 TMT3_STND2_FVS_TreeInit<-T3S2[,c("STAND_CN","STAND_ID","PLOT_CN","PLOT_ID","STANDPLOT_CN","STANDPLOT_ID","TREE_ID","HISTORY","DIAMETER")]
 write_csv(TMT3_STND2_FVS_TreeInit, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs_update/TMT3_STND2_FVS_TreeInit.csv")
 #T3S3
-T3S3<- filter(FVS_Prep, Tnum=='30' & SEV==3)
+T3S3<- filter(FVS_Prep, Tnum=='30' & BLOCK==3)
 TMT3_STND3_FVS_TreeInit<-T3S3[,c("STAND_CN","STAND_ID","PLOT_CN","PLOT_ID","STANDPLOT_CN","STANDPLOT_ID","TREE_ID","HISTORY","DIAMETER")]
 write_csv(TMT3_STND3_FVS_TreeInit, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs_update/TMT3_STND3_FVS_TreeInit.csv")
 #T3S4
-T3S4<- filter(FVS_Prep, Tnum=='30' & SEV==4)
+T3S4<- filter(FVS_Prep, Tnum=='30' & BLOCK==4)
 TMT3_STND4_FVS_TreeInit<-T3S4[,c("STAND_CN","STAND_ID","PLOT_CN","PLOT_ID","STANDPLOT_CN","STANDPLOT_ID","TREE_ID","HISTORY","DIAMETER")]
 write_csv(TMT3_STND4_FVS_TreeInit, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs_update/TMT3_STND4_FVS_TreeInit.csv")
 #T3S5
-T3S5<- filter(FVS_Prep, Tnum=='30' & SEV==5)
+T3S5<- filter(FVS_Prep, Tnum=='30' & BLOCK==5)
 TMT3_STND5_FVS_TreeInit<-T3S5[,c("STAND_CN","STAND_ID","PLOT_CN","PLOT_ID","STANDPLOT_CN","STANDPLOT_ID","TREE_ID","HISTORY","DIAMETER")]
 write_csv(TMT3_STND5_FVS_TreeInit, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs_update/TMT3_STND5_FVS_TreeInit.csv")
 #T4S1
-T4S1<- filter(FVS_Prep, Tnum=='40' & SEV==1)
+T4S1<- filter(FVS_Prep, Tnum=='40' & BLOCK==1)
 TMT4_STND1_FVS_TreeInit<-T4S1[,c("STAND_CN","STAND_ID","PLOT_CN","PLOT_ID","STANDPLOT_CN","STANDPLOT_ID","TREE_ID","HISTORY","DIAMETER")]
 write_csv(TMT4_STND1_FVS_TreeInit, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs_update/TMT4_STND1_FVS_TreeInit.csv")
 #T4S2
-T4S2<- filter(FVS_Prep, Tnum=='40' & SEV==2)
+T4S2<- filter(FVS_Prep, Tnum=='40' & BLOCK==2)
 TMT4_STND2_FVS_TreeInit<-T4S2[,c("STAND_CN","STAND_ID","PLOT_CN","PLOT_ID","STANDPLOT_CN","STANDPLOT_ID","TREE_ID","HISTORY","DIAMETER")]
 write_csv(TMT4_STND2_FVS_TreeInit, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs_update/TMT4_STND2_FVS_TreeInit.csv")
 #T4S3
-T4S3<- filter(FVS_Prep, Tnum=='40' & SEV==3)
+T4S3<- filter(FVS_Prep, Tnum=='40' & BLOCK==3)
 TMT4_STND3_FVS_TreeInit<-T4S3[,c("STAND_CN","STAND_ID","PLOT_CN","PLOT_ID","STANDPLOT_CN","STANDPLOT_ID","TREE_ID","HISTORY","DIAMETER")]
 write_csv(TMT4_STND3_FVS_TreeInit, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs_update/TMT4_STND3_FVS_TreeInit.csv")
 #T4S4
-T4S4<- filter(FVS_Prep, Tnum=='40' & SEV==4)
+T4S4<- filter(FVS_Prep, Tnum=='40' & BLOCK==4)
 TMT4_STND4_FVS_TreeInit<-T4S4[,c("STAND_CN","STAND_ID","PLOT_CN","PLOT_ID","STANDPLOT_CN","STANDPLOT_ID","TREE_ID","HISTORY","DIAMETER")]
 write_csv(TMT4_STND4_FVS_TreeInit, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs_update/TMT4_STND4_FVS_TreeInit.csv")
 #T4S5
-T4S5<- filter(FVS_Prep, Tnum=='40' & SEV==5)
+T4S5<- filter(FVS_Prep, Tnum=='40' & BLOCK==5)
 TMT4_STND5_FVS_TreeInit<-T4S5[,c("STAND_CN","STAND_ID","PLOT_CN","PLOT_ID","STANDPLOT_CN","STANDPLOT_ID","TREE_ID","HISTORY","DIAMETER")]
 write_csv(TMT4_STND5_FVS_TreeInit, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs_update/TMT4_STND5_FVS_TreeInit.csv")
 #T5S1
-T5S1<- filter(FVS_Prep, Tnum=='50' & SEV==1)
+T5S1<- filter(FVS_Prep, Tnum=='50' & BLOCK==1)
 TMT5_STND1_FVS_TreeInit<-T5S1[,c("STAND_CN","STAND_ID","PLOT_CN","PLOT_ID","STANDPLOT_CN","STANDPLOT_ID","TREE_ID","HISTORY","DIAMETER")]
 write_csv(TMT5_STND1_FVS_TreeInit, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs_update/TMT5_STND1_FVS_TreeInit.csv")
 #T5S2
-T5S2<- filter(FVS_Prep, Tnum=='50' & SEV==2)
+T5S2<- filter(FVS_Prep, Tnum=='50' & BLOCK==2)
 TMT5_STND2_FVS_TreeInit<-T5S2[,c("STAND_CN","STAND_ID","PLOT_CN","PLOT_ID","STANDPLOT_CN","STANDPLOT_ID","TREE_ID","HISTORY","DIAMETER")]
 write_csv(TMT5_STND2_FVS_TreeInit, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs_update/TMT5_STND2_FVS_TreeInit.csv")
 #T5S3
-T5S3<- filter(FVS_Prep, Tnum=='50' & SEV==3)
+T5S3<- filter(FVS_Prep, Tnum=='50' & BLOCK==3)
 TMT5_STND3_FVS_TreeInit<-T5S3[,c("STAND_CN","STAND_ID","PLOT_CN","PLOT_ID","STANDPLOT_CN","STANDPLOT_ID","TREE_ID","HISTORY","DIAMETER")]
 write_csv(TMT5_STND3_FVS_TreeInit, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs_update/TMT5_STND3_FVS_TreeInit.csv")
 #T5S4
-T5S4<- filter(FVS_Prep, Tnum=='50' & SEV==4)
+T5S4<- filter(FVS_Prep, Tnum=='50' & BLOCK==4)
 TMT5_STND4_FVS_TreeInit<-T5S4[,c("STAND_CN","STAND_ID","PLOT_CN","PLOT_ID","STANDPLOT_CN","STANDPLOT_ID","TREE_ID","HISTORY","DIAMETER")]
 write_csv(TMT5_STND4_FVS_TreeInit, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs_update/TMT5_STND4_FVS_TreeInit.csv")
 #T5S5
-T5S5<- filter(FVS_Prep, Tnum=='50' & SEV==5)
+T5S5<- filter(FVS_Prep, Tnum=='50' & BLOCK==5)
 TMT5_STND5_FVS_TreeInit<-T5S5[,c("STAND_CN","STAND_ID","PLOT_CN","PLOT_ID","STANDPLOT_CN","STANDPLOT_ID","TREE_ID","HISTORY","DIAMETER")]
 write_csv(TMT5_STND5_FVS_TreeInit, "C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs_update/TMT5_STND5_FVS_TreeInit.csv")
 ```
