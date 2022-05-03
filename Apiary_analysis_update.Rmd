@@ -34,44 +34,44 @@ NOTE: Lab computer path "showalt_d/", home computer "showa/"
 
 ```{r, message=FALSE}
 #reading in abbreviation code sheets from metadata workbook from Anna
-Apiary_TMTs <- read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/Apiary_2020_Path_Data_All_for_Jared_2.xlsx", sheet = "Treatments", range = "A1:C6", col_names = TRUE)
+Apiary_TMTs <- read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/raw_data/Apiary_2020_Path_Data_All_for_Jared_2.xlsx", sheet = "Treatments", range = "A1:C6", col_names = TRUE)
 colnames(Apiary_TMTs)<-c("TMT_code","TMT_short","TMT_name")
 
-Species_codes <- read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/Apiary_Measurement_Codes.xls",sheet = "Species_Codes", range = "A5:B130", col_names = FALSE)
+Species_codes <- read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/raw_data/Apiary_Measurement_Codes.xls",sheet = "Species_Codes", range = "A5:B130", col_names = FALSE)
 colnames(Species_codes)<-c("Species_Code","Species_name")
 
-Origin_codes <- read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/Apiary_Measurement_Codes.xls",sheet = "Origin_Codes", range = "A5:B10", col_names = FALSE)
+Origin_codes <- read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/raw_data/Apiary_Measurement_Codes.xls",sheet = "Origin_Codes", range = "A5:B10", col_names = FALSE)
 colnames(Origin_codes)<-c("Origin_Code","Origin")
 
-Status_codes <- read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/Apiary_Measurement_Codes.xls",sheet = "Status_Codes", range = "A5:B19", col_names = FALSE)
+Status_codes <- read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/raw_data/Apiary_Measurement_Codes.xls",sheet = "Status_Codes", range = "A5:B19", col_names = FALSE)
 colnames(Status_codes)<-c("Status_Code","Status")
 
-Damage_codes <- read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/Apiary_Measurement_Codes.xls",sheet = "Damage_Codes", range = "A5:B62", col_names = FALSE)
+Damage_codes <- read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/raw_data/Apiary_Measurement_Codes.xls",sheet = "Damage_Codes", range = "A5:B62", col_names = FALSE)
 colnames(Damage_codes)<-c("Damage_Code","Damage")
 
-Position_codes <- read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/Apiary_Measurement_Codes.xls",sheet = "Position_Codes", range = "A7:B14", col_names = FALSE)
+Position_codes <- read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/raw_data/Apiary_Measurement_Codes.xls",sheet = "Position_Codes", range = "A7:B14", col_names = FALSE)
 colnames(Position_codes)<-c("Position_Code","Position")
 
-Damage_amount_codes <- read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/Apiary_Measurement_Codes.xls",sheet = "Amount_Codes", range = "A5:B54", col_names = FALSE)
+Damage_amount_codes <- read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/raw_data/Apiary_Measurement_Codes.xls",sheet = "Amount_Codes", range = "A5:B54", col_names = FALSE)
 colnames(Damage_amount_codes)<-c("Damage_Amount_Code","Damage_Amount")
 
 #reading in dictionary sheet from data workbook
-Data_dict <- read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/Apiary_2020_Path_Data_All_for_Jared_2.xlsx",sheet = "Data_Dictionary", range = "A3:B23", col_names = FALSE)
+Data_dict <- read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/raw_data/Apiary_2020_Path_Data_All_for_Jared_2.xlsx",sheet = "Data_Dictionary", range = "A3:B23", col_names = FALSE)
 colnames(Data_dict)<-c("Column_Name","Description")
 
 #reading in data Note that "data_input_edits.xlsx" has been manually reviewed and corrected based on inspection of data in R.
-A_plots <- read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/data_input_edits.xlsx",sheet = "A-Plots", col_names = TRUE)
+A_plots <- read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/raw_data/data_input_edits.xlsx",sheet = "A-Plots", col_names = TRUE)
 #unique(A_plots$AMT1)
 A_plots$AMT1[A_plots$AMT1==0]<-NA
 
-B_plots <- read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/data_input_edits.xlsx",sheet = "B-Plots", col_names = TRUE)
+B_plots <- read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/raw_data/data_input_edits.xlsx",sheet = "B-Plots", col_names = TRUE)
 
-C_plots <- read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/data_input_edits.xlsx",sheet = "C-Plots", col_names = TRUE)
+C_plots <- read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/raw_data/data_input_edits.xlsx",sheet = "C-Plots", col_names = TRUE)
 #checking nonconforming trt entries with "y" instead of "Y"
 #unique(C_plots$TRT)
 C_plots$TRT[C_plots$TRT=="DF0y"]<-"DF0Y"
 
-D_plots <- read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/data_input_edits.xlsx",sheet = "D-Plots", col_names = TRUE)
+D_plots <- read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/raw_data/data_input_edits.xlsx",sheet = "D-Plots", col_names = TRUE)
 #checking nonconforming trt entries with "y" instead of "Y"
 #unique(D_plots$TRT)
 #unique(D_plots$DAM1)
@@ -80,7 +80,7 @@ D_plots$TRT[D_plots$TRT=="RA20y"]<-"RA20Y"
 #D_plots$DAM1[D_plots$DAM1=="Blank"]<-NA
 #D_plots$AMT1[D_plots$AMT1=="Blank"]<-NA
 
-E_plots <- read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/data_input_edits.xlsx",sheet = "E-Plots", col_names = TRUE)
+E_plots <- read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/raw_data/data_input_edits.xlsx",sheet = "E-Plots", col_names = TRUE)
 
 #combine all treatments together into one dataset and change coded variables to factors rather than numbers
 combined_data<-rbind(A_plots,B_plots,C_plots,D_plots,E_plots)
@@ -113,9 +113,9 @@ combined_data$Tree_ID<-paste(combined_data$SUBPLOT_ID,combined_data$TREE, sep = 
 
 #Repeat similar process for transcribed datasheets adding new dates.
 
-A_plots_2<- read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/Stem_maps_and_datasheets/transcribed_datasheets_87_95_11_common_format.xlsx",sheet = "A_Plots", col_names = TRUE) 
-B_plots_2<- read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/Stem_maps_and_datasheets/transcribed_datasheets_87_95_11_common_format.xlsx",sheet = "B_Plots", col_names = TRUE)
-C_plots_2<- read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/Stem_maps_and_datasheets/transcribed_datasheets_87_95_11_common_format.xlsx",sheet = "C_Plots", col_names = TRUE)
+A_plots_2<- read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/raw_data/Stem_maps_and_datasheets/transcribed_datasheets_87_95_11_common_format.xlsx",sheet = "A_Plots", col_names = TRUE) 
+B_plots_2<- read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/raw_data/Stem_maps_and_datasheets/transcribed_datasheets_87_95_11_common_format.xlsx",sheet = "B_Plots", col_names = TRUE)
+C_plots_2<- read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/raw_data/Stem_maps_and_datasheets/transcribed_datasheets_87_95_11_common_format.xlsx",sheet = "C_Plots", col_names = TRUE)
 
 new_combined_data<-rbind(A_plots_2,B_plots_2,C_plots_2)
 
@@ -315,9 +315,9 @@ lessA1A3<-subset(long_data_keep, (TRT!="RA10Y" |SUBPLOT_ID=="A01" |SUBPLOT_ID=="
 #ABC_long_keep<-long_data_keep[long_data_keep$TRT_code=="A"|long_data_keep$TRT_code=="B"|long_data_keep$TRT_code=="C",]
 
 #write.csv(long_data_keep, file="C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/long_data_keep.csv", row.names = FALSE)
-#write.csv(lessA1A3, file="C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/long_data_keep_lessA1A3.csv", row.names = FALSE)
+#write.csv(lessA1A3, file="C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/raw_data/long_data_keep_lessA1A3.csv", row.names = FALSE)
 #saveRDS(long_data_keep, file="C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/long_data_keep.Rds")
-#saveRDS(lessA1A3, file="C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/long_data_keep_lessA1A3.Rds")
+#saveRDS(lessA1A3, file="C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/raw_data/long_data_keep_lessA1A3.Rds")
 ```
 
 ## Plotting status and live dbh distributions
@@ -1211,35 +1211,13 @@ stand_df_year$Live_BA_fpa<-stand_df_year$Live_BA_mpha*4.356
 
 #Creating FVS_input format
 ```{r}
-
-###UPDATE WITH NEW TREATMENTS AND YEARS
-
-#Creating FVS_input
-#A0 Treatment A REP "0" is being called Treatment 1 Stand 5,  A1 = Stand 1, A2= stand 2, A3= Stand 3, A4= Stand 4
-#FVS_Prep<-filter(ABC_long_keep, FVS_age==0 & !is.na(Tree_status))
-#FVS_Prep$Tnum<-as.numeric(ifelse(FVS_Prep$TRT_code=="A",10,ifelse(FVS_Prep$TRT_code=="B",20,30)))
-#FVS_Prep$SEV<-ifelse(FVS_Prep$REP==0,5,FVS_Prep$REP)
-#FVS_Prep$root_prop<-FVS_Prep$SEV * 0.2
-#FVS_Prep$STAND_CN<-paste0(FVS_Prep$Tnum,FVS_Prep$SEV,sep="")
-#FVS_Prep$STAND_ID<-paste0(FVS_Prep$Tnum,FVS_Prep$SEV,FVS_Prep$SEV,sep="")
-#FVS_Prep$PLOT_ID<-FVS_Prep$SUBPLOT
-#FVS_Prep$PLOT_CN<-paste0(FVS_Prep$STAND_ID,FVS_Prep$PLOT_ID,sep="")
-#FVS_Prep$STANDPLOT_CN<-paste0(FVS_Prep$STAND_CN,"_000",FVS_Prep$PLOT_ID,sep="")
-#FVS_Prep$STANDPLOT_ID<-paste0(FVS_Prep$STAND_ID,"_000",FVS_Prep$PLOT_ID,sep="")
-#FVS_Prep$TREE_ID<-FVS_Prep$TREE
-#FVS_Prep$HISTORY<-ifelse(FVS_Prep$STATUS=="3","6",FVS_Prep$STATUS)
-#FVS_Prep$DIAMETER<-(FVS_Prep$DBH_mm * 0.03937)
-
-
-
-
 #importing sample FVS_Input sheets to get the right format
 FVS_GroupAddFilesAndKeywords <- read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/FVS_inputs/FVS_Input_Template.xlsx", sheet = "FVS_GroupAddFilesAndKeywords", range = "A1:C1", col_names = TRUE)
 FVS_StandInit <- read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/FVS_inputs/FVS_Input_Template.xlsx", sheet = "FVS_StandInit", range = "A1:BP1", col_names = TRUE)
 FVS_TreeInit <- read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/FVS_inputs/FVS_Input_Template.xlsx", sheet = "FVS_TreeInit", range = "A1:AM1", col_names = TRUE)
 FVS_PlotInit <- read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/FVS_inputs/FVS_Input_Template.xlsx", sheet = "FVS_PlotInit", range = "A1:BU1", col_names = TRUE)
 #A0 Treatment A REP "0" is being called Treatment 1 Stand 5,  A1 = Stand 1, A2= stand 2, A3= Stand 3, A4= Stand 4
-#lessA1A3<-readRDS(file="C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/raw_data/long_data_keep_lessA1A3.Rds")
+lessA1A3<-readRDS(file="C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/raw_data/long_data_keep_lessA1A3.Rds")
 #Calculate necessary ID variables
 FVS_Prep<-filter(lessA1A3, FVS_age==0 & !is.na(Tree_status))
 FVS_Prep$Tnum<-as.numeric(ifelse(FVS_Prep$TRT_code=="A",1,
@@ -1249,18 +1227,21 @@ FVS_Prep$Tnum<-as.numeric(ifelse(FVS_Prep$TRT_code=="A",1,
                                         5)))))
 FVS_Prep$BLOCK<-as.numeric(ifelse(FVS_Prep$REP==0,5,FVS_Prep$REP))
 FVS_Prep$StandNum<-as.numeric(((FVS_Prep$Tnum -1)*5)+FVS_Prep$BLOCK)
-FVS_Prep$PlotNum<-as.numeric(((FVS_Prep$Tnum -1)*25)+as.numeric(FVS_Prep$SUBPLOT))
+FVS_Prep$PlotNum<-as.numeric(((FVS_Prep$StandNum -1)*5)+as.numeric(FVS_Prep$SUBPLOT))
 #create an input file based on template and input data
 FVS_TreeInit_Test = data.frame(matrix(nrow = nrow(FVS_Prep), ncol = ncol(FVS_TreeInit))) 
 # assign column names
 colnames(FVS_TreeInit_Test) = colnames(FVS_TreeInit)
 #populate
 FVS_TreeInit_Test$STAND_CN<-FVS_Prep$StandNum
-FVS_TreeInit_Test$STAND_ID<-FVS_Prep$StandNum
+FVS_TreeInit_Test$STAND_CN <- sprintf("%02d",FVS_TreeInit_Test$STAND_CN) # fix to 2 characters
+FVS_TreeInit_Test$STAND_ID<-FVS_TreeInit_Test$STAND_CN
 FVS_TreeInit_Test$PLOT_ID<-FVS_Prep$PlotNum
-FVS_TreeInit_Test$PLOT_CN<-FVS_Prep$PlotNum
-FVS_TreeInit_Test$STANDPLOT_CN<-paste0(FVS_Prep$StandNum,FVS_Prep$PlotNum,sep="")
-FVS_TreeInit_Test$STANDPLOT_ID<-paste0(FVS_Prep$StandNum,FVS_Prep$PlotNum,sep="")
+FVS_TreeInit_Test$PLOT_ID <- sprintf("%03d",FVS_TreeInit_Test$PLOT_ID) # fix to 3 characters
+FVS_TreeInit_Test$PLOT_CN<-FVS_TreeInit_Test$PLOT_ID
+FVS_TreeInit_Test$STANDPLOT_CN<-paste0(FVS_TreeInit_Test$STAND_CN,FVS_TreeInit_Test$PLOT_CN)
+FVS_TreeInit_Test$STANDPLOT_CN <- sprintf("%05s",FVS_TreeInit_Test$STANDPLOT_CN) # fix to 5 characters
+FVS_TreeInit_Test$STANDPLOT_ID<-FVS_TreeInit_Test$STANDPLOT_CN
 FVS_TreeInit_Test$TREE_ID<-FVS_Prep$Tree_ID
 FVS_TreeInit_Test$HISTORY<-ifelse(FVS_Prep$STATUS=="3","7",FVS_Prep$STATUS)
 FVS_TreeInit_Test$DIAMETER<-(FVS_Prep$DBH_mm * 0.03937)
@@ -1271,12 +1252,12 @@ FVS_TreeInit_Test$SPECIES<-"DF"
 #including cut stumps in FVS inputs
 
 ```{r, echo=FALSE}
-trees_less_10_sub<-readRDS("C:/Users/showa/Documents/GitHub/Apiary_LRR/Initial_LRR_trees_dead_less_than_10_year.Rds")
-#trees_less_10_sub<-readRDS("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Initial_LRR_trees_dead_less_than_10_year.Rds")
+#trees_less_10_sub<-readRDS("C:/Users/showa/Documents/GitHub/Apiary_LRR/Initial_LRR_trees_dead_less_than_10_year.Rds")
+trees_less_10_sub<-readRDS("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Initial_LRR_trees_dead_less_than_10_year.Rds")
 
-sp_trees_less_10<-readRDS("C:/Users/showa/Documents/GitHub/Apiary_LRR/Initial_LRR_trees_dead_less_than_10_year_in_subplots.Rds")
+#sp_trees_less_10<-readRDS("C:/Users/showa/Documents/GitHub/Apiary_LRR/Initial_LRR_trees_dead_less_than_10_year_in_subplots.Rds")
 
-#sp_trees_less_10<-readRDS("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Initial_LRR_trees_dead_less_than_10_year_in_subplots.Rds")
+sp_trees_less_10<-readRDS("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Initial_LRR_trees_dead_less_than_10_year_in_subplots.Rds")
 
 #adding damage code =62 for LRR, history=7 dead and update column names to FVS format
 sp_trees_less_10$HISTORY<-7
@@ -1298,27 +1279,37 @@ FVS_Stump_Prep$Tnum<-as.numeric(ifelse(FVS_Stump_Prep$TRT_code=="A",1,
                                          ifelse(FVS_Stump_Prep$TRT_code=="D",4,
                                         5)))))
 FVS_Stump_Prep$StandNum<-as.numeric(((FVS_Stump_Prep$Tnum -1)*5)+FVS_Stump_Prep$BLOCK)
-FVS_Stump_Prep$PlotNum<-as.numeric(((FVS_Stump_Prep$Tnum -1)*25)+as.numeric(FVS_Stump_Prep$SUBPLOT))
+FVS_Stump_Prep$PlotNum<-as.numeric(((FVS_Stump_Prep$StandNum -1)*5)+as.numeric(FVS_Stump_Prep$SUBPLOT))
 #create an input file based on template and input data
 FVS_TreeInit_Test2 = data.frame(matrix(nrow = nrow(FVS_Stump_Prep), ncol = ncol(FVS_TreeInit))) 
 # assign column names
 colnames(FVS_TreeInit_Test2) = colnames(FVS_TreeInit)
 #populate
 FVS_TreeInit_Test2$STAND_CN<-FVS_Stump_Prep$StandNum
+FVS_TreeInit_Test2$STAND_CN <- sprintf("%02d",FVS_TreeInit_Test2$STAND_CN) # fix to 2 characters
 FVS_TreeInit_Test2$STAND_ID<-FVS_Stump_Prep$StandNum
+FVS_TreeInit_Test2$STAND_ID <- sprintf("%02d",FVS_TreeInit_Test2$STAND_ID) # fix to 2 characters
 FVS_TreeInit_Test2$PLOT_ID<-FVS_Stump_Prep$PlotNum
+FVS_TreeInit_Test2$PLOT_ID <- sprintf("%03d",FVS_TreeInit_Test2$PLOT_ID) # fix to 3 characters
 FVS_TreeInit_Test2$PLOT_CN<-FVS_Stump_Prep$PlotNum
-FVS_TreeInit_Test2$STANDPLOT_CN<-paste0(FVS_Stump_Prep$StandNum,FVS_Stump_Prep$PlotNum,sep="")
-FVS_TreeInit_Test2$STANDPLOT_ID<-paste0(FVS_Stump_Prep$StandNum,FVS_Stump_Prep$PlotNum,sep="")
+FVS_TreeInit_Test2$PLOT_CN <- sprintf("%03d",FVS_TreeInit_Test2$PLOT_CN) # fix to 3 characters
+FVS_TreeInit_Test2$STANDPLOT_CN<-paste0(FVS_TreeInit_Test2$STAND_CN,FVS_TreeInit_Test2$PLOT_CN)
+FVS_TreeInit_Test2$STANDPLOT_CN <- sprintf("%05s",FVS_TreeInit_Test2$STANDPLOT_CN) # fix to 5 characters
+FVS_TreeInit_Test2$STANDPLOT_ID<-paste0(FVS_TreeInit_Test2$STAND_ID,FVS_TreeInit_Test2$PLOT_ID)
+FVS_TreeInit_Test2$STANDPLOT_ID <- sprintf("%05s",FVS_TreeInit_Test2$STANDPLOT_ID) # fix to 5 characters
 FVS_TreeInit_Test2$TREE_ID<-FVS_Stump_Prep$entry
 FVS_TreeInit_Test2$HISTORY<-7
 FVS_TreeInit_Test2$DIAMETER<-(FVS_Stump_Prep$DIAMETER)
 FVS_TreeInit_Test2$SPECIES<-FVS_Stump_Prep$SPECIES
 #add stumps to seedlings input
-FVS_TreeInit_Test<-rbind(FVS_TreeInit_Test,FVS_TreeInit_Test2)
+FVS_TreeInit_Input<-rbind(FVS_TreeInit_Test,FVS_TreeInit_Test2)
 
-####GENERATE PLOT AND STAND INPUTS
+#GENERATE PLOT INPUTS
+STANDPLOT_ID<-c(unique(FVS_TreeInit_Test$STANDPLOT_ID))
+Plot_prep<-as.data.frame(STANDPLOT_ID)
+colnames(Plot_prep)<-"STANDPLOT_ID"
 
+####GENERATE STAND INPUTS
 
 #once seedling positions have been input (perhaps just start with DF treatment C)
 #run a loop to test if seedlings are within 30 ft of an infested tree and use to populate DAMAGE & SEVERITY codes
