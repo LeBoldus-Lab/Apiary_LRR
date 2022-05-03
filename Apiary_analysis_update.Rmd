@@ -1212,7 +1212,7 @@ stand_df_year$Live_BA_fpa<-stand_df_year$Live_BA_mpha*4.356
 #Creating FVS_input format
 ```{r}
 #importing sample FVS_Input sheets to get the right format
-FVS_GroupAddFilesAndKeywords <- read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/FVS_inputs/FVS_Input_Template.xlsx", sheet = "FVS_GroupAddFilesAndKeywords", range = "A1:C1", col_names = TRUE)
+FVS_GroupAddFilesAndKeywords <- read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/FVS_inputs/FVS_Input_Template.xlsx", sheet = "FVS_GroupAddFilesAndKeywords", range = "A1:C2", col_names = TRUE)
 FVS_StandInit <- read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/FVS_inputs/FVS_Input_Template.xlsx", sheet = "FVS_StandInit", range = "A1:BP1", col_names = TRUE)
 FVS_TreeInit <- read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/FVS_inputs/FVS_Input_Template.xlsx", sheet = "FVS_TreeInit", range = "A1:AM1", col_names = TRUE)
 FVS_PlotInit <- read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/FVS_inputs/FVS_Input_Template.xlsx", sheet = "FVS_PlotInit", range = "A1:BU1", col_names = TRUE)
@@ -1308,9 +1308,44 @@ FVS_TreeInit_Input<-rbind(FVS_TreeInit_Test,FVS_TreeInit_Test2)
 STANDPLOT_ID<-c(unique(FVS_TreeInit_Test$STANDPLOT_ID))
 Plot_prep<-as.data.frame(STANDPLOT_ID)
 colnames(Plot_prep)<-"STANDPLOT_ID"
+#split subplot ID to get TRT BLOCK and SUBPLOP IDS
+df<-data.frame(str_split_fixed(Plot_prep$STANDPLOT_ID, "", 5))
+df$STAND_ID<-paste(df$X1,df$X2,sep="")
+df$PLOT_ID<-paste(df$X3,df$X4,df$X5,sep ="")
+FVS_Plot_Prep<-cbind(Plot_prep,df)
+#create an input file based on template and input data
+FVS_PlotInit_Input = data.frame(matrix(nrow = nrow(FVS_Plot_Prep), ncol = ncol(FVS_PlotInit))) 
+# assign column names
+colnames(FVS_PlotInit_Input) = colnames(FVS_PlotInit)
+FVS_PlotInit_Input$STANDPLOT_CN<-FVS_Plot_Prep$STANDPLOT_ID
+FVS_PlotInit_Input$STANDPLOT_ID<-FVS_Plot_Prep$STANDPLOT_ID
+FVS_PlotInit_Input$PLOT_CN<-FVS_Plot_Prep$PLOT_ID
+FVS_PlotInit_Input$PLOT_ID<-FVS_Plot_Prep$PLOT_ID
+FVS_PlotInit_Input$STAND_ID<-FVS_Plot_Prep$STAND_ID
+FVS_PlotInit_Input$STAND_CN<-FVS_Plot_Prep$STAND_ID
+FVS_PlotInit_Input$INV_PLOT_SIZE=20
+FVS_PlotInit_Input$BRK_DBH=999
 
-####GENERATE STAND INPUTS
+#GENERATE STAND INPUTS
+STAND_ID<-c(unique(FVS_TreeInit_Test$STAND_ID))
+Stand_prep<-as.data.frame(STAND_ID)
+colnames(Stand_prep)<-"STAND_ID"
+FVS_StandInit_Input = data.frame(matrix(nrow = nrow(Stand_prep), ncol = ncol(FVS_StandInit)))
+colnames(FVS_StandInit_Input) = colnames(FVS_StandInit)
+FVS_StandInit_Input$STAND_CN<-Stand_prep$STAND_ID
+FVS_StandInit_Input$STAND_ID<-Stand_prep$STAND_ID
+FVS_StandInit_Input$ASPECT=45
+FVS_StandInit_Input$SLOPE=25
+FVS_StandInit_Input$ELEVATION=18
+FVS_StandInit_Input$INV_PLOT_SIZE=20
+FVS_StandInit_Input$BRK_DBH=999
+FVS_StandInit_Input$NUM_PLOTS=5
+FVS_StandInit_Input$NONSTK_PLOTS=0
+```
 
+
+#input seedling positions and calculate distances from infected trees
+```{r, echo=FALSE}
 #once seedling positions have been input (perhaps just start with DF treatment C)
 #run a loop to test if seedlings are within 30 ft of an infested tree and use to populate DAMAGE & SEVERITY codes
 #us example below as a place to start
@@ -1352,10 +1387,10 @@ colnames(Plot_prep)<-"STANDPLOT_ID"
 #use paste() and R objects to customize output file name
 #could also make a list of the object names for each sheet and then run a for loop to process multiple inputs.
 #or could generate one large input using the STAND and PLOT structure and then just select the relevant stands within FVS when performing the runs.
-write.xlsx(FVS_GroupAddFilesAndKeywords, file="C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/FVS_inputs/FVS_Input_Test.xlsx", sheetName="FVS_GroupAddFilesAndKeywords", row.names=FALSE, showNA = FALSE)
-write.xlsx(FVS_StandInit_Test, file="C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/FVS_inputs/FVS_Input_Test.xlsx", sheetName="FVS_StandInit", append=TRUE, row.names=FALSE, showNA = FALSE)
-write.xlsx(FVS_TreeInit_Test, file="C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/FVS_inputs/FVS_Input_Test.xlsx", sheetName="FVS_TreeInit", append=TRUE, row.names=FALSE, showNA = FALSE)
-write.xlsx(FVS_PlotInit_Test, file="C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/FVS_inputs/FVS_Input_Test.xlsx", sheetName="FVS_PlotInit", append=TRUE, row.names=FALSE, showNA = FALSE)
+write.xlsx(FVS_GroupAddFilesAndKeywords, file="C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/FVS_inputs_update/FVS_Input_Test.xlsx", sheetName="FVS_GroupAddFilesAndKeywords", row.names=FALSE, showNA = FALSE)
+write.xlsx(FVS_StandInit_Input, file="C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/FVS_inputs_update/FVS_Input_Test.xlsx", sheetName="FVS_StandInit", append=TRUE, row.names=FALSE, showNA = FALSE)
+write.xlsx(FVS_TreeInit_Input, file="C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/FVS_inputs_update/FVS_Input_Test.xlsx", sheetName="FVS_TreeInit", append=TRUE, row.names=FALSE, showNA = FALSE)
+write.xlsx(FVS_PlotInit_Input, file="C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/FVS_inputs_update/FVS_Input_Test.xlsx", sheetName="FVS_PlotInit", append=TRUE, row.names=FALSE, showNA = FALSE)
 ```
 
 
