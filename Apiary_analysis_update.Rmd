@@ -1217,12 +1217,56 @@ stand_df_year$Live_BA_fpa<-stand_df_year$Live_BA_mpha*4.356
 #Creating FVS_input format
 ```{r}
 #importing sample FVS_Input sheets to get the right format
-FVS_GroupAddFilesAndKeywords <- read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/FVS_inputs/FVS_Input_Template.xlsx", sheet = "FVS_GroupAddFilesAndKeywords", range = "A1:C2", col_names = TRUE)
-FVS_StandInit <- read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/FVS_inputs/FVS_Input_Template.xlsx", sheet = "FVS_StandInit", range = "A1:BP1", col_names = TRUE)
-FVS_TreeInit <- read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/FVS_inputs/FVS_Input_Template.xlsx", sheet = "FVS_TreeInit", range = "A1:AM1", col_names = TRUE)
-FVS_PlotInit <- read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/FVS_inputs/FVS_Input_Template.xlsx", sheet = "FVS_PlotInit", range = "A1:BU1", col_names = TRUE)
+FVS_GroupAddFilesAndKeywords <- read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs/FVS_Input_Template.xlsx", sheet = "FVS_GroupAddFilesAndKeywords", range = "A1:C1", col_names = TRUE)
+GROUPS<-"All_Stands"
+#GROUPS<-c("All_Stands","A","B","C","D","AB","DE",1,2,3,4,5)
+FVSKEYWORDS<-c(
+"Database
+DSNin
+C:/FVS/Apiary_WRDM/FVS_Data.db
+StandSQL
+SELECT * FROM FVS_StandInit WHERE Stand_CN = '%Stand_CN%'
+EndSQL
+TreeSQL
+SELECT * FROM FVS_TreeInit WHERE Stand_CN = '%Stand_CN%'
+EndSQL
+END")
+
+#FVSKEYWORDS<-c(
+#"Database
+#DSNin
+#FVS_Data.db
+#StandSQL
+#SELECT * FROM FVS_StandInit WHERE Stand_CN = '%Stand_CN%'
+#EndSQL
+#TreeSQL
+#SELECT * FROM FVS_TreeInit WHERE Stand_CN = '%Stand_CN%'
+#EndSQL
+#END",
+#"Database
+#DSNin
+#FVS_Data.db
+#StandSQL
+#SELECT * FROM FVS_PlotInit WHERE StandPlot_CN = '%Stand_CN%'
+#EndSQL
+#TreeSQL
+#SELECT * FROM FVS_TreeInit WHERE StandPlot_CN = '%Stand_CN%'
+#EndSQL
+#END"
+#)
+###FINISH THE VECTOR ABOVE WITH THE OTHER GROUPS
+
+GFK_Input = data.frame(matrix(nrow = length(GROUPS), ncol = ncol(FVS_GroupAddFilesAndKeywords)))
+colnames(GFK_Input)<-colnames(FVS_GroupAddFilesAndKeywords)
+GFK_Input$GROUPS<-GROUPS
+GFK_Input$FVSKEYWORDS<-FVSKEYWORDS
+
+FVS_StandInit <- read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs/FVS_Input_Template.xlsx", sheet = "FVS_StandInit", range = "A1:BP1", col_names = TRUE)
+FVS_TreeInit <- read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs/FVS_Input_Template.xlsx", sheet = "FVS_TreeInit", range = "A1:AM1", col_names = TRUE)
+FVS_PlotInit <- read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs/FVS_Input_Template.xlsx", sheet = "FVS_PlotInit", range = "A1:BU1", col_names = TRUE)
 #A0 Treatment A REP "0" is being called Treatment 1 Stand 5,  A1 = Stand 1, A2= stand 2, A3= Stand 3, A4= Stand 4
-lessA1A3<-readRDS(file="C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/raw_data/long_data_keep_lessA1A3.Rds")
+lessA1A3<-readRDS(file="C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/long_data_keep_lessA1A3.Rds")
+
 #Calculate necessary ID variables
 FVS_Prep<-filter(lessA1A3, FVS_age==0 & !is.na(Tree_status))
 FVS_Prep$Tnum<-as.numeric(ifelse(FVS_Prep$TRT_code=="A",1,
@@ -1251,18 +1295,19 @@ FVS_TreeInit_Test$TREE_ID<-FVS_Prep$Tree_ID
 FVS_TreeInit_Test$HISTORY<-ifelse(FVS_Prep$STATUS=="3","7",FVS_Prep$STATUS)
 FVS_TreeInit_Test$DIAMETER<-(FVS_Prep$DBH_mm * 0.03937)
 FVS_TreeInit_Test$SPECIES<-"DF"
+FVS_TreeInit_Test$VARIANT<-"pn"
 
 ```
 
 #including cut stumps in FVS inputs
 
 ```{r, echo=FALSE}
-#trees_less_10_sub<-readRDS("C:/Users/showa/Documents/GitHub/Apiary_LRR/Initial_LRR_trees_dead_less_than_10_year.Rds")
-trees_less_10_sub<-readRDS("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Initial_LRR_trees_dead_less_than_10_year.Rds")
+trees_less_10_sub<-readRDS("C:/Users/showa/Documents/GitHub/Apiary_LRR/Initial_LRR_trees_dead_less_than_10_year.Rds")
+#trees_less_10_sub<-readRDS("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Initial_LRR_trees_dead_less_than_10_year.Rds")
 
-#sp_trees_less_10<-readRDS("C:/Users/showa/Documents/GitHub/Apiary_LRR/Initial_LRR_trees_dead_less_than_10_year_in_subplots.Rds")
+sp_trees_less_10<-readRDS("C:/Users/showa/Documents/GitHub/Apiary_LRR/Initial_LRR_trees_dead_less_than_10_year_in_subplots.Rds")
 
-sp_trees_less_10<-readRDS("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Initial_LRR_trees_dead_less_than_10_year_in_subplots.Rds")
+#sp_trees_less_10<-readRDS("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Initial_LRR_trees_dead_less_than_10_year_in_subplots.Rds")
 
 #adding damage code =62 for LRR, history=7 dead and update column names to FVS format
 sp_trees_less_10$HISTORY<-7
@@ -1307,9 +1352,14 @@ FVS_TreeInit_Test2$TREE_ID<-FVS_Stump_Prep$entry
 FVS_TreeInit_Test2$HISTORY<-7
 FVS_TreeInit_Test2$DIAMETER<-(FVS_Stump_Prep$DIAMETER)
 FVS_TreeInit_Test2$SPECIES<-FVS_Stump_Prep$SPECIES
+FVS_TreeInit_Test2$VARIANT<-"pn"
 #add stumps to seedlings input
 FVS_TreeInit_Input<-rbind(FVS_TreeInit_Test,FVS_TreeInit_Test2)
+FVS_TreeInit_Input$SITE_TREE_FLAG<-0
+```
 
+#generate plot and stand FVS inputs
+```{r, echo=FALSE}
 #GENERATE PLOT INPUTS
 STANDPLOT_ID<-c(unique(FVS_TreeInit_Input$STANDPLOT_ID))
 Plot_prep<-as.data.frame(STANDPLOT_ID)
@@ -1331,12 +1381,16 @@ FVS_PlotInit_Input$STAND_ID<-FVS_Plot_Prep$STAND_ID
 FVS_PlotInit_Input$STAND_CN<-FVS_Plot_Prep$STAND_ID
 FVS_PlotInit_Input$INV_PLOT_SIZE=20
 FVS_PlotInit_Input$BRK_DBH=999
-FVS_PlotInit_Input$GROUPS<-c("All_Stands A AB 5","All_Stands A AB 5","All_Stands A AB 5","All_Stands A AB 5","All_Stands A AB 5","All_Stands A AB 2","All_Stands A AB 2","All_Stands A AB 2","All_Stands A AB 2","All_Stands A AB 2","All_Stands A AB 4","All_Stands A AB 4","All_Stands A AB 4","All_Stands A AB 4","All_Stands A AB 4","All_Stands B AB 5","All_Stands B AB 5","All_Stands B AB 5","All_Stands B AB 5","All_Stands B AB 5","All_Stands B AB 1","All_Stands B AB 1","All_Stands B AB 1","All_Stands B AB 1","All_Stands B AB 1","All_Stands B AB 2","All_Stands B AB 2","All_Stands B AB 2","All_Stands B AB 2","All_Stands B AB 2","All_Stands B AB 3","All_Stands B AB 3","All_Stands B AB 3","All_Stands B AB 3","All_Stands B AB 3","All_Stands B AB 4","All_Stands B AB 4","All_Stands B AB 4","All_Stands B AB 4","All_Stands B AB 4","All_Stands C 5","All_Stands C 5","All_Stands C 5","All_Stands C 5","All_Stands C 5","All_Stands C 1","All_Stands C 1","All_Stands C 1","All_Stands C 1","All_Stands C 1","All_Stands C 2","All_Stands C 2","All_Stands C 2","All_Stands C 2","All_Stands C 2","All_Stands C 3","All_Stands C 3","All_Stands C 3","All_Stands C 3","All_Stands C 3","All_Stands C 4","All_Stands C 4","All_Stands C 4","All_Stands C 4","All_Stands C 4","All_Stands D DE 5","All_Stands D DE 5","All_Stands D DE 5","All_Stands D DE 5","All_Stands D DE 5","All_Stands D DE 1","All_Stands D DE 1","All_Stands D DE 1","All_Stands D DE 1","All_Stands D DE 1","All_Stands D DE 2","All_Stands D DE 2","All_Stands D DE 2","All_Stands D DE 2","All_Stands D DE 2","All_Stands D DE 3","All_Stands D DE 3","All_Stands D DE 3","All_Stands D DE 3","All_Stands D DE 3","All_Stands D DE 4","All_Stands D DE 4","All_Stands D DE 4","All_Stands D DE 4","All_Stands D DE 4","All_Stands E DE 5","All_Stands E DE 5","All_Stands E DE 5","All_Stands E DE 5","All_Stands E DE 5","All_Stands E DE 1","All_Stands E DE 1","All_Stands E DE 1","All_Stands E DE 1","All_Stands E DE 1","All_Stands E DE 2","All_Stands E DE 2","All_Stands E DE 2","All_Stands E DE 2","All_Stands E DE 2","All_Stands E DE 3","All_Stands E DE 3","All_Stands E DE 3","All_Stands E DE 3","All_Stands E DE 3","All_Stands E DE 4","All_Stands E DE 4","All_Stands E DE 4","All_Stands E DE 4","All_Stands E DE 4")
+FVS_PlotInit_Input$VARIANT<-"pn"
+FVS_PlotInit_Input$REGION=6
+FVS_PlotInit_Input$FOREST=12
+FVS_PlotInit_Input$AGE=0
 
+#FVS_PlotInit_Input$GROUPS<-c("All_Plots A AB 5 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots A AB 5 Project = #Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots A AB 5 Project = Apiary_WRDM Forest_Type=200 Variant=pn #Location_Code=612","All_Plots A AB 5 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots A AB 5 Project = Apiary_WRDM #Forest_Type=200 Variant=pn Location_Code=612","All_Plots A AB 2 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots A AB 2 #Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots A AB 2 Project = Apiary_WRDM Forest_Type=200 Variant=pn #Location_Code=612","All_Plots A AB 2 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots A AB 2 Project = Apiary_WRDM #Forest_Type=200 Variant=pn Location_Code=612","All_Plots A AB 4 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots A AB 4 #Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots A AB 4 Project = Apiary_WRDM Forest_Type=200 Variant=pn #Location_Code=612","All_Plots A AB 4 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots A AB 4 Project = Apiary_WRDM #Forest_Type=200 Variant=pn Location_Code=612","All_Plots B AB 5 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots B AB 5 #Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots B AB 5 Project = Apiary_WRDM Forest_Type=200 Variant=pn #Location_Code=612","All_Plots B AB 5 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots B AB 5 Project = Apiary_WRDM #Forest_Type=200 Variant=pn Location_Code=612","All_Plots B AB 1 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots B AB 1 #Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots B AB 1 Project = Apiary_WRDM Forest_Type=200 Variant=pn #Location_Code=612","All_Plots B AB 1 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots B AB 1 Project = Apiary_WRDM #Forest_Type=200 Variant=pn Location_Code=612","All_Plots B AB 2 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots B AB 2 #Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots B AB 2 Project = Apiary_WRDM Forest_Type=200 Variant=pn #Location_Code=612","All_Plots B AB 2 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots B AB 2 Project = Apiary_WRDM #Forest_Type=200 Variant=pn Location_Code=612","All_Plots B AB 3 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots B AB 3 #Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots B AB 3 Project = Apiary_WRDM Forest_Type=200 Variant=pn #Location_Code=612","All_Plots B AB 3 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots B AB 3 Project = Apiary_WRDM #Forest_Type=200 Variant=pn Location_Code=612","All_Plots B AB 4 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots B AB 4 #Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots B AB 4 Project = Apiary_WRDM Forest_Type=200 Variant=pn #Location_Code=612","All_Plots B AB 4 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots B AB 4 Project = Apiary_WRDM #Forest_Type=200 Variant=pn Location_Code=612","All_Plots C 5 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots C 5 #Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots C 5 Project = Apiary_WRDM Forest_Type=200 Variant=pn #Location_Code=612","All_Plots C 5 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots C 5 Project = Apiary_WRDM #Forest_Type=200 Variant=pn Location_Code=612","All_Plots C 1 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots C 1 #Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots C 1 Project = Apiary_WRDM Forest_Type=200 Variant=pn #Location_Code=612","All_Plots C 1 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots C 1 Project = Apiary_WRDM #Forest_Type=200 Variant=pn Location_Code=612","All_Plots C 2 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots C 2 #Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots C 2 Project = Apiary_WRDM Forest_Type=200 Variant=pn #Location_Code=612","All_Plots C 2 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots C 2 Project = Apiary_WRDM #Forest_Type=200 Variant=pn Location_Code=612","All_Plots C 3 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots C 3 #Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots C 3 Project = Apiary_WRDM Forest_Type=200 Variant=pn #Location_Code=612","All_Plots C 3 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots C 3 Project = Apiary_WRDM #Forest_Type=200 Variant=pn Location_Code=612","All_Plots C 4 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots C 4 #Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots C 4 Project = Apiary_WRDM Forest_Type=200 Variant=pn #Location_Code=612","All_Plots C 4 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots C 4 Project = Apiary_WRDM #Forest_Type=200 Variant=pn Location_Code=612","All_Plots D DE 5 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots D DE 5 #Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots D DE 5 Project = Apiary_WRDM Forest_Type=200 Variant=pn #Location_Code=612","All_Plots D DE 5 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots D DE 5 Project = Apiary_WRDM #Forest_Type=200 Variant=pn Location_Code=612","All_Plots D DE 1 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots D DE 1 #Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots D DE 1 Project = Apiary_WRDM Forest_Type=200 Variant=pn #Location_Code=612","All_Plots D DE 1 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots D DE 1 Project = Apiary_WRDM #Forest_Type=200 Variant=pn Location_Code=612","All_Plots D DE 2 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots D DE 2 #Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots D DE 2 Project = Apiary_WRDM Forest_Type=200 Variant=pn #Location_Code=612","All_Plots D DE 2 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots D DE 2 Project = Apiary_WRDM #Forest_Type=200 Variant=pn Location_Code=612","All_Plots D DE 3 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots D DE 3 #Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots D DE 3 Project = Apiary_WRDM Forest_Type=200 Variant=pn #Location_Code=612","All_Plots D DE 3 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots D DE 3 Project = Apiary_WRDM #Forest_Type=200 Variant=pn Location_Code=612","All_Plots D DE 4 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots D DE 4 #Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots D DE 4 Project = Apiary_WRDM Forest_Type=200 Variant=pn #Location_Code=612","All_Plots D DE 4 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots D DE 4 Project = Apiary_WRDM #Forest_Type=200 Variant=pn Location_Code=612","All_Plots E DE 5 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots E DE 5 #Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots E DE 5 Project = Apiary_WRDM Forest_Type=200 Variant=pn #Location_Code=612","All_Plots E DE 5 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots E DE 5 Project = Apiary_WRDM #Forest_Type=200 Variant=pn Location_Code=612","All_Plots E DE 1 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots E DE 1 #Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots E DE 1 Project = Apiary_WRDM Forest_Type=200 Variant=pn #Location_Code=612","All_Plots E DE 1 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots E DE 1 Project = Apiary_WRDM #Forest_Type=200 Variant=pn Location_Code=612","All_Plots E DE 2 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots E DE 2 #Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots E DE 2 Project = Apiary_WRDM Forest_Type=200 Variant=pn #Location_Code=612","All_Plots E DE 2 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots E DE 2 Project = Apiary_WRDM #Forest_Type=200 Variant=pn Location_Code=612","All_Plots E DE 3 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots E DE 3 #Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots E DE 3 Project = Apiary_WRDM Forest_Type=200 Variant=pn #Location_Code=612","All_Plots E DE 3 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots E DE 3 Project = Apiary_WRDM #Forest_Type=200 Variant=pn Location_Code=612","All_Plots E DE 4 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots E DE 4 #Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots E DE 4 Project = Apiary_WRDM Forest_Type=200 Variant=pn #Location_Code=612","All_Plots E DE 4 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots E DE 4 Project = Apiary_WRDM #Forest_Type=200 Variant=pn Location_Code=612")
+#
 #GENERATE STAND INPUTS
 STAND_ID<-c(unique(FVS_TreeInit_Input$STAND_ID))
 Stand_prep<-as.data.frame(STAND_ID)
-colnames(Stand_prep)<-"STAND_ID"
 FVS_StandInit_Input = data.frame(matrix(nrow = nrow(Stand_prep), ncol = ncol(FVS_StandInit)))
 colnames(FVS_StandInit_Input) = colnames(FVS_StandInit)
 FVS_StandInit_Input$STAND_CN<-Stand_prep$STAND_ID
@@ -1348,30 +1402,35 @@ FVS_StandInit_Input$INV_PLOT_SIZE=20
 FVS_StandInit_Input$BRK_DBH=999
 FVS_StandInit_Input$NUM_PLOTS=5
 FVS_StandInit_Input$NONSTK_PLOTS=0
-FVS_StandInit_Input$GROUPS<-c(
-"All_Stands A AB 5",
-"All_Stands A AB 2",
-"All_Stands A AB 4",
-"All_Stands B AB 5",
-"All_Stands B AB 1",
-"All_Stands B AB 2",
-"All_Stands B AB 3",
-"All_Stands B AB 4",
-"All_Stands C 5",
-"All_Stands C 1",
-"All_Stands C 2",
-"All_Stands C 3",
-"All_Stands C 4",
-"All_Stands D DE 5",
-"All_Stands D DE 1",
-"All_Stands D DE 2",
-"All_Stands D DE 3",
-"All_Stands D DE 4",
-"All_Stands E DE 5",
-"All_Stands E DE 1",
-"All_Stands E DE 2",
-"All_Stands E DE 3",
-"All_Stands E DE 4")
+FVS_StandInit_Input$REGION=6
+FVS_StandInit_Input$FOREST=12
+FVS_StandInit_Input$VARIANT<-"pn"
+FVS_StandInit_Input$AGE=0
+FVS_StandInit_Input$GROUPS<-"All_Stands"
+#FVS_StandInit_Input$GROUPS<-c(
+#"All_Stands A AB 5 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612",
+#"All_Stands A AB 2 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612",
+#"All_Stands A AB 4 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612",
+#"All_Stands B AB 5 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612",
+#"All_Stands B AB 1 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612",
+#"All_Stands B AB 2 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612",
+#"All_Stands B AB 3 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612",
+#"All_Stands B AB 4 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612",
+#"All_Stands C 5 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612",
+#"All_Stands C 1 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612",
+#"All_Stands C 2 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612",
+#"All_Stands C 3 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612",
+#"All_Stands C 4 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612",
+#"All_Stands D DE 5 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612",
+#"All_Stands D DE 1 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612",
+#"All_Stands D DE 2 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612",
+#"All_Stands D DE 3 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612",
+#"All_Stands D DE 4 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612",
+#"All_Stands E DE 5 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612",
+#"All_Stands E DE 1 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612",
+#"All_Stands E DE 2 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612",
+#"All_Stands E DE 3 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612",
+#"All_Stands E DE 4 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612")
 
 ```
 
@@ -1419,10 +1478,10 @@ FVS_StandInit_Input$GROUPS<-c(
 #use paste() and R objects to customize output file name
 #could also make a list of the object names for each sheet and then run a for loop to process multiple inputs.
 #or could generate one large input using the STAND and PLOT structure and then just select the relevant stands within FVS when performing the runs.
-write.xlsx(FVS_GroupAddFilesAndKeywords, file="C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/FVS_inputs_update/FVS_Input_Test.xlsx", sheetName="FVS_GroupAddFilesAndKeywords", row.names=FALSE, showNA = FALSE)
-write.xlsx(FVS_StandInit_Input, file="C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/FVS_inputs_update/FVS_Input_Test.xlsx", sheetName="FVS_StandInit", append=TRUE, row.names=FALSE, showNA = FALSE)
-write.xlsx(FVS_TreeInit_Input, file="C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/FVS_inputs_update/FVS_Input_Test.xlsx", sheetName="FVS_TreeInit", append=TRUE, row.names=FALSE, showNA = FALSE)
-write.xlsx(FVS_PlotInit_Input, file="C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/FVS_inputs_update/FVS_Input_Test.xlsx", sheetName="FVS_PlotInit", append=TRUE, row.names=FALSE, showNA = FALSE)
+write.xlsx2(GFK_Input, file="C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs_update/FVS_Input_Test.xlsx", sheetName="FVS_GroupAddFilesAndKeywords", row.names=FALSE, showNA = FALSE)
+write.xlsx2(FVS_StandInit_Input, file="C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs_update/FVS_Input_Test.xlsx", sheetName="FVS_StandInit", append=TRUE, row.names=FALSE, showNA = FALSE)
+write.xlsx2(FVS_TreeInit_Input, file="C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs_update/FVS_Input_Test.xlsx", sheetName="FVS_TreeInit", append=TRUE, row.names=FALSE, showNA = FALSE)
+write.xlsx2(FVS_PlotInit_Input, file="C:/Users/showa/Documents/GitHub/Apiary_LRR/FVS_inputs_update/FVS_Input_Test.xlsx", sheetName="FVS_PlotInit", append=TRUE, row.names=FALSE, showNA = FALSE)
 ```
 
 
