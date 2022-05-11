@@ -349,6 +349,41 @@ RA20<-subset(lessA1A3, TRT=="RA20Y")
 ## Rep and Subplot summaries for all treatments
 
 ```{r}
+#looking at strange summary values for tree diameters
+RA10_8y_DBH<-lessA1A3[which(lessA1A3$TRT=="RA10Y" & lessA1A3$DF_age==8),c("Tree_ID","Tree_status","DBH_mm")]
+RA10_8y_DBH_Alive<-subset(RA10_8y_DBH, RA10_8y_DBH$Tree_status=="Alive")
+RA10_8y_DBH_Dead<-subset(RA10_8y_DBH, RA10_8y_DBH$Tree_status=="Dead")
+summary_RA10_8y_DBH<- data.frame("Stat"=c("count","median","min","max","IQR"),"All"=c(length(RA10_8y_DBH$DBH_mm),median(RA10_8y_DBH$DBH_mm),min(RA10_8y_DBH$DBH_mm),max(RA10_8y_DBH$DBH_mm),IQR(RA10_8y_DBH$DBH_mm)),"Alive"=c(length(RA10_8y_DBH_Alive$DBH_mm),median(RA10_8y_DBH_Alive$DBH_mm),min(RA10_8y_DBH_Alive$DBH_mm),max(RA10_8y_DBH_Alive$DBH_mm),IQR(RA10_8y_DBH_Alive$DBH_mm)),"Dead"=c(length(RA10_8y_DBH_Dead$DBH_mm),median(RA10_8y_DBH_Dead$DBH_mm),min(RA10_8y_DBH_Dead$DBH_mm),max(RA10_8y_DBH_Dead$DBH_mm),IQR(RA10_8y_DBH_Dead$DBH_mm)))
+p<-ggplot(data=RA10_8y_DBH, aes(DBH_mm, fill= Tree_status))+geom_histogram(position="identity",alpha=0.5)                                     
+p
+summary_RA10_8y_DBH_Alive<- data.frame("Stat"=c("count","median","min","max","IQR"),"Alive"=c(length(RA10_8y_DBH_Alive),median(RA10_8y_DBH_Alive),min(RA10_8y_DBH_Alive),max(RA10_8y_DBH_Alive),IQR(RA10_8y_DBH_Alive)))
+
+
+summary_RA10_8y_DBH_Dead<- data.frame("Stat"=c("count","median","min","max","IQR"),"Dead"=c(length(RA10_8y_DBH_Dead),median(RA10_8y_DBH_Dead),min(RA10_8y_DBH_Dead),max(RA10_8y_DBH_Dead),IQR(RA10_8y_DBH_Dead)))
+
+summary_RA10_8y_DBH_all<-summary_RA10_8y_DBH
+summary_RA10_8y_DBH_all$Alive<-RA10_8y_DBH_Alive$Alive
+summary_RA10_8y_DBH_all$Dead<-summary_RA10_8y_DBH_Dead$Dead
+
+
+
+RA10_8y_DBH<-subset(lessA1A3$DBH_mm, lessA1A3$TRT=="RA10Y" & lessA1A3$DF_age==8)
+summary_RA10_8y_DBH<- data.frame("Stat"=c("count","median","min","max","IQR"),"All"=c(length(RA10_8y_DBH),median(RA10_8y_DBH),min(RA10_8y_DBH),max(RA10_8y_DBH),IQR(RA10_8y_DBH)))
+                                       
+RA10_8y_DBH_Alive<-subset(lessA1A3$DBH_mm, lessA1A3$TRT=="RA10Y" & lessA1A3$DF_age==8 & lessA1A3$Tree_status=="Alive")
+summary_RA10_8y_DBH_Alive<- data.frame("Stat"=c("count","median","min","max","IQR"),"Alive"=c(length(RA10_8y_DBH_Alive),median(RA10_8y_DBH_Alive),min(RA10_8y_DBH_Alive),max(RA10_8y_DBH_Alive),IQR(RA10_8y_DBH_Alive)))
+
+RA10_8y_DBH_Dead<-subset(lessA1A3$DBH_mm, lessA1A3$TRT=="RA10Y" & lessA1A3$DF_age==8 & lessA1A3$Tree_status=="Dead")
+summary_RA10_8y_DBH_Dead<- data.frame("Stat"=c("count","median","min","max","IQR"),"Dead"=c(length(RA10_8y_DBH_Dead),median(RA10_8y_DBH_Dead),min(RA10_8y_DBH_Dead),max(RA10_8y_DBH_Dead),IQR(RA10_8y_DBH_Dead)))
+
+summary_RA10_8y_DBH_all<-summary_RA10_8y_DBH
+summary_RA10_8y_DBH_all$Alive<-RA10_8y_DBH_Alive$Alive
+summary_RA10_8y_DBH_all$Dead<-summary_RA10_8y_DBH_Dead$Dead
+
+```
+
+
+```{r}
 #make varible containing total counts of trees with diameters
 median_dbh_Alive<-subset(lessA1A3, Tree_status=="Alive") %>% 
   group_by(DF_age, TRT, Tree_status) %>% 
@@ -356,9 +391,9 @@ median_dbh_Alive<-subset(lessA1A3, Tree_status=="Alive") %>%
 median_dbh_Dead<-subset(lessA1A3, Tree_status=="Dead") %>% 
   group_by(DF_age, TRT, Tree_status) %>% 
   summarise(Median=round(median(DBH_mm, na.rm=TRUE)), N=n())
-pall<- subset(lessA1A3, !is.na(Tree_status)) %>% 
+pall<- subset(lessA1A3, Tree_status=="Alive"|Tree_status=="Dead") %>% 
   ggplot(aes(DBH_mm,fill=Tree_status))+
-  geom_histogram(position="identity", alpha=0.65, binwidth =25)+
+  geom_histogram(position="identity", alpha=0.65, binwidth =25, na.rm = TRUE)+
   scale_fill_viridis_d(begin = 0.33, end = 0.99)+
   labs(title= "Size distrubtion of trees by Age and Treatment",x="DBH (mm)",y= "Trees") +
   geom_label(data = median_dbh_Alive,aes(x=Median+200,y=88,label=paste0("Sum: \n",N,"\n Median: \n",Median,"mm"), alpha=0.05),  show.legend = FALSE, label.size = 0)+
