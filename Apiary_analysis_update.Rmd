@@ -241,9 +241,9 @@ long_data$SUPP<-ifelse((long_data$STATUS=="3"|long_data$STATUS=="1"), (ifelse(lo
 long_data$SUP_MORT<- as.character(paste0(long_data$SUPP,long_data$Tree_status,sep=""))
 
 #and a root rot flag
-long_data$ROOT<-as.character(ifelse((long_data$DAMAGE=="806"|long_data$DAMAGE=="807"|long_data$DAMAGE=="808"), "ROT", NA))
-long_data$PW_R<-as.character(ifelse((long_data$DAMAGE=="806"|long_data$DAMAGE=="807"), 1, NA))
-long_data$PW<-as.character(ifelse((long_data$DAMAGE=="807"), 1, NA))
+long_data$ROOT<-as.character(ifelse((long_data$DAMAGE=="806"|long_data$DAMAGE=="807"|long_data$DAMAGE=="808"), "ROoT DISEASE", "NOT"))
+long_data$PW_R<-as.character(ifelse((long_data$DAMAGE=="806"|long_data$DAMAGE=="807"), "LRR", "NOT"))
+long_data$PW<-as.character(ifelse((long_data$DAMAGE=="807"), 1, 0))
 #adding nominal diameter to small trees too short to have a diameter at breast height
 long_data$DBH_mm_nom<-ifelse(long_data$YEAR_dbl==1995& long_data$STATUS=="1" & long_data$HT_95<5 & is.na(long_data$DBH_mm)==TRUE & is.na(long_data$HT_95)==FALSE
 ,2.5 
@@ -329,6 +329,36 @@ lessA1A3<-subset(long_data_keep, (TRT!="RA10Y" |SUBPLOT_ID=="A01" |SUBPLOT_ID=="
 
 ## Plotting status and live dbh distributions
 ```{r}
+#attempting to plot damage type
+lessA1A3$SupLRR<-paste(lessA1A3$SUPP,lessA1A3$PW_R,sep="_")
+
+ggplot(data=subset(lessA1A3, lessA1A3$Tree_status=="Dead"|lessA1A3$Tree_status=="Alive") ,aes(x=factor(DF_age)))+
+  geom_bar(aes(position="fill",fill=SupLRR, na.rm = TRUE))+scale_fill_viridis_d()+
+  ylab("Proportion of Trees")+
+  xlab("Douglas Fir Age (years)")+
+  scale_x_discrete("Douglas Fir Age", drop=FALSE, limits= c("10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31","32","33","34","35","36","37","38","39","40","41","42","43","44","45","46"), breaks=c("0","8", "11","12", "20", "24", "33","36","45")) +
+facet_grid(rows=vars(TRT),vars(Tree_status), labeller = label_both)
+
+#ggsave("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Summary_Graphs_update/SuppLRR_mort_by_TRT_Age.pdf")
+
+ggplot(data=subset(lessA1A3, lessA1A3$Tree_status=="Dead"|lessA1A3$Tree_status=="Alive") ,aes(x=YEAR_dbl))+
+  geom_bar(aes(position="fill",fill=SupLRR, na.rm = TRUE))+scale_fill_viridis_d()+
+  ylab("Proportion of Trees")+
+  xlab("Douglas Fir Age (years)")+
+  facet_grid(rows=vars(TRT),vars(Tree_status), labeller = label_both)
+
+#ggsave("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Summary_Graphs_update/SuppLRR_mort_by_TRT_Year.pdf")
+
+#just suppression
+sup_plot_ABC<-ggplot(data=subset(lessA1A3, !is.na(SUPP)) ,aes(x=factor(DF_age),fill=SUPP))+
+  geom_bar(position="fill")+scale_fill_viridis_d()+
+  ylab("Proportion of Trees")+
+  xlab("Douglas Fir Age (years)")+
+  scale_x_discrete("Douglas Fir age", drop=FALSE, limits= c("10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31","32","33","34","35","36","37","38","39","40","41","42","43","44","45","46"), breaks=c("0","8", "11","12", "20", "24", "33","36","45")) +
+facet_grid(rows=vars(TRT), labeller = label_both)
+sup_plot_ABC
+
+
 #subset by treatments and treatments with similar ages
 RACW10<-subset(lessA1A3, (TRT=="RA10Y" |TRT=="CW10Y"))
 RACW20<-subset(lessA1A3, (TRT=="RA20Y" |TRT=="CW20Y"))
