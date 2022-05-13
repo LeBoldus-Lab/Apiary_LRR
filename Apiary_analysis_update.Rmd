@@ -2307,13 +2307,8 @@ late_mort2<-late_mort+labs(x="Treatment",y="Late (>25y)")
 ```
 
 
-plot mean asn prop mort x DF age, fit slopes by TRT? Same for BA. include initial incidence as ordinal variable? Kruskal Wallace or rank-based for Reps/initial incidence?
 ANOVA FINALLY????????
 example provided by stats consult https://rpubs.com/tmcurley/twowayanova
 len.aov <- aov(len ~ supp + dose + supp:dose, data = ToothGrowth)
 summary(len.aov)
 Proportion Dead
-
-modify to run the anova on years independently, or add year as a covariate?
-
-Prepare Stand-level FVS input for Shawn.  10y and 12y data. Proportion of subplots with Pw as measure of disease in each stand. 
