@@ -1155,7 +1155,7 @@ dev.off()
 ## Generating Plot and Stand level summaries
 ```{r}
 #building from Woods Creek approach
-#lessA1A3<-readRDS(file="C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/raw_data/long_data_keep_lessA1A3.Rds")
+#lessA1A3<-readRDS(file="C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/long_data_keep_lessA1A3.Rds")
 
 #creating unique tree ID variable of format TRT_REP_SUBPLOT_TREE
 lessA1A3$Tree_ID_TRS<-paste(lessA1A3$TRT_code,lessA1A3$REP,lessA1A3$SUBPLOT,lessA1A3$TREE, sep = "_")
@@ -1274,7 +1274,7 @@ stand_df_age$Treatment<-ifelse(stand_df_age$TRT=="A",
 stand_df_year$Live_BA_fpa<-stand_df_year$Live_BA_mpha*4.356
 stand_df_age$Live_BA_fpa<-stand_df_age$Live_BA_mpha*4.356
 #saveRDS(subplot_df_age,"C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/subplot_df_age.Rds")
-#saveRDS(stand_df_age,"C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/stand_level_df_age.Rds")
+#saveRDS(stand_df_age,"C:/Users/showa/Documents/GitHub/Apiary_LRR/stand_level_df_age.Rds")
 #saveRDS(subplot_ABC,"C:/Users/showa/Documents/GitHub/Apiary_LRR/subplot_level_ABC.Rds")
 #saveRDS(stand_ABC,"C:/Users/showa/Documents/GitHub/Apiary_LRR/stand_level_ABC.Rds")
 #write_csv(subplot_df_age, "C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/subplot_df_age.csv")
@@ -2260,8 +2260,8 @@ wide_stand_stats$early_mort_slope<-(wide_stand_stats$prop_dead_T2-wide_stand_sta
 wide_stand_stats$late_mort_slope<-(wide_stand_stats$prop_dead_T3-wide_stand_stats$prop_dead_T2)/(wide_stand_stats$DF_age_T3-wide_stand_stats$DF_age_T2)
 wide_stand_stats$early_asnmort_slope<-(wide_stand_stats$asn_mort_T2-wide_stand_stats$asn_mort_T1)/(wide_stand_stats$DF_age_T2-wide_stand_stats$DF_age_T1)
 wide_stand_stats$late_asnmort_slope<-(wide_stand_stats$asn_mort_T3-wide_stand_stats$asn_mort_T2)/(wide_stand_stats$DF_age_T3-wide_stand_stats$DF_age_T2)
-wide_stand_stats$Treatment<-factor(wide_stand_stats$Treatment, levels= c("Red Alder\n12 years","Cottonwood\n12 years","Douglas fir\nImmediately","Red Alder\n25 years","Cottonwood\n25 years"))
-wide_stand_stats$TMT<-factor(wide_stand_stats$TMT, levels= c("RA 12","CW 12","DF","RA 25","CW 25"))
+wide_stand_stats$Treatment<-factor(wide_stand_stats$Treatment, levels= c("Douglas fir\nImmediately","Red Alder\n12 years","Cottonwood\n12 years","Red Alder\n25 years","Cottonwood\n25 years"))
+wide_stand_stats$TMT<-factor(wide_stand_stats$TMT, levels= c("DF","RA 12","CW 12","RA 25","CW 25"))
 
 #boxplots
 #library(patchwork)
@@ -2275,6 +2275,15 @@ early_BA<-ggplot(data = wide_stand_stats, aes(x=TMT,y=early_BA_slope))+
 early_BA
 early_BA2<-early_BA+labs(x=NULL,y="Annual DF Basal Area Increment\n(m^2*ha^-1*year^-1)\n\nEarly (<25y)")
 
+early_BA_block_facet<-ggplot(data = wide_stand_stats, aes(x=TMT,y=early_BA_slope))+
+                    geom_hline(linetype=3,yintercept = 0)+
+                    geom_point()+
+  labs(x="Treatment",y="Early (<25y)\nAnnual DF Basal Area Increment\n(m^2*ha^-1*year^-1)")+
+   ylim(-1,3)+
+  theme_bw()+
+  facet_grid(rows = vars(Block))
+early_BA_block_facet
+
 late_BA<-ggplot(data = wide_stand_stats, aes(x=TMT,y=late_BA_slope))+
   geom_hline(linetype=3,yintercept = 0)+
   geom_boxplot()+
@@ -2284,6 +2293,16 @@ late_BA<-ggplot(data = wide_stand_stats, aes(x=TMT,y=late_BA_slope))+
   theme_bw()
 late_BA
 late_BA2<-late_BA+labs(x=NULL,y="Late (>25y)")
+
+late_BA_block_facet<-ggplot(data = wide_stand_stats, aes(x=TMT,y=late_BA_slope))+
+                    geom_hline(linetype=3,yintercept = 0)+
+                    geom_point()+
+  labs(x="Treatment",y="Late (<25y)\nAnnual DF Basal Area Increment\n(m^2*ha^-1*year^-1)")+
+   ylim(-1,3)+
+  theme_bw()+
+  facet_grid(rows = vars(Block))
+late_BA_block_facet
+
 early_mort<-ggplot(data = wide_stand_stats, aes(x=TMT,y=early_mort_slope))+
   geom_boxplot()+
   labs(x="Treatment", y="Early (<25y)\nAnnual DF Mortality\n(proportion*year^-1)")+
@@ -2291,6 +2310,14 @@ early_mort<-ggplot(data = wide_stand_stats, aes(x=TMT,y=early_mort_slope))+
    ylim(0,0.05)+
   theme_bw()
 early_mort
+early_mort_block_facet<-ggplot(data = wide_stand_stats, aes(x=TMT,y=early_mort_slope))+
+  geom_point()+
+  labs(x="Treatment", y="Early (<25y)\nAnnual DF Mortality\n(proportion*year^-1)")+
+   ylim(0,0.05)+
+  theme_bw()+
+  facet_grid(rows = vars(Block))
+early_mort_block_facet
+
 early_mort2<-early_mort+labs(x="Treatment",y="Annual DF Mortality\n(proportion*year^-1)\n\nEarly (<25y)")
 late_mort<-ggplot(data = wide_stand_stats, aes(x=TMT,y=late_mort_slope))+
   geom_boxplot()+
@@ -2300,15 +2327,179 @@ late_mort<-ggplot(data = wide_stand_stats, aes(x=TMT,y=late_mort_slope))+
   theme_bw()
 late_mort
 late_mort2<-late_mort+labs(x="Treatment",y="Late (>25y)")
+late_mort_block_facet<-ggplot(data = wide_stand_stats, aes(x=TMT,y=early_mort_slope))+
+  geom_point()+
+  labs(x="Treatment", y="Late (<25y)\nAnnual DF Mortality\n(proportion*year^-1)")+
+   ylim(0,0.05)+
+  theme_bw()+
+  facet_grid(rows = vars(Block))
+late_mort_block_facet
 (early_BA2 | late_BA2) / (early_mort2 | late_mort2)
-#pdf("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Summary_Graphs_update/Early_and_late_BA_mort_slope_boxplots.pdf", height= 10, width = 12)
+(early_BA_block_facet | late_BA_block_facet) / (early_mort_block_facet | late_mort_block_facet)
+#pdf("C:/Users/showa/Documents/GitHub/Apiary_LRR/Summary_Graphs_update/Early_and_late_BA_mort_slope_boxplots.pdf", height= 10, width = 12)
 #(early_BA2 | late_BA2) / (early_mort2 | late_mort2)
+#dev.off()
+#pdf("C:/Users/showa/Documents/GitHub/Apiary_LRR/Summary_Graphs_update/Early_and_late_BA_mort_Block_facet.pdf", height= 10, width = 5)
+#(early_BA_block_facet | late_BA_block_facet) / (early_mort_block_facet | late_mort_block_facet)
 #dev.off()
 ```
 
 
-ANOVA FINALLY????????
+# ANOVAs and ordinal logistic regression for rates of mortality and BA increment
 example provided by stats consult https://rpubs.com/tmcurley/twowayanova
 len.aov <- aov(len ~ supp + dose + supp:dose, data = ToothGrowth)
 summary(len.aov)
-Proportion Dead
+
+## early rate of mortality
+```{r}
+#early mort slope
+# define model
+add_emorto_model <- lm(early_mort_slope ~ TMT+ordered(Block), data = wide_stand_stats)
+# Change the panel layout to 2 x 2 (to look at all 4 plots at once)
+hist(add_emorto_model$residuals)
+par(mfrow = c(2, 2))
+# Use plot() function to create diagnostic plots
+plot(add_emorto_model)
+summary(add_emorto_model)
+aov.add_emorto<-aov(add_emorto_model)
+summary(aov.add_emorto)
+
+
+add_emortf_model <- lm(early_mort_slope ~ TMT+factor(Block), data = wide_stand_stats)
+# Change the panel layout to 2 x 2 (to look at all 4 plots at once)
+hist(add_emortf_model$residuals)
+par(mfrow = c(2, 2))
+# Use plot() function to create diagnostic plots
+plot(add_emortf_model)
+summary(add_emortf_model)
+aov.add_emortf<-aov(add_emortf_model)
+summary(aov.add_emortf)
+
+#trying rank transformation prior to ANOVA
+#https://rcompanion.org/handbook/F_16.html
+#model = art(early_mort_slope ~ TMT + factor(Block) + TMT:factor(Block) ,data = wide_stand_stats)
+#anova(model)
+#received 0 degrees of freedom error
+
+#alternative would be to create a combined TMTxBlock variable and run a Kruskal Wallis test
+wide_stand_stats$TxB<-paste(wide_stand_stats$TRT, wide_stand_stats$Block, Sep="")
+kwem<-kruskal.test(early_mort_slope ~ TxB, data = wide_stand_stats)
+kwem
+pwem<-pairwise.wilcox.test(wide_stand_stats$early_mort_slope, wide_stand_stats$TxB,
+                 p.adjust.method = "BH")
+pwem
+```
+
+## late rate of mortality
+```{r}
+#late mort slope
+# define model
+add_lmorto_model <- lm(late_mort_slope ~ TMT+ordered(Block), data = wide_stand_stats)
+# Change the panel layout to 2 x 2 (to look at all 4 plots at once)
+hist(add_lmorto_model$residuals)
+par(mfrow = c(2, 2))
+# Use plot() function to create diagnostic plots
+plot(add_lmorto_model)
+summary(add_lmorto_model)
+aov.add_lmorto<-aov(add_lmorto_model)
+summary(aov.add_lmorto)
+
+
+add_lmortf_model <- lm(late_mort_slope ~ TMT+factor(Block), data = wide_stand_stats)
+# Change the panel layout to 2 x 2 (to look at all 4 plots at once)
+hist(add_lmortf_model$residuals)
+par(mfrow = c(2, 2))
+# Use plot() function to create diagnostic plots
+plot(add_lmortf_model)
+summary(add_lmortf_model)
+aov.add_lmortf<-aov(add_lmortf_model)
+summary(aov.add_lmortf)
+
+#alternative would be to create a combined TMTxBlock variable and run a Kruskal Wallis test
+#wide_stand_stats$TxB<-paste(wide_stand_stats$TRT, wide_stand_stats$Block, Sep="")
+kwlm<-kruskal.test(late_mort_slope ~ TxB, data = wide_stand_stats)
+kwlm
+wide_stand_stats_ABC<- subset(wide_stand_stats, wide_stand_stats$TRT!="D"&wide_stand_stats$TRT!="E")
+pwlm<-pairwise.wilcox.test(wide_stand_stats_ABC$late_mort_slope, wide_stand_stats_ABC$TxB,
+                 p.adjust.method = "BH")
+pwlm
+#just treatment effect
+tkwlm<-kruskal.test(late_mort_slope ~ TRT, data = wide_stand_stats)
+tkwlm
+wide_stand_stats_ABC<- subset(wide_stand_stats, wide_stand_stats$TRT!="D"&wide_stand_stats$TRT!="E")
+tpwlm<-pairwise.wilcox.test(wide_stand_stats_ABC$late_mort_slope, wide_stand_stats_ABC$TRT,
+                 p.adjust.method = "BH")
+tpwlm
+#just Block effect
+bkwlm<-kruskal.test(late_mort_slope ~ Block, data = wide_stand_stats)
+bkwlm
+wide_stand_stats_ABC<- subset(wide_stand_stats, wide_stand_stats$TRT!="D"&wide_stand_stats$TRT!="E")
+bpwlm<-pairwise.wilcox.test(wide_stand_stats_ABC$late_mort_slope, wide_stand_stats_ABC$Block,
+                 p.adjust.method = "BH")
+bpwlm
+```
+
+## early BA increment
+```{r}
+#early BA slope
+# define model
+add_ebao_model <- lm(early_BA_slope ~ TMT+ordered(Block), data = wide_stand_stats)
+# Change the panel layout to 2 x 2 (to look at all 4 plots at once)
+hist(add_ebao_model$residuals)
+par(mfrow = c(2, 2))
+# Use plot() function to create diagnostic plots
+plot(add_ebao_model)
+summary(add_ebao_model)
+aov.add_ebao<-aov(add_ebao_model)
+summary(aov.add_ebao)
+
+
+add_ebaf_model <- lm(early_BA_slope ~ TMT+factor(Block), data = wide_stand_stats)
+# Change the panel layout to 2 x 2 (to look at all 4 plots at once)
+hist(add_ebaf_model$residuals)
+par(mfrow = c(2, 2))
+# Use plot() function to create diagnostic plots
+plot(add_ebaf_model)
+summary(add_ebaf_model)
+aov.add_ebaf<-aov(add_ebaf_model)
+summary(aov.add_ebaf)
+
+kweba<-kruskal.test(early_BA_slope ~ TxB, data = wide_stand_stats)
+kweba
+pweba<-pairwise.wilcox.test(wide_stand_stats$early_BA_slope, wide_stand_stats$TxB,
+                 p.adjust.method = "BH")
+pweba
+```
+
+
+## late BA increment
+```{r}
+#late BA slope
+# define model
+add_lbao_model <- lm(late_BA_slope ~ TMT+ordered(Block), data = wide_stand_stats)
+# Change the panel layout to 2 x 2 (to look at all 4 plots at once)
+hist(add_lbao_model$residuals)
+par(mfrow = c(2, 2))
+# Use plot() function to create diagnostic plots
+plot(add_lbao_model)
+summary(add_lbao_model)
+aov.add_lbao<-aov(add_lbao_model)
+summary(aov.add_lbao)
+
+
+add_lbaf_model <- lm(late_BA_slope ~ TMT+factor(Block), data = wide_stand_stats)
+# Change the panel layout to 2 x 2 (to look at all 4 plots at once)
+hist(add_lbaf_model$residuals)
+par(mfrow = c(2, 2))
+# Use plot() function to create diagnostic plots
+plot(add_lbaf_model)
+summary(add_lbaf_model)
+aov.add_lbaf<-aov(add_lbaf_model)
+summary(aov.add_lbaf)
+
+kwlba<-kruskal.test(early_BA_slope ~ TxB, data = wide_stand_stats_ABC)
+kwlba
+pwlba<-pairwise.wilcox.test(wide_stand_stats_ABC$early_BA_slope, wide_stand_stats_ABC$TxB,
+                 p.adjust.method = "BH")
+pwlba
+```
