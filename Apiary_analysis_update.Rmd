@@ -167,6 +167,9 @@ full_data$DBH_11<-ifelse(is.na(full_data$DIA_11_mm),full_data$ODBH,full_data$DIA
 full_data$STS_2011<-ifelse(is.na(full_data$STS_11),full_data$OSTS,full_data$STS_11)
 #ABC<- full_data[full_data$TRT=="RA10Y"|full_data$TRT=="CW10Y"|full_data$TRT=="DF0Y",]
 
+#adding known damage from 2011 if not present in 2020
+full_data$DAM_20<-ifelse(is.na(full_data$DAM_20),full_data$DAM_11,full_data$DAM_20)
+
 #write.csv(full_data, file="C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/full_data.csv", row.names = FALSE)
 
 #saveRDS(full_data, file="C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/full_data.Rds")
@@ -336,22 +339,38 @@ lessA1A3<-subset(long_data_keep, (TRT!="RA10Y" |SUBPLOT_ID=="A01" |SUBPLOT_ID=="
 #write.csv(lessA1A3, file="C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/long_data_keep_lessA1A3.csv", row.names = FALSE)
 #saveRDS(long_data_keep, file="C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/long_data_keep.Rds")
 #saveRDS(lessA1A3, file="C:/Users/showa/Documents/GitHub/Apiary_LRR/raw_data/long_data_keep_lessA1A3.Rds")
+```
 
-#looking at SUPP_DAMAGE
+#looking at SUPP_DAMAGE by TRT BLOCK YEAR STATUS
+```{r}
 long_DAM_summary<-lessA1A3[which(lessA1A3$Tree_status=="Alive"|lessA1A3$Tree_status=="Dead"),] %>%group_by(TRT,Block,YEAR_fac,Tree_status,SUP_LRR) %>% summarise(SUP_LRR_sum =n())
-long_DAM_summary$Damage<-factor(long_DAM_summary$SUP_LRR, levels = c("Suppressed_NA","NA_LRR","NA_NA"))
-levels(long_DAM_summary$Damage) <- c('Suppression', 'LRR', 'Neither')
+long_DAM_summary$Damage<-factor(long_DAM_summary$SUP_LRR, levels = c("Suppressed_NA","NA_NA","NA_LRR"))
+levels(long_DAM_summary$Damage) <- c('Suppression', 'Other/None', 'LRR')
 long_DAM_summary$TRT<-factor(long_DAM_summary$TRT, levels = c("DF0Y","RA10Y","CW10Y","RA20Y","CW20Y"))
 levels(long_DAM_summary$TRT) <- c('DF', 'RA 12','CW 12', 'RA 25','CW 25')
-d_alive<- ggplot(aes(x=Block,y=SUP_LRR_sum, fill=Damage),data=long_DAM_summary[which(long_DAM_summary$Tree_status=="Alive"),])+ geom_col() + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+ facet_grid(rows=vars(TRT),vars(YEAR_fac))+labs(title="Living trees",x= "Block",y="Count")+ ylim(0, 200)
+#witih Block as x and facet column as Year
+d_alive<- ggplot(aes(x=Block,y=SUP_LRR_sum, fill=Damage),data=long_DAM_summary[which(long_DAM_summary$Tree_status=="Alive"),])+ geom_col()+ facet_grid(rows=vars(TRT),vars(YEAR_fac))+labs(title="Living trees",x= "Block",y="Count")+ ylim(0, 200)
 d_alive
 d_alive2<-d_alive + theme(legend.position="none")
 
-d_dead<- ggplot(aes(x=Block,y=SUP_LRR_sum, fill=Damage),data=long_DAM_summary[which(long_DAM_summary$Tree_status=="Dead"),])+ geom_col() + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+ facet_grid(rows=vars(TRT),vars(YEAR_fac))+labs(title="Dead trees",x= "Block",y="Count")+ ylim(0, 200)
+d_dead<- ggplot(aes(x=Block,y=SUP_LRR_sum, fill=Damage),data=long_DAM_summary[which(long_DAM_summary$Tree_status=="Dead"),])+ geom_col() + facet_grid(rows=vars(TRT),vars(YEAR_fac))+labs(title="Dead trees",x= "Block",y="Count")+ ylim(0, 200)
 d_dead
 d_dead2<-d_dead + ylab("")
 (d_alive2 | d_dead2)
 #ggsave("C:/Users/showa/Documents/GitHub/Apiary_LRR/Summary_Graphs_update/Suppression_and_LRR_flags_by_Treatment_block_year_and_tree_status.pdf", height= 12, width = 20, units="in")
+
+#witih year as x and facet column as Block
+d_aliveY<- ggplot(aes(x=YEAR_fac,y=SUP_LRR_sum, fill=Damage, group=Damage),data=long_DAM_summary[which(long_DAM_summary$Tree_status=="Alive"),])+ geom_col()+#geom_line(position="stack", na.rm = FALSE)+ 
+  facet_grid(rows=vars(TRT),vars(Block))+labs(title="Living trees",x= "Year",y="Count")+ ylim(0, 200)+theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+d_aliveY
+d_aliveY2<-d_aliveY + theme(legend.position="none")
+
+d_deadY<- ggplot(aes(x=YEAR_fac,y=SUP_LRR_sum, fill=Damage, group=Damage),data=long_DAM_summary[which(long_DAM_summary$Tree_status=="Dead"),])+ geom_col()+#geom_line(position="stack", na.rm = FALSE) + 
+  facet_grid(rows=vars(TRT),vars(Block))+labs(title="Dead trees",x= "Year",y="Count")+ ylim(0, 200)+theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+d_deadY
+d_deadY2<-d_deadY + ylab("")
+(d_aliveY2 | d_deadY2)
+#ggsave("C:/Users/showa/Documents/GitHub/Apiary_LRR/Summary_Graphs_update/Suppression_and_LRR_flags_by_Treatment_year_block_and_tree_status.pdf", height= 12, width = 20, units="in")
 
 ```
 
@@ -1203,8 +1222,17 @@ lessA1A3$Subplot_ID_TRS<-paste(lessA1A3$TRT_code,lessA1A3$REP,lessA1A3$SUBPLOT, 
 #subplot_df<-long_data_keep %>% filter(!is.na(STATUS)) %>% group_by(Subplot_ID_TRS, YEAR_fac,TRT, STATUS, .drop = TRUE) %>% summarise(count = n(), Live_BA_sq_m = if(all(is.na(Live_BA_sq_m))) NA_real_ else sum(Live_BA_sq_m, na.rm=TRUE))
 #using DF age instead of year and adding PW and PW+root rot counts
 #converting BA to BA m^2/ha 1/20 acre = 0.02023428 hectares
-subplot_df_age<-lessA1A3 %>% filter(!is.na(STATUS)) %>% group_by(Subplot_ID_TRS, DF_age,TRT, STATUS, .drop = TRUE) %>% summarise(count = n(), Live_BA_mpha = if(all(is.na(Live_BA_sq_m))) NA_real_ else sum(Live_BA_sq_m/0.02023428, na.rm=TRUE),PW=sum(!is.na(PW)), PW_R=sum(!is.na(PW_R)), YEAR_dbl=median(YEAR_dbl, na.rm = TRUE))
-subplot_df_year<-lessA1A3 %>% filter(!is.na(STATUS)) %>% group_by(Subplot_ID_TRS, YEAR_dbl,TRT, STATUS, .drop = TRUE) %>% summarise(count = n(), Live_BA_mpha = if(all(is.na(Live_BA_sq_m))) NA_real_ else sum(Live_BA_sq_m/0.02023428, na.rm=TRUE),PW=sum(!is.na(PW)), PW_R=sum(!is.na(PW_R)), DF_age=median(DF_age, na.rm = TRUE))
+
+#creating individual columns for damage types to summarise
+lessA1A3$LRR<-ifelse(lessA1A3$SUP_LRR=="NA_LRR",1,NA)
+lessA1A3$No_dam<-ifelse(lessA1A3$SUP_LRR=="NA_NA",1,NA)
+lessA1A3$SUP<-ifelse(lessA1A3$SUP_LRR=="Suppressed_NA",1,NA)
+lessA1A3$LRRNO<-ifelse(lessA1A3$SUP_LRR=="NA_LRR"|lessA1A3$SUP_LRR=="NA_NA",1,NA)
+lessA1A3$all_DAM<-ifelse(lessA1A3$SUP_LRR=="NA_LRR"|lessA1A3$SUP_LRR=="NA_NA"|lessA1A3$SUP_LRR=="Suppressed_NA",1,NA)
+
+
+subplot_df_age<-lessA1A3 %>% filter(!is.na(STATUS)) %>% group_by(Subplot_ID_TRS, DF_age,TRT, STATUS, .drop = TRUE) %>% summarise(count = n(), Live_BA_mpha = if(all(is.na(Live_BA_sq_m))) NA_real_ else sum(Live_BA_sq_m/0.02023428, na.rm=TRUE),LRR=sum(LRR, na.rm = TRUE), No_dam=sum(No_dam, na.rm = TRUE),SUP=sum(SUP,na.rm = TRUE), LRRNO=sum(LRRNO, na.rm=TRUE),all_DAM=sum(all_DAM, na.rm=TRUE), YEAR_dbl=median(YEAR_dbl, na.rm = TRUE), DF_age=median(DF_age, na.rm = TRUE))
+#subplot_df_year<-lessA1A3 %>% filter(!is.na(STATUS)) %>% group_by(Subplot_ID_TRS, YEAR_dbl,TRT, STATUS, .drop = TRUE) %>% summarise(count = n(), #Live_BA_mpha = if(all(is.na(Live_BA_sq_m))) NA_real_ else sum(Live_BA_sq_m/0.02023428, na.rm=TRUE),PW=sum(!is.na(PW)), PW_R=sum(!is.na(PW_R)), #DF_age=median(DF_age, na.rm = TRUE))
 
 # 1 sq m = 10.7639 sq ft
 #subplot_df_age$Live_BA_sq_ft<-subplot_df_age$Live_BA_sq_m*10.7639
@@ -1214,33 +1242,29 @@ subplot_df_year<-lessA1A3 %>% filter(!is.na(STATUS)) %>% group_by(Subplot_ID_TRS
 
 #adding the separate TMT, BLOCK, and PLOT columns
 subplot_df_age<-subplot_df_age %>% separate(Subplot_ID_TRS, c("TRT","REP","SUBPLOT"),"_",remove = FALSE)
-subplot_df_year<-subplot_df_year %>% separate(Subplot_ID_TRS, c("TRT","REP","SUBPLOT"),"_",remove = FALSE)
+#subplot_df_year<-subplot_df_year %>% separate(Subplot_ID_TRS, c("TRT","REP","SUBPLOT"),"_",remove = FALSE)
 
 #adding sq ft/acr in addition to sq m/ha  1m/ha = 4.356 ft/a
 subplot_df_age$Live_BA_fpa<-subplot_df_age$Live_BA_mpha*4.356
-subplot_df_year$Live_BA_fpa<-subplot_df_year$Live_BA_mpha*4.356
+#subplot_df_year$Live_BA_fpa<-subplot_df_year$Live_BA_mpha*4.356
 #subplot_df_age$TRT<-as.factor(subplot_df_age$TRT)
 #subplot_df_age$REP<-as.factor(subplot_df_age$REP)
 #subplot_df_age$SUBPLOT<-as.factor(subplot_df_age$SUBPLOT)
 
 #creating unique stand ID factor varaible of format TRT_BLOCK
 subplot_df_age$Stand_ID_TR<-paste(subplot_df_age$TRT,subplot_df_age$REP, sep = "_")
-subplot_df_year$Stand_ID_TR<-paste(subplot_df_year$TRT,subplot_df_year$REP, sep = "_")
+#subplot_df_year$Stand_ID_TR<-paste(subplot_df_year$TRT,subplot_df_year$REP, sep = "_")
 # updating to calculate stand-level Live-BA mph and fpa by taking the mean of subplots rather than summing so I can account for missing data/subplots
-
-#calculating whether or not subplots had Pw (807) or PW or root rot (806 or 807) at the first measurement (10 or 12 y)
-PW_in_subplot_1012<-subplot_df_age %>% filter(DF_age==8|DF_age==12) %>% group_by(Subplot_ID_TRS, .drop = TRUE) %>% summarise(PW=sum(PW), PW_R=sum(PW_R))
-#none of the 10 or 12y measurements had any PW, likely because all of those notes were input as from the second measurement off of the datasheets. I'm unable to tell which comments on the datasheet corresponded to the first measurement or the second measurement.
 
 #instead I will just use REP and as a proxy for FVS parameter related to initial incidence, since that is what was used to determine the blocking anyway. Rep 1=0.2, Rep 2=0.4, Rep 3=0.6 Rep 4=0.8 Rep 0=1.0
 
-stand_df_age<- subplot_df_age %>% filter(!is.na(STATUS)) %>% group_by(Stand_ID_TR, DF_age, TRT, STATUS, .drop = TRUE) %>% summarise(count = sum(count, na.rm=TRUE), Live_BA_mpha = if(all(is.na(Live_BA_mpha))) NA_real_ else mean(Live_BA_mpha, na.rm=TRUE),  PW=sum(PW), PW_R=sum(PW_R), YEAR_dbl=median(YEAR_dbl, na.rm = TRUE))
+stand_df_age<- subplot_df_age %>% filter(!is.na(STATUS)) %>% group_by(Stand_ID_TR, DF_age, TRT, STATUS, .drop = TRUE) %>% summarise(count = sum(count, na.rm=TRUE), Live_BA_mpha = if(all(is.na(Live_BA_mpha))) NA_real_ else mean(Live_BA_mpha, na.rm=TRUE),  LRR=sum(LRR, na.rm = TRUE), No_dam=sum(No_dam, na.rm = TRUE),SUP=sum(SUP,na.rm = TRUE), LRRNO=sum(LRRNO, na.rm=TRUE),all_DAM=sum(all_DAM, na.rm=TRUE), YEAR_dbl=median(YEAR_dbl, na.rm = TRUE))
 
-stand_df_year<- subplot_df_year %>% filter(!is.na(STATUS)) %>% group_by(Stand_ID_TR, YEAR_dbl, TRT, STATUS, .drop = TRUE) %>% summarise(count = sum(count, na.rm=TRUE), Live_BA_mpha = if(all(is.na(Live_BA_mpha))) NA_real_ else mean(Live_BA_mpha, na.rm=TRUE), PW=sum(PW), PW_R=sum(PW_R), DF_age=median(DF_age, na.rm = TRUE))
+#stand_df_year<- subplot_df_year %>% filter(!is.na(STATUS)) %>% group_by(Stand_ID_TR, YEAR_dbl, TRT, STATUS, .drop = TRUE) %>% summarise(count = #sum(count, na.rm=TRUE), Live_BA_mpha = if(all(is.na(Live_BA_mpha))) NA_real_ else mean(Live_BA_mpha, na.rm=TRUE), PW=sum(PW), PW_R=sum(PW_R), #DF_age=median(DF_age, na.rm = TRUE))
 
 #adding the separate REP column
 stand_df_age<-stand_df_age %>% separate(Stand_ID_TR, c(NA,"REP"),"_",remove = FALSE)
-stand_df_year<-stand_df_year %>% separate(Stand_ID_TR, c(NA,"REP"),"_",remove = FALSE)
+#stand_df_year<-stand_df_year %>% separate(Stand_ID_TR, c(NA,"REP"),"_",remove = FALSE)
 #stand_df_age$REP<-as.factor(stand_df_age$REP)
 
 #subplot_ABC<- subplot_df_age[subplot_df_age$TRT=="A"|subplot_df_age$TRT=="B"|subplot_df_age$TRT=="C",]
@@ -1262,26 +1286,26 @@ stand_df_year<-stand_df_year %>% separate(Stand_ID_TR, c(NA,"REP"),"_",remove = 
 #adding sq ft/acr in addition to sq m/ha  1m/ha = 4.356 ft/a
 #stand_ABC$Live_BA_fpa<-stand_ABC$Live_BA_mpha*4.356
 
-subplot_df_year$SEV<-ifelse(subplot_df_year$REP=="0","5",subplot_df_year$REP)
-stand_df_year$SEV<-ifelse(stand_df_year$REP=="0","5",stand_df_year$REP)
-subplot_df_year$Treatment<-ifelse(subplot_df_year$TRT=="A",
-                            "10RA",
-                            ifelse(subplot_df_year$TRT=="B",
-                               "10CW", 
-                               ifelse(subplot_df_year$TRT=="C",
-                                "DF",
-                                ifelse(subplot_df_year$TRT=="D",
-                                  "RA20", "CW20"
-                               ))))
-stand_df_year$Treatment<-ifelse(stand_df_year$TRT=="A",
-                            "10RA",
-                            ifelse(stand_df_year$TRT=="B",
-                               "10CW", 
-                               ifelse(stand_df_year$TRT=="C",
-                                "DF",
-                                ifelse(stand_df_year$TRT=="D",
-                                  "RA20", "CW20"
-                               ))))
+#subplot_df_year$SEV<-ifelse(subplot_df_year$REP=="0","5",subplot_df_year$REP)
+#stand_df_year$SEV<-ifelse(stand_df_year$REP=="0","5",stand_df_year$REP)
+#subplot_df_year$Treatment<-ifelse(subplot_df_year$TRT=="A",
+#                            "10RA",
+#                            ifelse(subplot_df_year$TRT=="B",
+#                               "10CW", 
+#                               ifelse(subplot_df_year$TRT=="C",
+#                                "DF",
+#                                ifelse(subplot_df_year$TRT=="D",
+#                                  "RA20", "CW20"
+#                               ))))
+#stand_df_year$Treatment<-ifelse(stand_df_year$TRT=="A",
+#                            "10RA",
+#                            ifelse(stand_df_year$TRT=="B",
+#                               "10CW", 
+#                               ifelse(stand_df_year$TRT=="C",
+#                                "DF",
+#                                ifelse(stand_df_year$TRT=="D",
+#                                  "RA20", "CW20"
+#                               ))))
 subplot_df_age$SEV<-ifelse(subplot_df_age$REP=="0","5",subplot_df_age$REP)
 stand_df_age$SEV<-ifelse(stand_df_age$REP=="0","5",stand_df_age$REP)
 subplot_df_age$Treatment<-ifelse(subplot_df_age$TRT=="A",
@@ -1305,7 +1329,7 @@ stand_df_age$Treatment<-ifelse(stand_df_age$TRT=="A",
 
 
 #adding sq ft/acr in addition to sq m/ha  1m/ha = 4.356 ft/a
-stand_df_year$Live_BA_fpa<-stand_df_year$Live_BA_mpha*4.356
+#stand_df_year$Live_BA_fpa<-stand_df_year$Live_BA_mpha*4.356
 stand_df_age$Live_BA_fpa<-stand_df_age$Live_BA_mpha*4.356
 #saveRDS(subplot_df_age,"C:/Users/showa/Documents/GitHub/Apiary_LRR/subplot_df_age.Rds")
 #saveRDS(stand_df_age,"C:/Users/showa/Documents/GitHub/Apiary_LRR/stand_level_df_age.Rds")
@@ -1893,15 +1917,45 @@ mort_plots<-list(sub_mort,sub_mort_c,sub_RA_mort,sub_RA_mort_c,sub_CW_mort,sub_C
 COPIED FROM WOODS CREEK STATISTICAL ANALYSIS
 
 ```{r}
+#working to simplify 
 #stand_df_age <- readRDS("C:/Users/showa/Documents/GitHub/Apiary_LRR/stand_level_df.Rds")
 #subplot_df_age<-readRDS("C:/Users/showa/Documents/GitHub/Apiary_LRR/subplot_df_age.Rds")
+model_in<-stand_df_age %>% group_by(TRT, SEV, STATUS, DF_age)%>%summarise(YEAR_dbl=median(YEAR_dbl, na.rm = TRUE), Live_BA_mpha = if(all(is.na(Live_BA_mpha))) NA_real_ else sum(Live_BA_mpha, na.rm=TRUE),count=sum(count, na.rm=TRUE),LRR=sum(LRR, na.rm=TRUE),LRRNO=sum(LRRNO, na.rm=TRUE),SUP=sum(SUP, na.rm=TRUE),No_dam=sum(No_dam, na.rm=TRUE) )
+colnames(model_in)[colnames(model_in) == "SEV"] <- "Block"
+model_in$timepoint<-
+  ifelse(model_in$TRT=="A"|model_in$TRT=="B", #test 10y trt
+        ifelse(model_in$DF_age==8, #test age=8
+              1, #then timpoint 1
+              ifelse(model_in$DF_age==24, # if not 8, test age=24
+                    2, #then timpoint 2
+                    3)) #if not 24, then timpoint 3m close test 24, close test 8  
+        ,ifelse(model_in$TRT=="C",     #if not 10y, test DF
+                ifelse(model_in$DF_age==12, #test age=12
+                       1, #then timpoint 1
+                       ifelse(model_in$DF_age==36, # if not 12, test age=36
+                              2, #then timpoint 2
+                              3)) #if not 36, then timpoint 3, close test 36 close test 12
+        ,ifelse(model_in$DF_age==11,  #test age=11
+                1, #then timepoint 1
+                2  #if not, then timepoint 2
+) #close test 11
+) #close test DF           
+) #close test 10y  
+model_in_test<-model_in[,c(1,2,3,6,12)]
 
+#this is the same as the approach to stand summary below.  Need wide data, not long.
+  
+```
+
+```{r}
 #generate data subset for ANOVA
 AOV_in<-stand_df_age
 AOV_Alive<-subset(AOV_in, AOV_in$STATUS==1)
 AOV_Alive_count<- AOV_Alive %>% group_by(Stand_ID_TR, DF_age)%>%summarise(Alive=sum(count, na.rm=TRUE), Live_BA_mpha = if(all(is.na(Live_BA_mpha))) NA_real_ else sum(Live_BA_mpha, na.rm=TRUE), YEAR_dbl=median(YEAR_dbl, na.rm = TRUE))
 AOV_Dead<-subset(AOV_in, AOV_in$STATUS==3)
 AOV_Dead_count<- AOV_Dead %>% group_by(Stand_ID_TR, DF_age)%>%summarise(Dead=sum(count, na.rm=TRUE), Live_BA_mpha = if(all(is.na(Live_BA_mpha))) NA_real_ else sum(Live_BA_mpha, na.rm=TRUE), YEAR_dbl=median(YEAR_dbl, na.rm = TRUE)) 
+
+#####REPEAT ABOVE FOR DAMAGE TYPES (SUPP, LRR, N_O, LRRNO)  MAY NEED TO MAKE FILLER DFs LIKE Dead_add Below.
 
 #attempt to merge datasets but there are not "Dead" entries for all of the stand/year combinations
 #need to add rows for stand years with zero Dead trees https://www.statology.org/r-append-to-data-frame/
@@ -1918,11 +1972,18 @@ AOV_Dead_count_add<-rbind(AOV_Dead_count, Dead_add)
 #need to have rows in same order to cbind
 AOV_Dead_count_add_sort<-AOV_Dead_count_add[c(1:15,57,16,17,58,18,19,59,20:56),]
 AOV_prop_Dead<-cbind(AOV_Alive_count, AOV_Dead_count_add_sort[,"Dead"])
+
+#AOV_prop_Dead<-cbind(AOV_Alive_count, AOV_Dead_count_add_sort[,"SUPP"])
+#AOV_prop_Dead<-cbind(AOV_Alive_count, AOV_Dead_count_add_sort[,"LRR"])
+#AOV_prop_Dead<-cbind(AOV_Alive_count, AOV_Dead_count_add_sort[,"N_O"])
+#AOV_prop_Dead<-cbind(AOV_Alive_count, AOV_Dead_count_add_sort[,"LRRNO"])
+
+
 AOV_prop_Dead$total<-(AOV_prop_Dead$Alive+AOV_prop_Dead$Dead)
 AOV_prop_Dead$prop_Dead<-(AOV_prop_Dead$Dead/AOV_prop_Dead$total)
-AOV_prop_Dead$prop_D_miss<-((pmax(AOV_prop_Dead$total,170)-AOV_prop_Dead$Alive)/pmax(AOV_prop_Dead$total,170))
+#AOV_prop_Dead$prop_D_miss<-((pmax(AOV_prop_Dead$total,170)-AOV_prop_Dead$Alive)/pmax(AOV_prop_Dead$total,170))
 AOV_prop_Dead$prop_Alive<-1-AOV_prop_Dead$prop_Dead
-AOV_prop_Dead$prop_A_miss<-1-AOV_prop_Dead$prop_D_miss
+#AOV_prop_Dead$prop_A_miss<-1-AOV_prop_Dead$prop_D_miss
 
 #add unique block and tmt designations and make them factors
 AOV_prop_Dead<-AOV_prop_Dead %>% separate(Stand_ID_TR, c("TRT","REP"),"_",remove = FALSE)
@@ -2074,6 +2135,7 @@ stand_summary_stats$RA25_Block<-ifelse(stand_summary_stats$RA25_REP=="0","5",sta
 stand_summary_stats$CW25_Block<-ifelse(stand_summary_stats$CW25_REP=="0","5",stand_summary_stats$CW25_REP)
 stand_summary_stats$age<-as.numeric(stand_summary_stats$DF_age)
 ```
+
 
 ```{r}
 #graphing
