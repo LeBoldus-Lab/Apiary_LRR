@@ -1943,7 +1943,54 @@ model_in$timepoint<-
 ) #close test 10y  
 model_in_test<-model_in[,c(1,2,3,6,12)]
 
-#this is the same as the approach to stand summary below.  Need wide data, not long.
+#############this is the same as the approach to stand summary below.  Need wide data, not long.  
+
+#EDIT CHUNK BELOW updating column numbers, object names, and calculatingn new mortality damage variables.
+
+#coverting to wide format using timepoint column
+wide_BA_in<-wide_in[,c(1,4,10)]
+wide_BA<-pivot_wider(wide_BA_in, names_from = "timepoint",id_cols = "Stand_ID_TR",values_from = "Live_BA_mpha",names_prefix = "Live_BA_mpha_T")
+wide_BA$TRT<-as.factor(c("A","A","A","B","B","B","B","B","C","C","C","C","C","D","D","D","D","D","E","E","E","E","E"))
+wide_BA$Block<-c(5,2,4,5,1,2,3,4,5,1,2,3,4,5,1,2,3,4,5,1,2,3,4)
+wide_age_in<-wide_in[,c(1,3,10)]
+wide_age<-pivot_wider(wide_age_in, names_from = "timepoint",id_cols = "Stand_ID_TR",values_from = "DF_age",names_prefix = "DF_age_T")
+wide_stand_stats<-merge(wide_BA,wide_age, by="Stand_ID_TR")
+wide_total_in<-wide_in[,c(1,5,10)]
+wide_total<-pivot_wider(wide_total_in, names_from = "timepoint",id_cols = "Stand_ID_TR",values_from = "total",names_prefix = "Trees_T")
+wide_stand_stats<-merge(wide_stand_stats,wide_total, by="Stand_ID_TR")
+wide_pd_in<-wide_in[,c(1,6,10)]
+wide_pd<-pivot_wider(wide_pd_in, names_from = "timepoint",id_cols = "Stand_ID_TR",values_from = "prop_Dead",names_prefix = "prop_dead_T")
+wide_stand_stats<-merge(wide_stand_stats,wide_pd, by="Stand_ID_TR")
+wide_asn_in<-wide_in[,c(1,7,10)]
+wide_asn<-pivot_wider(wide_asn_in, names_from = "timepoint",id_cols = "Stand_ID_TR",values_from = "asn_mort",names_prefix = "asn_mort_T")
+wide_stand_stats<-merge(wide_stand_stats,wide_asn, by="Stand_ID_TR")
+wide_stand_stats$Treatment<-ifelse(wide_stand_stats$TRT=="A",
+                            "Red Alder\n12 years",
+                            ifelse(wide_stand_stats$TRT=="B",
+                               "Cottonwood\n12 years", 
+                               ifelse(wide_stand_stats$TRT=="C",
+                               "Douglas fir\nImmediately",
+                               ifelse(wide_stand_stats$TRT=="D",
+                                   "Red Alder\n25 years","Cottonwood\n25 years" ))))
+wide_stand_stats$TMT<-ifelse(wide_stand_stats$TRT=="A",
+                            "RA 12",
+                            ifelse(wide_stand_stats$TRT=="B",
+                               "CW 12", 
+                               ifelse(wide_stand_stats$TRT=="C",
+                               "DF",
+                               ifelse(wide_stand_stats$TRT=="D",
+                                   "RA 25","CW 25"))))
+
+wide_stand_stats$early_BA_slope<-(wide_stand_stats$Live_BA_mpha_T2-wide_stand_stats$Live_BA_mpha_T1)/(wide_stand_stats$DF_age_T2-wide_stand_stats$DF_age_T1)
+wide_stand_stats$late_BA_slope<-(wide_stand_stats$Live_BA_mpha_T3-wide_stand_stats$Live_BA_mpha_T2)/(wide_stand_stats$DF_age_T3-wide_stand_stats$DF_age_T2)
+wide_stand_stats$early_mort_slope<-(wide_stand_stats$prop_dead_T2-wide_stand_stats$prop_dead_T1)/(wide_stand_stats$DF_age_T2-wide_stand_stats$DF_age_T1)
+wide_stand_stats$late_mort_slope<-(wide_stand_stats$prop_dead_T3-wide_stand_stats$prop_dead_T2)/(wide_stand_stats$DF_age_T3-wide_stand_stats$DF_age_T2)
+wide_stand_stats$early_asnmort_slope<-(wide_stand_stats$asn_mort_T2-wide_stand_stats$asn_mort_T1)/(wide_stand_stats$DF_age_T2-wide_stand_stats$DF_age_T1)
+wide_stand_stats$late_asnmort_slope<-(wide_stand_stats$asn_mort_T3-wide_stand_stats$asn_mort_T2)/(wide_stand_stats$DF_age_T3-wide_stand_stats$DF_age_T2)
+wide_stand_stats$Treatment<-factor(wide_stand_stats$Treatment, levels= c("Douglas fir\nImmediately","Red Alder\n12 years","Cottonwood\n12 years","Red Alder\n25 years","Cottonwood\n25 years"))
+wide_stand_stats$TMT<-factor(wide_stand_stats$TMT, levels= c("DF","RA 12","CW 12","RA 25","CW 25"))
+
+
   
 ```
 
