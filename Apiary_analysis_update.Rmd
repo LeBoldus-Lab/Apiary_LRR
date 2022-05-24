@@ -2493,6 +2493,11 @@ example provided by stats consult https://rpubs.com/tmcurley/twowayanova
 len.aov <- aov(len ~ supp + dose + supp:dose, data = ToothGrowth)
 summary(len.aov)
 
+find a way to accomodate an unbalanced model (i.e. proc mixed or proc glimmix in SAS)
+perhaps lmer can.
+Run block as a random effect and double check coding (1|Block)?
+If not possible to use unbalanced, then run full model (with interaction) on blocks 2,4,5 and run additive model on full dataset.
+
 ## early rate of mortality
 ```{r}
 #early mort slope
@@ -2506,7 +2511,7 @@ add_emorto_model <- lm(early_mort_slope ~ TMT+Block, data = wide_stand_stats)
 #hist(int_emorto_model$residuals)
 #par(mfrow = c(2, 2))
 # Use plot() function to create diagnostic plots
-#(int_emorto_model)
+#plot(int_emorto_model)
 summary(add_emorto_model)
 aov.add_emorto<-aov(add_emorto_model)
 summary(aov.add_emorto)
