@@ -2084,7 +2084,24 @@ wide_for_dam$early_prop_No_damage_dead_slope<-(wide_for_dam$prop_No_damage_dead_
 wide_for_dam$late_prop_No_damage_dead_slope<-(wide_for_dam$prop_No_damage_dead_T3-wide_for_dam$prop_No_damage_dead_T2)/(wide_for_dam$DF_age_T3-wide_for_dam$DF_age_T2)
 wide_for_dam$early_asn_prop_No_damage_dead_slope<-(wide_for_dam$asn_prop_No_damage_dead_T2-wide_for_dam$asn_prop_No_damage_dead_T1)/(wide_for_dam$DF_age_T2-wide_for_dam$DF_age_T1)
 wide_for_dam$late_asn_prop_No_damage_dead_slope<-(wide_for_dam$asn_prop_No_damage_dead_T3-wide_for_dam$asn_prop_No_damage_dead_T2)/(wide_for_dam$DF_age_T3-wide_for_dam$DF_age_T2)
-  
+#Descriptive treatments
+wide_for_dam$Treatment<-ifelse(wide_for_dam$TRT=="A",
+                            "Red Alder\n12 years",
+                            ifelse(wide_for_dam$TRT=="B",
+                               "Cottonwood\n12 years", 
+                               ifelse(wide_for_dam$TRT=="C",
+                               "Douglas fir\nImmediately",
+                               ifelse(wide_for_dam$TRT=="D",
+                                   "Red Alder\n25 years","Cottonwood\n25 years" ))))
+wide_for_dam$TMT<-ifelse(wide_for_dam$TRT=="A",
+                            "RA 12",
+                            ifelse(wide_for_dam$TRT=="B",
+                               "CW 12", 
+                               ifelse(wide_for_dam$TRT=="C",
+                               "DF",
+                               ifelse(wide_for_dam$TRT=="D",
+                                   "RA 25","CW 25"))))
+#saveRDS(wide_for_dam, file= here("wide_stand_summaries_including_damage_codes.Rds"))  
 ```
 
 ```{r}
@@ -2094,8 +2111,6 @@ AOV_Alive<-subset(AOV_in, AOV_in$STATUS==1)
 AOV_Alive_count<- AOV_Alive %>% group_by(Stand_ID_TR, DF_age)%>%summarise(Alive=sum(count, na.rm=TRUE), Live_BA_mpha = if(all(is.na(Live_BA_mpha))) NA_real_ else sum(Live_BA_mpha, na.rm=TRUE), YEAR_dbl=median(YEAR_dbl, na.rm = TRUE))
 AOV_Dead<-subset(AOV_in, AOV_in$STATUS==3)
 AOV_Dead_count<- AOV_Dead %>% group_by(Stand_ID_TR, DF_age)%>%summarise(Dead=sum(count, na.rm=TRUE), Live_BA_mpha = if(all(is.na(Live_BA_mpha))) NA_real_ else sum(Live_BA_mpha, na.rm=TRUE), YEAR_dbl=median(YEAR_dbl, na.rm = TRUE)) 
-
-#####REPEAT ABOVE FOR DAMAGE TYPES (SUPP, LRR, N_O, LRRNO)  MAY NEED TO MAKE FILLER DFs LIKE Dead_add Below.
 
 #attempt to merge datasets but there are not "Dead" entries for all of the stand/year combinations
 #need to add rows for stand years with zero Dead trees https://www.statology.org/r-append-to-data-frame/
@@ -2430,7 +2445,7 @@ dev.off()
 
 ```
 ## Converting data back to wide format for calculating slopes as response variables for anova/glm
-
+Use above version wide_for_dam which includes mortality broken down by damage codes
 ```{r}
 #selecting relevant columns from stand summary data
 colnames(stand_summary_stats)
@@ -2498,7 +2513,11 @@ wide_stand_stats$early_asnmort_slope<-(wide_stand_stats$asn_mort_T2-wide_stand_s
 wide_stand_stats$late_asnmort_slope<-(wide_stand_stats$asn_mort_T3-wide_stand_stats$asn_mort_T2)/(wide_stand_stats$DF_age_T3-wide_stand_stats$DF_age_T2)
 wide_stand_stats$Treatment<-factor(wide_stand_stats$Treatment, levels= c("Douglas fir\nImmediately","Red Alder\n12 years","Cottonwood\n12 years","Red Alder\n25 years","Cottonwood\n25 years"))
 wide_stand_stats$TMT<-factor(wide_stand_stats$TMT, levels= c("DF","RA 12","CW 12","RA 25","CW 25"))
+```
 
+#Plotting
+copy or update to use new wide_for_dam dataset as input
+```{r}
 #boxplots
 #library(patchwork)
 early_BA<-ggplot(data = wide_stand_stats, aes(x=TMT,y=early_BA_slope))+
