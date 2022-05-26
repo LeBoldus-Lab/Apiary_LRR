@@ -170,8 +170,16 @@ full_data$DBH_11<-ifelse(is.na(full_data$DIA_11_mm),full_data$ODBH,full_data$DIA
 full_data$STS_2011<-ifelse(is.na(full_data$STS_11),full_data$OSTS,full_data$STS_11)
 #ABC<- full_data[full_data$TRT=="RA10Y"|full_data$TRT=="CW10Y"|full_data$TRT=="DF0Y",]
 
-#adding known damage from 2011 if not present in 2020
+#seeing if LRR or root rot damage codes carry over from 2011 to 2020
+test<-full_data[which(full_data$DAM_11!=full_data$DAM_20&(full_data$DAM_11==800|full_data$DAM_11==806|full_data$DAM_11==807)),c(1,9,27)]
+nrow(test)
+
+#adding known damage from 2011 if not present in 2020 or if root rot 8## is changed to unknown 100 or suppression 400
 full_data$DAM_20<-ifelse(is.na(full_data$DAM_20),full_data$DAM_11,full_data$DAM_20)
+full_data$DAM_20<-ifelse((full_data$DAM_20==100|full_data$DAM_20==400)&(full_data$DAM_11==800|full_data$DAM_11==806|full_data$DAM_11==807),full_data$DAM_11,full_data$DAM_20)
+
+test2<-full_data[which(full_data$DAM_11!=full_data$DAM_20&(full_data$DAM_11==800|full_data$DAM_11==806|full_data$DAM_11==807)),c(1,9,27)]
+nrow(test2)
 
 #write.csv(full_data, file=here("raw_data","full_data.csv"), row.names = FALSE)
 
@@ -1945,10 +1953,6 @@ model_in$timepoint<-
 ) #close test 10y  
 model_in_test<-model_in[,c(13,1,2,3,6,12)]
 
-#############this is the same as the approach to stand summary below.  Need wide data, not long.  
-
-#EDIT CHUNK BELOW updating column numbers, object names, and calculatingn new mortality damage variables.
-
 #pivoting to wide format using timepoint column
 #for BA variable
 wide_BA_in<-model_in_test
@@ -2101,6 +2105,9 @@ wide_for_dam$TMT<-ifelse(wide_for_dam$TRT=="A",
                                "DF",
                                ifelse(wide_for_dam$TRT=="D",
                                    "RA 25","CW 25"))))
+
+wide_for_dam$Treatment<-factor(wide_for_dam$Treatment, levels= c("Douglas fir\nImmediately","Red Alder\n12 years","Cottonwood\n12 years","Red Alder\n25 years","Cottonwood\n25 years"))
+wide_for_dam$TMT<-factor(wide_for_dam$TMT, levels= c("DF","RA 12","CW 12","RA 25","CW 25"))
 #saveRDS(wide_for_dam, file= here("wide_stand_summaries_including_damage_codes.Rds"))  
 ```
 
@@ -2520,7 +2527,7 @@ copy or update to use new wide_for_dam dataset as input
 ```{r}
 #boxplots
 #library(patchwork)
-early_BA<-ggplot(data = wide_stand_stats, aes(x=TMT,y=early_BA_slope))+
+early_BA<-ggplot(data = wide_for_dam, aes(x=TMT,y=early_BA_slope))+
   geom_hline(linetype=3,yintercept = 0)+
   geom_boxplot()+
   labs(x="Treatment",y="Early (<25y)\nAnnual DF Basal Area Increment\n(m^2*ha^-1*year^-1)")+
@@ -2530,7 +2537,7 @@ early_BA<-ggplot(data = wide_stand_stats, aes(x=TMT,y=early_BA_slope))+
 early_BA
 early_BA2<-early_BA+labs(x=NULL,y="Annual DF Basal Area Increment\n(m^2*ha^-1*year^-1)\n\nEarly (<25y)")
 
-early_BA_block_facet<-ggplot(data = wide_stand_stats, aes(x=TMT,y=early_BA_slope))+
+early_BA_block_facet<-ggplot(data = wide_for_dam, aes(x=TMT,y=early_BA_slope))+
                     geom_hline(linetype=3,yintercept = 0)+
                     geom_point()+
   labs(x="Treatment",y="Early (<25y)\nAnnual DF Basal Area Increment\n(m^2*ha^-1*year^-1)")+
@@ -2539,7 +2546,7 @@ early_BA_block_facet<-ggplot(data = wide_stand_stats, aes(x=TMT,y=early_BA_slope
   facet_grid(rows = vars(Block))
 early_BA_block_facet
 
-late_BA<-ggplot(data = wide_stand_stats, aes(x=TMT,y=late_BA_slope))+
+late_BA<-ggplot(data = wide_for_dam, aes(x=TMT,y=late_BA_slope))+
   geom_hline(linetype=3,yintercept = 0)+
   geom_boxplot()+
   labs(x="Treatment",y="Late (>25y)\nAnnual DF Basal Area Increment\n(m^2*ha^-1*year^-1)")+
@@ -2549,7 +2556,7 @@ late_BA<-ggplot(data = wide_stand_stats, aes(x=TMT,y=late_BA_slope))+
 late_BA
 late_BA2<-late_BA+labs(x=NULL,y="Late (>25y)")
 
-late_BA_block_facet<-ggplot(data = wide_stand_stats, aes(x=TMT,y=late_BA_slope))+
+late_BA_block_facet<-ggplot(data = wide_for_dam, aes(x=TMT,y=late_BA_slope))+
                     geom_hline(linetype=3,yintercept = 0)+
                     geom_point()+
   labs(x="Treatment",y="Late (<25y)\nAnnual DF Basal Area Increment\n(m^2*ha^-1*year^-1)")+
@@ -2558,40 +2565,40 @@ late_BA_block_facet<-ggplot(data = wide_stand_stats, aes(x=TMT,y=late_BA_slope))
   facet_grid(rows = vars(Block))
 late_BA_block_facet
 
-early_mort<-ggplot(data = wide_stand_stats, aes(x=TMT,y=early_mort_slope))+
+early_mort<-ggplot(data = wide_for_dam, aes(x=TMT,y=early_prop_dead_slope))+
   geom_boxplot()+
-  labs(x="Treatment", y="Early (<25y)\nAnnual DF Mortality\n(proportion*year^-1)")+
+  labs(x="Treatment", y="Early (<25y)\nAnnual DF Mortality\n(proportion/year)")+
   geom_text_repel(aes(label=Block),nudge_x = 0.5,segment.colour = NA)+
    ylim(0,0.05)+
   theme_bw()
 early_mort
-early_mort_block_facet<-ggplot(data = wide_stand_stats, aes(x=TMT,y=early_mort_slope))+
+early_mort_block_facet<-ggplot(data = wide_for_dam, aes(x=TMT,y=early_prop_dead_slope))+
   geom_point()+
-  labs(x="Treatment", y="Early (<25y)\nAnnual DF Mortality\n(proportion*year^-1)")+
+  labs(x="Treatment", y="Early (<25y)\nAnnual DF Mortality\n(proportion/year)")+
    ylim(0,0.05)+
   theme_bw()+
   facet_grid(rows = vars(Block))
 early_mort_block_facet
 
-early_mort2<-early_mort+labs(x="Treatment",y="Annual DF Mortality\n(proportion*year^-1)\n\nEarly (<25y)")
-late_mort<-ggplot(data = wide_stand_stats, aes(x=TMT,y=late_mort_slope))+
+early_mort2<-early_mort+labs(x="Treatment",y="Annual DF Mortality\n(proportion/year)\n\nEarly (<25y)")
+late_mort<-ggplot(data = wide_for_dam, aes(x=TMT,y=late_prop_dead_slope))+
   geom_boxplot()+
-  labs(x="Treatment",y="Late (>25y)\nAnnual DF Mortality\n(proportion*year^-1)")+
+  labs(x="Treatment",y="Late (>25y)\nAnnual DF Mortality\n(proportion/year)")+
   geom_text_repel(aes(label=Block),nudge_x = 0.5,segment.colour = NA)+
   ylim(0,0.05)+
   theme_bw()
 late_mort
 late_mort2<-late_mort+labs(x="Treatment",y="Late (>25y)")
-late_mort_block_facet<-ggplot(data = wide_stand_stats, aes(x=TMT,y=early_mort_slope))+
+late_mort_block_facet<-ggplot(data = wide_for_dam, aes(x=TMT,y=early_prop_dead_slope))+
   geom_point()+
-  labs(x="Treatment", y="Late (<25y)\nAnnual DF Mortality\n(proportion*year^-1)")+
+  labs(x="Treatment", y="Late (<25y)\nAnnual DF Mortality\n(proportion/year)")+
    ylim(0,0.05)+
   theme_bw()+
   facet_grid(rows = vars(Block))
 late_mort_block_facet
 (early_BA2 | late_BA2) / (early_mort2 | late_mort2)
 (early_BA_block_facet | late_BA_block_facet) / (early_mort_block_facet | late_mort_block_facet)
-#pdf(here("Summary_Graphs_update","Early_and_late_BA_mort_slope_boxplots.pdf"), height= 10, width = 12)
+#pdf(here("Summary_Graphs_update","Early_and_late_BA_prop_dead_slope_boxplots.pdf"), height= 10, width = 12)
 #(early_BA2 | late_BA2) / (early_mort2 | late_mort2)
 #dev.off()
 #pdf(here("Summary_Graphs_update","Early_and_late_BA_mort_Block_facet.pdf"), height= 10, width = 5)
@@ -2599,6 +2606,33 @@ late_mort_block_facet
 #dev.off()
 ```
 
+parsing out damage codes
+```{r}
+early_LRR_mort<-ggplot(data = wide_for_dam, aes(x=TMT,y=early_prop_LRR_dead_slope))+
+  geom_boxplot()+
+  labs(x="Treatment", y="Early (<25y)\nAnnual DF LRR Mortality\n(proportion/year)")+
+  geom_text_repel(aes(label=Block),nudge_x = 0.5,segment.colour = NA)+
+   ylim(-0.005,0.035)+
+  theme_bw()
+early_LRR_mort
+
+early_LRR_mort2<-early_LRR_mort+labs(x="Treatment",y="Annual DF LRR Mortality\n(proportion/year)\n\nEarly (<25y)")
+
+late_LRR_mort<-ggplot(data = wide_for_dam, aes(x=TMT,y=late_prop_LRR_dead_slope))+
+  geom_boxplot()+
+  labs(x="Treatment",y="Late (>25y)\nAnnual DF LRR Mortality\n(proportion/year)")+
+  geom_text_repel(aes(label=Block),nudge_x = 0.5,segment.colour = NA)+
+  #geom_text(aes(label=Block),nudge_x = 0.5)+
+  ylim(-0.005,0.035)+
+  theme_bw()
+late_LRR_mort
+late_LRR_mort2<-late_LRR_mort+labs(x="Treatment",y="Late (>25y)")
+(early_LRR_mort2 | late_LRR_mort2)
+
+#pdf(here("Summary_Graphs_update","Early_and_late_prop_LRR_dead_slope_boxplots.pdf"), height= 6, width = 12)
+#(early_LRR_mort2 | late_LRR_mort2)
+#dev.off()
+```
 
 # ANOVAs and ordinal logistic regression for rates of mortality and BA increment
 example provided by stats consult https://rpubs.com/tmcurley/twowayanova
