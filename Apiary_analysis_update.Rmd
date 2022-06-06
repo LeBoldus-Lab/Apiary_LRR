@@ -24,6 +24,8 @@ library(ggplot2)
 library(ggrepel)
 library(patchwork)
 library(here)
+library(lme4)
+library(car)
 ```
 
 ## Importing data
@@ -2294,6 +2296,7 @@ stand_summary_stats$CW12_Block<-ifelse(stand_summary_stats$CW12_REP=="0","5",sta
 stand_summary_stats$RA25_Block<-ifelse(stand_summary_stats$RA25_REP=="0","5",stand_summary_stats$RA25_REP)
 stand_summary_stats$CW25_Block<-ifelse(stand_summary_stats$CW25_REP=="0","5",stand_summary_stats$CW25_REP)
 stand_summary_stats$age<-as.numeric(stand_summary_stats$DF_age)
+#saveRDS(stand_summary_stats, file= here("stand_summary_stats.Rds"))  
 ```
 
 
@@ -2449,75 +2452,78 @@ MyPlots2
 dev.off()
 
 ```
+
 ## Converting data back to wide format for calculating slopes as response variables for anova/glm
 Use above version wide_for_dam which includes mortality broken down by damage codes
 ```{r}
-#selecting relevant columns from stand summary data
-colnames(stand_summary_stats)
-wide_in<-stand_summary_stats[,c(1,2,4,6,9,10,14,15,16)]
-#assigning timpoints to calculate early and late slopes based on trt x age combinations
-wide_in$timepoint<-
-  ifelse(wide_in$TRT=="A"|wide_in$TRT=="B", #test 10y trt
-        ifelse(wide_in$DF_age==8, #test age=8
-              1, #then timpoint 1
-              ifelse(wide_in$DF_age==24, # if not 8, test age=24
-                    2, #then timpoint 2
-                    3)) #if not 24, then timpoint 3m close test 24, close test 8  
-        ,ifelse(wide_in$TRT=="C",     #if not 10y, test DF
-                ifelse(wide_in$DF_age==12, #test age=12
-                       1, #then timpoint 1
-                       ifelse(wide_in$DF_age==36, # if not 12, test age=36
-                              2, #then timpoint 2
-                              3)) #if not 36, then timpoint 3, close test 36 close test 12
-        ,ifelse(wide_in$DF_age==11,  #test age=11
-                1, #then timepoint 1
-                2  #if not, then timepoint 2
-) #close test 11
-) #close test DF           
-) #close test 10y
+##selecting relevant columns from stand summary data
+#colnames(stand_summary_stats)
+#wide_in<-stand_summary_stats[,c(1,2,4,6,9,10,14,15,16)]
+##assigning timpoints to calculate early and late slopes based on trt x age combinations
+#wide_in$timepoint<-
+#  ifelse(wide_in$TRT=="A"|wide_in$TRT=="B", #test 10y trt
+#        ifelse(wide_in$DF_age==8, #test age=8
+#              1, #then timpoint 1
+#              ifelse(wide_in$DF_age==24, # if not 8, test age=24
+#                    2, #then timpoint 2
+#                    3)) #if not 24, then timpoint 3m close test 24, close test 8  
+#        ,ifelse(wide_in$TRT=="C",     #if not 10y, test DF
+#                ifelse(wide_in$DF_age==12, #test age=12
+#                       1, #then timpoint 1
+#                       ifelse(wide_in$DF_age==36, # if not 12, test age=36
+#                              2, #then timpoint 2
+#                              3)) #if not 36, then timpoint 3, close test 36 close test 12
+#        ,ifelse(wide_in$DF_age==11,  #test age=11
+#                1, #then timepoint 1
+#                2  #if not, then timepoint 2
+#) #close test 11
+#) #close test DF           
+#) #close test 10y
+#
+##coverting to wide format using timepoint column
+#wide_BA_in<-wide_in[,c(1,4,10)]
+#wide_BA<-pivot_wider(wide_BA_in, names_from = "timepoint",id_cols = "Stand_ID_TR",values_from = "Live_BA_mpha",names_prefix = "Live_BA_mpha_T")
+#wide_BA$TRT<-as.factor(c("A","A","A","B","B","B","B","B","C","C","C","C","C","D","D","D","D","D","E","E","E","E","E"))
+#wide_BA$Block<-c(5,2,4,5,1,2,3,4,5,1,2,3,4,5,1,2,3,4,5,1,2,3,4)
+#wide_age_in<-wide_in[,c(1,3,10)]
+#wide_age<-pivot_wider(wide_age_in, names_from = "timepoint",id_cols = "Stand_ID_TR",values_from = "DF_age",names_prefix = "DF_age_T")
+#wide_stand_stats<-merge(wide_BA,wide_age, by="Stand_ID_TR")
+#wide_total_in<-wide_in[,c(1,5,10)]
+#wide_total<-pivot_wider(wide_total_in, names_from = "timepoint",id_cols = "Stand_ID_TR",values_from = "total",names_prefix = "Trees_T")
+#wide_stand_stats<-merge(wide_stand_stats,wide_total, by="Stand_ID_TR")
+#wide_pd_in<-wide_in[,c(1,6,10)]
+#wide_pd<-pivot_wider(wide_pd_in, names_from = "timepoint",id_cols = "Stand_ID_TR",values_from = "prop_Dead",names_prefix = "prop_dead_T")
+#wide_stand_stats<-merge(wide_stand_stats,wide_pd, by="Stand_ID_TR")
+#wide_asn_in<-wide_in[,c(1,7,10)]
+#wide_asn<-pivot_wider(wide_asn_in, names_from = "timepoint",id_cols = "Stand_ID_TR",values_from = "asn_mort",names_prefix = "asn_mort_T")
+#wide_stand_stats<-merge(wide_stand_stats,wide_asn, by="Stand_ID_TR")
+#wide_stand_stats$Treatment<-ifelse(wide_stand_stats$TRT=="A",
+#                            "Red Alder\n12 years",
+#                            ifelse(wide_stand_stats$TRT=="B",
+#                               "Cottonwood\n12 years", 
+#                               ifelse(wide_stand_stats$TRT=="C",
+#                               "Douglas fir\nImmediately",
+#                               ifelse(wide_stand_stats$TRT=="D",
+#                                   "Red Alder\n25 years","Cottonwood\n25 years" ))))
+#wide_stand_stats$TMT<-ifelse(wide_stand_stats$TRT=="A",
+#                            "RA 12",
+#                            ifelse(wide_stand_stats$TRT=="B",
+#                               "CW 12", 
+#                               ifelse(wide_stand_stats$TRT=="C",
+#                               "DF",
+#                               ifelse(wide_stand_stats$TRT=="D",
+#                                   "RA 25","CW 25"))))
+#
+#wide_stand_stats$early_BA_slope<-(wide_stand_stats$Live_BA_mpha_T2-wide_stand_stats$Live_BA_mpha_T1)/(wide_stand_stats$DF_age_T2-wide_stand_stats$DF_a#ge_T1)
+#wide_stand_stats$late_BA_slope<-(wide_stand_stats$Live_BA_mpha_T3-wide_stand_stats$Live_BA_mpha_T2)/(wide_stand_stats$DF_age_T3-wide_stand_stats$DF_ag#e_T2)
+#wide_stand_stats$early_mort_slope<-(wide_stand_stats$prop_dead_T2-wide_stand_stats$prop_dead_T1)/(wide_stand_stats$DF_age_T2-wide_stand_stats$DF_age_T#1)
+#wide_stand_stats$late_mort_slope<-(wide_stand_stats$prop_dead_T3-wide_stand_stats$prop_dead_T2)/(wide_stand_stats$DF_age_T3-wide_stand_stats$DF_age_T2#)
+#wide_stand_stats$early_asnmort_slope<-(wide_stand_stats$asn_mort_T2-wide_stand_stats$asn_mort_T1)/(wide_stand_stats$DF_age_T2-wide_stand_stats$DF_age_#T1)
+#wide_stand_stats$late_asnmort_slope<-(wide_stand_stats$asn_mort_T3-wide_stand_stats$asn_mort_T2)/(wide_stand_stats$DF_age_T3-wide_stand_stats$DF_age_T#2)
+#wide_stand_stats$Treatment<-factor(wide_stand_stats$Treatment, levels= c("Douglas fir\nImmediately","Red Alder\n12 years","Cottonwood\n12 years","Red #Alder\n25 years","Cottonwood\n25 years"))
+#wide_stand_stats$TMT<-factor(wide_stand_stats$TMT, levels= c("DF","RA 12","CW 12","RA 25","CW 25"))
+##saveRDS(wide_stand_stats, file=here("wide_stand_stats.Rds"))
 
-#coverting to wide format using timepoint column
-wide_BA_in<-wide_in[,c(1,4,10)]
-wide_BA<-pivot_wider(wide_BA_in, names_from = "timepoint",id_cols = "Stand_ID_TR",values_from = "Live_BA_mpha",names_prefix = "Live_BA_mpha_T")
-wide_BA$TRT<-as.factor(c("A","A","A","B","B","B","B","B","C","C","C","C","C","D","D","D","D","D","E","E","E","E","E"))
-wide_BA$Block<-c(5,2,4,5,1,2,3,4,5,1,2,3,4,5,1,2,3,4,5,1,2,3,4)
-wide_age_in<-wide_in[,c(1,3,10)]
-wide_age<-pivot_wider(wide_age_in, names_from = "timepoint",id_cols = "Stand_ID_TR",values_from = "DF_age",names_prefix = "DF_age_T")
-wide_stand_stats<-merge(wide_BA,wide_age, by="Stand_ID_TR")
-wide_total_in<-wide_in[,c(1,5,10)]
-wide_total<-pivot_wider(wide_total_in, names_from = "timepoint",id_cols = "Stand_ID_TR",values_from = "total",names_prefix = "Trees_T")
-wide_stand_stats<-merge(wide_stand_stats,wide_total, by="Stand_ID_TR")
-wide_pd_in<-wide_in[,c(1,6,10)]
-wide_pd<-pivot_wider(wide_pd_in, names_from = "timepoint",id_cols = "Stand_ID_TR",values_from = "prop_Dead",names_prefix = "prop_dead_T")
-wide_stand_stats<-merge(wide_stand_stats,wide_pd, by="Stand_ID_TR")
-wide_asn_in<-wide_in[,c(1,7,10)]
-wide_asn<-pivot_wider(wide_asn_in, names_from = "timepoint",id_cols = "Stand_ID_TR",values_from = "asn_mort",names_prefix = "asn_mort_T")
-wide_stand_stats<-merge(wide_stand_stats,wide_asn, by="Stand_ID_TR")
-wide_stand_stats$Treatment<-ifelse(wide_stand_stats$TRT=="A",
-                            "Red Alder\n12 years",
-                            ifelse(wide_stand_stats$TRT=="B",
-                               "Cottonwood\n12 years", 
-                               ifelse(wide_stand_stats$TRT=="C",
-                               "Douglas fir\nImmediately",
-                               ifelse(wide_stand_stats$TRT=="D",
-                                   "Red Alder\n25 years","Cottonwood\n25 years" ))))
-wide_stand_stats$TMT<-ifelse(wide_stand_stats$TRT=="A",
-                            "RA 12",
-                            ifelse(wide_stand_stats$TRT=="B",
-                               "CW 12", 
-                               ifelse(wide_stand_stats$TRT=="C",
-                               "DF",
-                               ifelse(wide_stand_stats$TRT=="D",
-                                   "RA 25","CW 25"))))
-
-wide_stand_stats$early_BA_slope<-(wide_stand_stats$Live_BA_mpha_T2-wide_stand_stats$Live_BA_mpha_T1)/(wide_stand_stats$DF_age_T2-wide_stand_stats$DF_age_T1)
-wide_stand_stats$late_BA_slope<-(wide_stand_stats$Live_BA_mpha_T3-wide_stand_stats$Live_BA_mpha_T2)/(wide_stand_stats$DF_age_T3-wide_stand_stats$DF_age_T2)
-wide_stand_stats$early_mort_slope<-(wide_stand_stats$prop_dead_T2-wide_stand_stats$prop_dead_T1)/(wide_stand_stats$DF_age_T2-wide_stand_stats$DF_age_T1)
-wide_stand_stats$late_mort_slope<-(wide_stand_stats$prop_dead_T3-wide_stand_stats$prop_dead_T2)/(wide_stand_stats$DF_age_T3-wide_stand_stats$DF_age_T2)
-wide_stand_stats$early_asnmort_slope<-(wide_stand_stats$asn_mort_T2-wide_stand_stats$asn_mort_T1)/(wide_stand_stats$DF_age_T2-wide_stand_stats$DF_age_T1)
-wide_stand_stats$late_asnmort_slope<-(wide_stand_stats$asn_mort_T3-wide_stand_stats$asn_mort_T2)/(wide_stand_stats$DF_age_T3-wide_stand_stats$DF_age_T2)
-wide_stand_stats$Treatment<-factor(wide_stand_stats$Treatment, levels= c("Douglas fir\nImmediately","Red Alder\n12 years","Cottonwood\n12 years","Red Alder\n25 years","Cottonwood\n25 years"))
-wide_stand_stats$TMT<-factor(wide_stand_stats$TMT, levels= c("DF","RA 12","CW 12","RA 25","CW 25"))
 ```
 
 #Plotting
@@ -2671,14 +2677,28 @@ find a way to accomodate an unbalanced model (i.e. proc mixed or proc glimmix in
 perhaps lmer can.
 Run block as a random effect and double check coding (1|Block)?
 If not possible to use unbalanced, then run full model (with interaction) on blocks 2,4,5 and run additive model on full dataset.
+use "wide_for_dam" dataset
 
 ## early rate of mortality
 ```{r}
 #early mort slope
 # define models, full and reduced without interaction
 #in order to look at interaction, may need to use subplot data, not stand data, otherwise 0 residual degrees of freedom.
-wide_stand_stats$TMT<-relevel(wide_stand_stats$TMT, ref = "DF")
-wide_stand_stats$Block<-factor(wide_stand_stats$Block, levels = c("1","2","3","4","5"), ordered=TRUE)
+wide_for_dam$TMT<-relevel(wide_for_dam$TMT, ref = "DF")
+wide_for_dam$Block<-factor(wide_for_dam$Block)
+no_RA12<-wide_for_dam[-which(wide_for_dam$TMT=="RA 12"),]
+BTmodelx<-lmer(early_BA_slope ~ TMT + (1|Block/TMT), data = no_RA12, REML=FALSE, verbose = 2)
+BTmodel<-lmer(early_BA_slope ~ TMT + (1|Block), data = no_RA12, REML=FALSE, verbose = 2)
+BTfix<-lmer(early_BA_slope ~ TMT+ (TMT|Block), data = no_RA12, REML=FALSE, verbose = 2)
+isSingular(BTmodel)
+emmeans(BTmodel,~TMT, weights = "show.levels")
+emmeans(BTmodel,~TMT + (1|Block))
+summary(BTmodel)
+Anova(BTmodel, type = "III")
+ranef(BTmodel)
+
+
+
 add_emorto_model <- lm(early_mort_slope ~ TMT+Block, data = wide_stand_stats)
 #int_emorto_model <- lm(early_mort_slope ~ TMT*Block, data = wide_stand_stats)
 # Change the panel layout to 2 x 2 (to look at all 4 plots at once)
