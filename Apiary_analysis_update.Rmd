@@ -27,6 +27,7 @@ library(here)
 library(lme4)
 library(car)
 library(lmerTest)
+library(emmeans)
 ```
 
 ## Importing data
@@ -2680,10 +2681,11 @@ Run block as a random effect and double check coding (1|Block)?
 If not possible to use unbalanced, then run full model (with interaction) on blocks 2,4,5 and run additive model on full dataset.
 use "wide_for_dam" dataset
 
-## early rate of mortality
+## BA and rate of mortality
 ```{r}
 #http://animsci.agrenv.mcgill.ca/StatisticalMethodsII/R/RCBD/index.html
 #https://cran.r-project.org/web/packages/lme4/vignettes/lmer.pdf
+#https://benwhalley.github.io/just-enough-r/contrasts-lmer.html
 
 #wide_for_dam<-readRDS(file= here("wide_stand_summaries_including_damage_codes.Rds"))
 
@@ -2751,7 +2753,7 @@ anova(EMaTFmodel)
 rand(EMaTFmodel)
 VarCorr(EMaTFmodel)
 ls_means(EMaTFmodel)
-#comparing transformed and untransformed shows transformed is better
+#comparing asn transformed and raw shows transformed is better fit (and slightly better diagnostic plots)
 anova(EMTFmodel, EMaTFmodel)
 
 #Trimming CW25 Block 1
@@ -2766,138 +2768,78 @@ rand(EMatrimmodel)
 VarCorr(EMatrimmodel)
 ls_means(EMatrimmodel)
 
-##FIX BELOW FOR OTHER VARIABLES
-
-
-
-
-
-add_emorto_model <- lm(early_prop_dead_slope ~ TMT+Block, data = wide_for_dam)
-summary(add_emorto_model)
-Anova(add_emorto_model, type = "III")
-
-#int_emorto_model <- lm(early_mort_slope ~ TMT*Block, data = wide_stand_stats)
-# Change the panel layout to 2 x 2 (to look at all 4 plots at once)
-#hist(int_emorto_model$residuals)
-#par(mfrow = c(2, 2))
-# Use plot() function to create diagnostic plots
-#plot(int_emorto_model)
-summary(add_emorto_model)
-aov.add_emorto<-aov(add_emorto_model)
-summary(aov.add_emorto)
-#summary(int_emorto_model)
-#aov.int_emorto<-aov(int_emorto_model)
-#summary(aov.int_emorto)
-
-#treating Block as an unordered factor
-#add_emortf_model <- lm(early_mort_slope ~ TMT+factor(Block), data = wide_stand_stats)
-#int_emortf_model <- lm(early_mort_slope ~ TMT*factor(Block), data = wide_stand_stats)
-## Change the panel layout to 2 x 2 (to look at all 4 plots at once)
-#hist(add_emortf_model$residuals)
-#par(mfrow = c(2, 2))
-## Use plot() function to create diagnostic plots
-#plot(add_emortf_model)
-#summary(add_emortf_model)
-#aov.add_emortf<-aov(add_emortf_model)
-#summary(aov.add_emortf)
+#capturing marginal means for levels of treatment as a dataframe
+m.emm<-emmeans(EMatrimmodel, "TMT")
+m.emm.df <-
+  m.emm %>%
+  broom::tidy()
+#plotting treatment estimated marginal means +/- SE
+m.emm.df %>%
+  ggplot(aes(TMT, estimate, ymin=(estimate - std.error), ymax=(estimate + std.error))) +
+  geom_pointrange() +
+  ylab("asn early prop dead")
+#all pairwise contrasts
+contrast(m.emm, 'tukey') %>%
+  broom::tidy()
+#each vs DF control
+contrast(m.emm, 'trt.vs.ctrl') %>%
+  broom::tidy()
 
 
 #alternative would be to create a combined TMTxBlock variable and run a Kruskal Wallis test
-wide_stand_stats$TxB<-paste(wide_stand_stats$TRT, wide_stand_stats$Block, Sep="")
-kwem<-kruskal.test(early_mort_slope ~ TxB, data = wide_stand_stats)
+wide_for_dam$TxB<-paste(wide_for_dam$TRT, wide_for_dam$Block, Sep="")
+kwem<-kruskal.test(early_prop_dead_slope ~ TxB, data = wide_for_dam)
 kwem
-pwem<-pairwise.wilcox.test(wide_stand_stats$early_mort_slope, wide_stand_stats$TxB,
+pwem<-pairwise.wilcox.test(wide_for_dam$early_prop_dead_slope, wide_for_dam$TxB,
                  p.adjust.method = "BH")
 pwem
+#OR just test block or tmt alone
+kwblock<-kruskal.test(early_prop_dead_slope~Block, data = wide_for_dam)
+kwblock
+pwblock<-pairwise.wilcox.test(wide_for_dam$early_prop_dead_slope, wide_for_dam$Block,
+                 p.adjust.method = "BH")
+pwblock
 
-#performing likelihood ratio test (chi square test) to compare the full model (with interaction) with reduced model (without interaction)
-#this doesn't make sense to do if interaction model has 0 residual degrees of freedom
-#lrtest(int_emorto_model, add_emorto_model)
-#lrtest(int_emortf_model, add_emortf_model)
-#both are significant, so full model is best fit to data
+kwtrt<-kruskal.test(early_prop_dead_slope~TMT, data = wide_for_dam)
+kwtrt
+pwtrt<-pairwise.wilcox.test(wide_for_dam$early_prop_dead_slope, wide_for_dam$TMT,
+                 p.adjust.method = "BH")
+pwtrt
+
+#late rate of mortality
+#asn transformed
+LMaTFmodel<-lmer(late_asn_prop_dead_slope ~ TMT + (1|Block), data = wide_for_dam, REML=FALSE, verbose = 2)
+plot(LMaTFmodel, type = c("p", "smooth"))
+plot(LMaTFmodel, sqrt(abs(resid(.))) ~ fitted(.),type = c("p", "smooth"))
+lattice::qqmath(LMaTFmodel, id = 0.05)
+summary(LMaTFmodel)
+anova(LMaTFmodel)
+rand(LMaTFmodel)
+VarCorr(LMaTFmodel)
+ls_means(LMaTFmodel)
+
+#capturing marginal means for levels of treatment as a dataframe
+lm.emm<-emmeans(LMaTFmodel, "TMT")
+lm.emm.df <-
+  lm.emm %>%
+  broom::tidy()
+#plotting treatment estimated marginal means +/- SE
+lm.emm.df %>%
+  ggplot(aes(TMT, estimate, ymin=(estimate - std.error), ymax=(estimate + std.error))) +
+  geom_pointrange() +
+  ylab("asn late prop dead")
+#all pairwise contrasts
+contrast(lm.emm, 'tukey') %>%
+  broom::tidy()
+#each vs DF control
+contrast(lm.emm, 'trt.vs.ctrl') %>%
+  broom::tidy()
 
 ```
 
 
-
-## late rate of mortality
+## cause specific mortality
 ```{r}
 #late mort slope
-# define model
-add_lmorto_model <- lm(late_mort_slope ~ TMT+Block, data = wide_stand_stats)
-# Change the panel layout to 2 x 2 (to look at all 4 plots at once)
-hist(add_lmorto_model$residuals)
-par(mfrow = c(2, 2))
-# Use plot() function to create diagnostic plots
-plot(add_lmorto_model)
-summary(add_lmorto_model)
-aov.add_lmorto<-aov(add_lmorto_model)
-summary(aov.add_lmorto)
 
-
-#alternative would be to create a combined TMTxBlock variable and run a Kruskal Wallis test
-#wide_stand_stats$TxB<-paste(wide_stand_stats$TRT, wide_stand_stats$Block, Sep="")
-kwlm<-kruskal.test(late_mort_slope ~ TxB, data = wide_stand_stats)
-kwlm
-wide_stand_stats_ABC<- subset(wide_stand_stats, wide_stand_stats$TRT!="D"&wide_stand_stats$TRT!="E")
-pwlm<-pairwise.wilcox.test(wide_stand_stats_ABC$late_mort_slope, wide_stand_stats_ABC$TxB,
-                 p.adjust.method = "BH")
-pwlm
-#just treatment effect
-tkwlm<-kruskal.test(late_mort_slope ~ TRT, data = wide_stand_stats)
-tkwlm
-wide_stand_stats_ABC<- subset(wide_stand_stats, wide_stand_stats$TRT!="D"&wide_stand_stats$TRT!="E")
-tpwlm<-pairwise.wilcox.test(wide_stand_stats_ABC$late_mort_slope, wide_stand_stats_ABC$TRT,
-                 p.adjust.method = "BH")
-tpwlm
-#just Block effect
-bkwlm<-kruskal.test(late_mort_slope ~ Block, data = wide_stand_stats)
-bkwlm
-wide_stand_stats_ABC<- subset(wide_stand_stats, wide_stand_stats$TRT!="D"&wide_stand_stats$TRT!="E")
-bpwlm<-pairwise.wilcox.test(wide_stand_stats_ABC$late_mort_slope, wide_stand_stats_ABC$Block,
-                 p.adjust.method = "BH")
-bpwlm
-```
-
-## early BA increment
-```{r}
-#early BA slope
-# define model
-add_ebao_model <- lm(early_BA_slope ~ TMT+Block, data = wide_stand_stats)
-# Change the panel layout to 2 x 2 (to look at all 4 plots at once)
-hist(add_ebao_model$residuals)
-par(mfrow = c(2, 2))
-# Use plot() function to create diagnostic plots
-plot(add_ebao_model)
-summary(add_ebao_model)
-aov.add_ebao<-aov(add_ebao_model)
-summary(aov.add_ebao)
-
-kweba<-kruskal.test(early_BA_slope ~ TxB, data = wide_stand_stats)
-kweba
-pweba<-pairwise.wilcox.test(wide_stand_stats$early_BA_slope, wide_stand_stats$TxB,
-                 p.adjust.method = "BH")
-pweba
-```
-
-
-## late BA increment
-```{r}
-#late BA slope
-# define model
-add_lbao_model <- lm(late_BA_slope ~ TMT+Block, data = wide_stand_stats)
-# Change the panel layout to 2 x 2 (to look at all 4 plots at once)
-hist(add_lbao_model$residuals)
-par(mfrow = c(2, 2))
-# Use plot() function to create diagnostic plots
-plot(add_lbao_model)
-summary(add_lbao_model)
-aov.add_lbao<-aov(add_lbao_model)
-summary(aov.add_lbao)
-
-kwlba<-kruskal.test(early_BA_slope ~ TxB, data = wide_stand_stats_ABC)
-kwlba
-pwlba<-pairwise.wilcox.test(wide_stand_stats_ABC$early_BA_slope, wide_stand_stats_ABC$TxB,
-                 p.adjust.method = "BH")
-pwlba
 ```
