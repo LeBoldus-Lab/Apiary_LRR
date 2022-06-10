@@ -2687,24 +2687,23 @@ use "wide_for_dam" dataset
 
 #wide_for_dam<-readRDS(file= here("wide_stand_summaries_including_damage_codes.Rds"))
 
-#early mort slope
-# define models, full and reduced without interaction
-#in order to look at interaction, may need to use subplot data, not stand data, otherwise 0 residual degrees of freedom.
-wide_for_dam$TMT<-relevel(wide_for_dam$TMT, ref = "DF")
+#early BA slope
+#wide_for_dam$TMT<-relevel(wide_for_dam$TMT, ref = "DF")
 wide_for_dam$Block<-factor(wide_for_dam$Block)
+#generating a balanced dataset which removes RA12 treatment
 no_RA12<-wide_for_dam[-which(wide_for_dam$TMT=="RA 12"),]
 no_RA12$TMT<-factor(no_RA12$TMT, levels= c("DF","CW 12","RA 25","CW 25"))
 no_RA12$TMT<-relevel(no_RA12$TMT, ref = "DF")
+#running on balanced dataset
 BAmodel<-lmer(early_BA_slope ~ TMT + (1|Block), data = no_RA12, REML=FALSE, verbose = 2)
-plot(BAmodel)
 plot(BAmodel, type = c("p", "smooth"))
 plot(BAmodel, sqrt(abs(resid(.))) ~ fitted(.),type = c("p", "smooth"))
 lattice::qqmath(BAmodel, id = 0.05)
 ranef(BAmodel)
 rand(BAmodel)
 
+#running on full dataset
 BAFmodel<-lmer(early_BA_slope ~ TMT + (1|Block), data = wide_for_dam, REML=FALSE, verbose = 2)
-plot(BAFmodel)
 plot(BAFmodel, type = c("p", "smooth"))
 plot(BAFmodel, sqrt(abs(resid(.))) ~ fitted(.),type = c("p", "smooth"))
 lattice::qqmath(BAFmodel, id = 0.05)
@@ -2713,9 +2712,64 @@ anova(BAFmodel)
 rand(BAFmodel)
 VarCorr(BAFmodel)
 ls_means(BAFmodel)
+#comparing with just a simple fixed effect model
+BATmodel<-lm(early_BA_slope ~ TMT, data = wide_for_dam)
+summary(BATmodel)
+#comparing the two models
+anova(BAFmodel, BATmodel)
+#fixed only model has slightly lower BIC and AIC and doesn't return the singular error.
 
+#late BA slope
+lBAFmodel<-lmer(late_BA_slope ~ TMT + (1|Block), data = wide_for_dam, REML=FALSE, verbose = 2)
+plot(lBAFmodel, type = c("p", "smooth"))
+plot(lBAFmodel, sqrt(abs(resid(.))) ~ fitted(.),type = c("p", "smooth"))
+lattice::qqmath(lBAFmodel, id = 0.05)
+summary(lBAFmodel)
+anova(lBAFmodel)
+rand(lBAFmodel)
+VarCorr(lBAFmodel)
+ls_means(lBAFmodel)
+
+#early total mortality
+EMTFmodel<-lmer(early_prop_dead_slope ~ TMT + (1|Block), data = wide_for_dam, REML=FALSE, verbose = 2)
+plot(EMTFmodel, type = c("p", "smooth"))
+plot(EMTFmodel, sqrt(abs(resid(.))) ~ fitted(.),type = c("p", "smooth"))
+lattice::qqmath(EMTFmodel, id = 0.05)
+summary(EMTFmodel)
+anova(EMTFmodel)
+rand(EMTFmodel)
+VarCorr(EMTFmodel)
+ls_means(EMTFmodel)
+
+#arcsin early total mortality
+EMaTFmodel<-lmer(early_asn_prop_dead_slope ~ TMT + (1|Block), data = wide_for_dam, REML=FALSE, verbose = 2)
+plot(EMaTFmodel, type = c("p", "smooth"))
+plot(EMaTFmodel, sqrt(abs(resid(.))) ~ fitted(.),type = c("p", "smooth"))
+lattice::qqmath(EMaTFmodel, id = 0.05)
+summary(EMaTFmodel)
+anova(EMaTFmodel)
+rand(EMaTFmodel)
+VarCorr(EMaTFmodel)
+ls_means(EMaTFmodel)
+#comparing transformed and untransformed shows transformed is better
+anova(EMTFmodel, EMaTFmodel)
+
+#Trimming CW25 Block 1
+trimE1<-wide_for_dam[-20,]
+EMatrimmodel<-lmer(early_asn_prop_dead_slope ~ TMT + (1|Block), data = trimE1, REML=FALSE, verbose = 2)
+plot(EMatrimmodel, type = c("p", "smooth"))
+plot(EMatrimmodel, sqrt(abs(resid(.))) ~ fitted(.),type = c("p", "smooth"))
+lattice::qqmath(EMatrimmodel, id = 0.05)
+summary(EMatrimmodel)
+anova(EMatrimmodel)
+rand(EMatrimmodel)
+VarCorr(EMatrimmodel)
+ls_means(EMatrimmodel)
 
 ##FIX BELOW FOR OTHER VARIABLES
+
+
+
 
 
 add_emorto_model <- lm(early_prop_dead_slope ~ TMT+Block, data = wide_for_dam)
