@@ -2838,8 +2838,217 @@ contrast(lm.emm, 'trt.vs.ctrl') %>%
 ```
 
 
-## cause specific mortality
+## LRR-specific mortality
 ```{r}
-#late mort slope
+#early LRR mort slope
+#asn
+EaLRRmodel<-lmer(early_asn_prop_LRR_dead_slope ~ TMT + (1|Block), data = wide_for_dam, REML=FALSE, verbose = 2)
+plot(EaLRRmodel, type = c("p", "smooth"))
+plot(EaLRRmodel, sqrt(abs(resid(.))) ~ fitted(.),type = c("p", "smooth"))
+lattice::qqmath(EaLRRmodel, id = 0.05)
+summary(EaLRRmodel)
+anova(EaLRRmodel)
+rand(EaLRRmodel)
+VarCorr(EaLRRmodel)
+ls_means(EaLRRmodel)
 
+#capturing marginal means for levels of treatment as a dataframe
+elrrm.emm<-emmeans(EaLRRmodel, "TMT")
+elrrm.emm.df <-
+  elrrm.emm %>%
+  broom::tidy()
+#plotting treatment estimated marginal means +/- SE
+elrrm.emm.df %>%
+  ggplot(aes(TMT, estimate, ymin=(estimate - std.error), ymax=(estimate + std.error))) +
+  geom_pointrange() +
+  ylab("asn early prop dead")
+#all pairwise contrasts
+contrast(elrrm.emm, 'tukey') %>%
+  broom::tidy()
+#each vs DF control
+contrast(elrrm.emm, 'trt.vs.ctrl') %>%
+  broom::tidy()
+
+#alternative would be to create a combined TMTxBlock variable and run a Kruskal Wallis test and use raw proportion, not asn
+kwelrrm<-kruskal.test(early_prop_LRR_dead_slope ~ TxB, data = wide_for_dam)
+kwelrrm
+pwelrrm<-pairwise.wilcox.test(wide_for_dam$early_prop_LRR_dead_slope, wide_for_dam$TxB,
+                 p.adjust.method = "BH")
+pwelrrm
+#OR just test block or tmt alone
+kwelrrblock<-kruskal.test(early_prop_LRR_dead_slope~Block, data = wide_for_dam)
+kwelrrblock
+pwelrrblock<-pairwise.wilcox.test(wide_for_dam$early_prop_LRR_dead_slope, wide_for_dam$Block,
+                 p.adjust.method = "BH")
+pwelrrblock
+
+kwelrrtrt<-kruskal.test(early_prop_LRR_dead_slope~TMT, data = wide_for_dam)
+kwelrrtrt
+pwelrrtrt<-pairwise.wilcox.test(wide_for_dam$early_prop_LRR_dead_slope, wide_for_dam$TMT,
+                 p.adjust.method = "BH")
+pwelrrtrt
+
+#note significant block effect when modeled alone with KW showing block 5> than all others except maybe 4
+#also significant Wald test when modeled as random factor in linear model 
+
+
+#late LRR mort slope
+#asn
+LaLRRmodel<-lmer(late_asn_prop_LRR_dead_slope ~ TMT + (1|Block), data = wide_for_dam, REML=FALSE, verbose = 2)
+plot(LaLRRmodel, type = c("p", "smooth"))
+plot(LaLRRmodel, sqrt(abs(resid(.))) ~ fitted(.),type = c("p", "smooth"))
+lattice::qqmath(LaLRRmodel, id = 0.05)
+summary(LaLRRmodel)
+anova(LaLRRmodel)
+rand(LaLRRmodel)
+VarCorr(LaLRRmodel)
+ls_means(LaLRRmodel)
+
+#capturing marginal means for levels of treatment as a dataframe
+llrrm.emm<-emmeans(LaLRRmodel, "TMT")
+llrrm.emm.df <-
+  llrrm.emm %>%
+  broom::tidy()
+#plotting treatment estimated marginal means +/- SE
+llrrm.emm.df %>%
+  ggplot(aes(TMT, estimate, ymin=(estimate - std.error), ymax=(estimate + std.error))) +
+  geom_pointrange() +
+  ylab("asn late prop dead")
+#all pairwise contrasts
+contrast(llrrm.emm, 'tukey') %>%
+  broom::tidy()
+#each vs DF control
+contrast(llrrm.emm, 'trt.vs.ctrl') %>%
+  broom::tidy()
+
+#alternative would be to create a combined TMTxBlock variable and run a Kruskal Wallis test and use raw proportion, not asn
+kwllrrm<-kruskal.test(late_prop_LRR_dead_slope ~ TxB, data = wide_for_dam)
+kwllrrm
+#pwllrrm<-pairwise.wilcox.test(wide_for_dam$late_prop_LRR_dead_slope, wide_for_dam$TxB,
+#                 p.adjust.method = "BH")
+#pwllrrm
+#OR just test block or tmt alone
+kwllrrblock<-kruskal.test(late_prop_LRR_dead_slope~Block, data = wide_for_dam)
+kwllrrblock
+pwllrrblock<-pairwise.wilcox.test(wide_for_dam$late_prop_LRR_dead_slope, wide_for_dam$Block,
+                 p.adjust.method = "BH")
+pwllrrblock
+
+kwllrrtrt<-kruskal.test(late_prop_LRR_dead_slope~TMT, data = wide_for_dam)
+kwllrrtrt
+#pwllrrtrt<-pairwise.wilcox.test(wide_for_dam$late_prop_LRR_dead_slope, wide_for_dam$TMT,
+#                 p.adjust.method = "BH")
+#pwllrrtrt
+
+#note nearly significant block effect when modeled alone with KW showing block 5> than all others
+#also significant Wald test when modeled as random factor in linear model 
+```
+
+
+## suppressions-specific mortality
+```{r}
+#UPDATE
+
+#early LRR mort slope
+#asn
+EaLRRmodel<-lmer(early_asn_prop_LRR_dead_slope ~ TMT + (1|Block), data = wide_for_dam, REML=FALSE, verbose = 2)
+plot(EaLRRmodel, type = c("p", "smooth"))
+plot(EaLRRmodel, sqrt(abs(resid(.))) ~ fitted(.),type = c("p", "smooth"))
+lattice::qqmath(EaLRRmodel, id = 0.05)
+summary(EaLRRmodel)
+anova(EaLRRmodel)
+rand(EaLRRmodel)
+VarCorr(EaLRRmodel)
+ls_means(EaLRRmodel)
+
+#capturing marginal means for levels of treatment as a dataframe
+elrrm.emm<-emmeans(EaLRRmodel, "TMT")
+elrrm.emm.df <-
+  elrrm.emm %>%
+  broom::tidy()
+#plotting treatment estimated marginal means +/- SE
+elrrm.emm.df %>%
+  ggplot(aes(TMT, estimate, ymin=(estimate - std.error), ymax=(estimate + std.error))) +
+  geom_pointrange() +
+  ylab("asn early prop dead")
+#all pairwise contrasts
+contrast(elrrm.emm, 'tukey') %>%
+  broom::tidy()
+#each vs DF control
+contrast(elrrm.emm, 'trt.vs.ctrl') %>%
+  broom::tidy()
+
+#alternative would be to create a combined TMTxBlock variable and run a Kruskal Wallis test and use raw proportion, not asn
+kwelrrm<-kruskal.test(early_prop_LRR_dead_slope ~ TxB, data = wide_for_dam)
+kwelrrm
+pwelrrm<-pairwise.wilcox.test(wide_for_dam$early_prop_LRR_dead_slope, wide_for_dam$TxB,
+                 p.adjust.method = "BH")
+pwelrrm
+#OR just test block or tmt alone
+kwelrrblock<-kruskal.test(early_prop_LRR_dead_slope~Block, data = wide_for_dam)
+kwelrrblock
+pwelrrblock<-pairwise.wilcox.test(wide_for_dam$early_prop_LRR_dead_slope, wide_for_dam$Block,
+                 p.adjust.method = "BH")
+pwelrrblock
+
+kwelrrtrt<-kruskal.test(early_prop_LRR_dead_slope~TMT, data = wide_for_dam)
+kwelrrtrt
+pwelrrtrt<-pairwise.wilcox.test(wide_for_dam$early_prop_LRR_dead_slope, wide_for_dam$TMT,
+                 p.adjust.method = "BH")
+pwelrrtrt
+
+#note significant block effect when modeled alone with KW showing block 5> than all others except maybe 4
+#also significant Wald test when modeled as random factor in linear model 
+
+
+#late LRR mort slope
+#asn
+LaLRRmodel<-lmer(late_asn_prop_LRR_dead_slope ~ TMT + (1|Block), data = wide_for_dam, REML=FALSE, verbose = 2)
+plot(LaLRRmodel, type = c("p", "smooth"))
+plot(LaLRRmodel, sqrt(abs(resid(.))) ~ fitted(.),type = c("p", "smooth"))
+lattice::qqmath(LaLRRmodel, id = 0.05)
+summary(LaLRRmodel)
+anova(LaLRRmodel)
+rand(LaLRRmodel)
+VarCorr(LaLRRmodel)
+ls_means(LaLRRmodel)
+
+#capturing marginal means for levels of treatment as a dataframe
+llrrm.emm<-emmeans(LaLRRmodel, "TMT")
+llrrm.emm.df <-
+  llrrm.emm %>%
+  broom::tidy()
+#plotting treatment estimated marginal means +/- SE
+llrrm.emm.df %>%
+  ggplot(aes(TMT, estimate, ymin=(estimate - std.error), ymax=(estimate + std.error))) +
+  geom_pointrange() +
+  ylab("asn late prop dead")
+#all pairwise contrasts
+contrast(llrrm.emm, 'tukey') %>%
+  broom::tidy()
+#each vs DF control
+contrast(llrrm.emm, 'trt.vs.ctrl') %>%
+  broom::tidy()
+
+#alternative would be to create a combined TMTxBlock variable and run a Kruskal Wallis test and use raw proportion, not asn
+kwllrrm<-kruskal.test(late_prop_LRR_dead_slope ~ TxB, data = wide_for_dam)
+kwllrrm
+#pwllrrm<-pairwise.wilcox.test(wide_for_dam$late_prop_LRR_dead_slope, wide_for_dam$TxB,
+#                 p.adjust.method = "BH")
+#pwllrrm
+#OR just test block or tmt alone
+kwllrrblock<-kruskal.test(late_prop_LRR_dead_slope~Block, data = wide_for_dam)
+kwllrrblock
+pwllrrblock<-pairwise.wilcox.test(wide_for_dam$late_prop_LRR_dead_slope, wide_for_dam$Block,
+                 p.adjust.method = "BH")
+pwllrrblock
+
+kwllrrtrt<-kruskal.test(late_prop_LRR_dead_slope~TMT, data = wide_for_dam)
+kwllrrtrt
+#pwllrrtrt<-pairwise.wilcox.test(wide_for_dam$late_prop_LRR_dead_slope, wide_for_dam$TMT,
+#                 p.adjust.method = "BH")
+#pwllrrtrt
+
+#note nearly significant block effect when modeled alone with KW showing block 5> than all others
+#also significant Wald test when modeled as random factor in linear model 
 ```
