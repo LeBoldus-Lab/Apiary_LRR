@@ -2947,7 +2947,6 @@ kwllrrtrt
 
 ## suppressions-specific mortality
 ```{r}
-#UPDATE
 
 #early SUP mort slope
 #asn with E1 outlier trimmed
