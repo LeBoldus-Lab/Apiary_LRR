@@ -2010,7 +2010,7 @@ wide_nod$No_damage_T1[is.na(wide_nod$No_damage_T1)]<-0
 #combining summary and no damage count tables
 wide_stand_stats<-merge(wide_stand_stats,wide_nod, by=c("Stand_ID_TR","STATUS"))
 
-#trim BA variables leaving ony ID and reponse variables
+#trim BA variables leaving only ID and response variables
 wide2b<-wide_stand_stats
 #sum total tree counts for different statuses together for each stand
 wide2b_tsum<-wide2b %>% group_by(Stand_ID_TR) %>% summarise(Live_BA_mpha_T1=first(Live_BA_mpha_T1),Live_BA_mpha_T2=first(Live_BA_mpha_T2),Live_BA_mpha_T3=first(Live_BA_mpha_T3), Total_Trees_T1=sum(Trees_T1), Total_Trees_T2=sum(Trees_T2), Total_Trees_T3=sum(Trees_T3), TRT=first(TRT), Block=first(Block), DF_age_T1=first(DF_age_T1), DF_age_T2=first(DF_age_T2), DF_age_T3=first(DF_age_T3))
