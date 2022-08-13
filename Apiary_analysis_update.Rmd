@@ -195,9 +195,6 @@ nrow(test2)
 
 ```
 
-## Remaining questions
-Anna confirmed that the "old" measurements refer to 2011.
-
 ## Converting to long data format
 ```{r}
 #pivot to long data by old and new
@@ -1822,7 +1819,7 @@ BA_TMT5_STND5<-BA_T5S5[,c("Stand_ID_TR","REP","YEAR_dbl","TRT","count","Live_BA_
 write_csv(BA_TMT5_STND5, here("FVS_inputs_update","BA_TMT5_STND5.csv"))
 ```
 
-## subplot BA and mortality boxplots by rep faceted by age
+## subplot BA and mortality stacked barplots by rep faceted by age
 
 ```{r}
 #stand_df_age<-readRDS(here("stand_level_df_age.Rds"))
@@ -1927,7 +1924,6 @@ mort_plots<-list(sub_mort,sub_mort_c,sub_RA_mort,sub_RA_mort_c,sub_CW_mort,sub_C
 #dev.off()
 
 ```
-
 
 
 ##Try linear regression with live BA or prop mortality by DF year. Multiplot and compare slope
