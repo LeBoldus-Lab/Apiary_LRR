@@ -1928,34 +1928,42 @@ mort_plots<-list(sub_mort,sub_mort_c,sub_RA_mort,sub_RA_mort_c,sub_CW_mort,sub_C
 
 ##Try linear regression with live BA or prop mortality by DF year. Multiplot and compare slope
 
-COPIED FROM WOODS CREEK STATISTICAL ANALYSIS
+BASED ON WOODS CREEK STATISTICAL ANALYSIS
 
 ```{r}
-#working to simplify 
+
 #stand_df_age <- readRDS(here("stand_level_df.Rds"))
 #subplot_df_age<-readRDS(here("subplot_df_age.Rds"))
+#defining similar sampling timepoints; 1-4
+#25y rotation treatments have data for timepoints 1 and 2
+#12y rotation treatments have data for timepoints 1-3
+#Continuous DF treatment has data for timpoints 1,3& 4
+#will calculate slopes for 1-2 (12 and 24 rotations), 1-3 (12 and DF), and 3-4 (DF only).
+
 model_in<-stand_df_age %>% group_by(TRT, SEV, STATUS, DF_age)%>%summarise(YEAR_dbl=median(YEAR_dbl, na.rm = TRUE), Live_BA_mpha = if(all(is.na(Live_BA_mpha))) NA_real_ else sum(Live_BA_mpha, na.rm=TRUE),total=sum(count, na.rm=TRUE),LRR=sum(LRR, na.rm=TRUE),LRRNO=sum(LRRNO, na.rm=TRUE),SUP=sum(SUP, na.rm=TRUE),No_dam=sum(No_dam, na.rm=TRUE), Stand_ID_TR=Stand_ID_TR )
 colnames(model_in)[colnames(model_in) == "SEV"] <- "Block"
 model_in$timepoint<-
   ifelse(model_in$TRT=="A"|model_in$TRT=="B", #test 10y trt
         ifelse(model_in$DF_age==8, #test age=8
-              1, #then timpoint 1
-              ifelse(model_in$DF_age==24, # if not 8, test age=24
-                    2, #then timpoint 2
-                    3)) #if not 24, then timpoint 3m close test 24, close test 8  
+              1, #then timepoint 1
+              ifelse(model_in$DF_age==24, # if not 8, test age==24
+                    2, #then timepoint 2
+                    3)) #if not 24, then timepoint 3, close test 24, close test 8  
         ,ifelse(model_in$TRT=="C",     #if not 10y, test DF
                 ifelse(model_in$DF_age==12, #test age=12
-                       1, #then timpoint 1
-                       ifelse(model_in$DF_age==36, # if not 12, test age=36
-                              2, #then timpoint 2
-                              3)) #if not 36, then timpoint 3, close test 36 close test 12
-        ,ifelse(model_in$DF_age==11,  #test age=11
+                       1, #then timepoint 1
+                       ifelse(model_in$DF_age==36, # if not 12, test age==36
+                              3, #then timepoint 3 (not timepoint 2 as originally specified since it is a more dissimilar range)
+                              4)) #if not 36, then timepoint 4, close test 36 close test 12. (not timepoint 3 as originally)
+        ,ifelse(model_in$DF_age==11,  #test age==11
                 1, #then timepoint 1
                 2  #if not, then timepoint 2
 ) #close test 11
 ) #close test DF           
 ) #close test 10y  
 model_in_test<-model_in[,c(13,1,2,3,6,12)]
+
+#DOUBLE CHECK THAT THIS WORKS WITH THE UPDATED TIMEPOINTS
 
 #pivoting to wide format using timepoint column
 #for BA variable
@@ -2015,6 +2023,8 @@ wide2_dead<-wide2b[which(wide2b$STATUS==3),-c(2:10)]
 #add total trees column to dead trees stats
 wide_for_dam<-merge(wide2_dead, wide2b_tsum, by="Stand_ID_TR")
 
+#ADD T4 and make sure incomplete data for T2 and T3 don't mess with things.
+
 #calculate proportions for each mortality response variable and time point
 #mortality
 wide_for_dam$prop_dead_T1<-wide_for_dam$Trees_T1/wide_for_dam$Total_Trees_T1
@@ -2058,7 +2068,7 @@ wide_for_dam$asn_prop_No_damage_dead_T1<-asin(sqrt(wide_for_dam$prop_No_damage_d
 wide_for_dam$asn_prop_No_damage_dead_T2<-asin(sqrt(wide_for_dam$prop_No_damage_dead_T2))
 wide_for_dam$asn_prop_No_damage_dead_T3<-asin(sqrt(wide_for_dam$prop_No_damage_dead_T3))
 
-#calculate slopes
+#calculate slopes (update with new timepoints.)
 wide_for_dam$early_BA_slope<-(wide_for_dam$Live_BA_mpha_T2-wide_for_dam$Live_BA_mpha_T1)/(wide_for_dam$DF_age_T2-wide_for_dam$DF_age_T1)
 wide_for_dam$late_BA_slope<-(wide_for_dam$Live_BA_mpha_T3-wide_for_dam$Live_BA_mpha_T2)/(wide_for_dam$DF_age_T3-wide_for_dam$DF_age_T2)
 
