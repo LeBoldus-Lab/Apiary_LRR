@@ -2632,13 +2632,13 @@ early_mort<-ggplot(data = wide_for_dam, aes(x=TMT,y=early_prop_dead_slope))+
   geom_boxplot()+
   labs(x="Treatment", y="Early (10-25y)\nAnnual DF Mortality\n(proportion/year)")+
   geom_text_repel(aes(label=Block),nudge_x = 0.5,segment.alpha=0.5)+
-   ylim(0,0.05)+
+   ylim(-0.005,0.045)+
   theme_bw()
 early_mort
 early_mort_block_facet<-ggplot(data = wide_for_dam, aes(x=TMT,y=early_prop_dead_slope))+
   geom_point()+
   labs(x="Treatment", y="Early (10-25y)\nAnnual DF Mortality\n(proportion/year)")+
-   ylim(0,0.05)+
+   ylim(-0.005,0.05)+
   theme_bw()+
   facet_grid(rows = vars(Block))
 early_mort_block_facet
@@ -2649,13 +2649,13 @@ mid_mort<-ggplot(data = wide_for_dam, aes(x=TMT,y=mid_prop_dead_slope))+
   geom_boxplot()+
   labs(x="Treatment", y="Mid (10-35y)\nAnnual DF Mortality\n(proportion/year)")+
   geom_text_repel(aes(label=Block),nudge_x = 0.5,segment.alpha=0.5)+
-   ylim(0,0.05)+
+   ylim(-0.005,0.045)+
   theme_bw()
 mid_mort
 mid_mort_block_facet<-ggplot(data = wide_for_dam, aes(x=TMT,y=early_prop_dead_slope))+
   geom_point()+
   labs(x="Treatment", y="Mid (10-35y)\nAnnual DF Mortality\n(proportion/year)")+
-   ylim(0,0.05)+
+   ylim(-0.005,0.045)+
   theme_bw()+
   facet_grid(rows = vars(Block))
 mid_mort_block_facet
@@ -2667,14 +2667,14 @@ late_mort<-ggplot(data = wide_for_dam, aes(x=TMT,y=late_prop_dead_slope))+
   geom_boxplot()+
   labs(x="Treatment",y="Late (35-45y)\nAnnual DF Mortality\n(proportion/year)")+
   geom_text_repel(aes(label=Block),nudge_x = 0.5,segment.alpha=0.5)+
-  ylim(0,0.05)+
+  ylim(-0.005,0.045)+
   theme_bw()
 late_mort
 late_mort2<-late_mort+labs(x="Treatment",y="Late (35-45y)")
 late_mort_block_facet<-ggplot(data = wide_for_dam, aes(x=TMT,y=early_prop_dead_slope))+
   geom_point()+
   labs(x="Treatment", y="Late (34-45y)\nAnnual DF Mortality\n(proportion/year)")+
-   ylim(0,0.05)+
+   ylim(-0.005,0.045)+
   theme_bw()+
   facet_grid(rows = vars(Block))
 late_mort_block_facet
@@ -2697,7 +2697,7 @@ early_LRR_mort<-ggplot(data = wide_for_dam, aes(x=TMT,y=early_prop_LRR_dead_slop
   geom_boxplot()+
   labs(x="Treatment", y="Early (10-25y)\nAnnual DF\nLRR Mortality\n(proportion/year)")+
   geom_text_repel(aes(label=Block),nudge_x = 0.5,segment.alpha=0.5)+
-  ylim(-0.005,0.035)+
+  ylim(-0.005,0.045)+
   theme_bw()
 early_LRR_mort
 
@@ -2707,7 +2707,7 @@ mid_LRR_mort<-ggplot(data = wide_for_dam, aes(x=TMT,y=mid_prop_LRR_dead_slope))+
   geom_boxplot()+
   labs(x="Treatment", y="Mid (10-35y)\nAnnual DF\nLRR Mortality\n(proportion/year)")+
   geom_text_repel(aes(label=Block),nudge_x = 0.5,segment.alpha=0.5)+
-  ylim(-0.005,0.035)+
+  ylim(-0.005,0.045)+
   theme_bw()
 mid_LRR_mort
 
@@ -2718,7 +2718,7 @@ late_LRR_mort<-ggplot(data = wide_for_dam, aes(x=TMT,y=late_prop_LRR_dead_slope)
   labs(x="Treatment",y="Late (35-45y)\nAnnual DF\nLRR Mortality\n(proportion/year)")+
   geom_text_repel(aes(label=Block),nudge_x = 0.5,segment.alpha=0.5)+
   #geom_text(aes(label=Block),nudge_x = 0.5)+
-  ylim(-0.005,0.035)+
+  ylim(-0.005,0.045)+
   theme_bw()
 late_LRR_mort
 late_LRR_mort2<-late_LRR_mort+labs(x="Treatment",y="Late (35-45y)")
@@ -2732,7 +2732,7 @@ early_SUP_mort<-ggplot(data = wide_for_dam, aes(x=TMT,y=early_prop_SUP_dead_slop
   geom_boxplot()+
   labs(x="Treatment", y="Early (10-25y)\nAnnual DF\nSuppression Mortality\n(proportion/year)")+
   geom_text_repel(aes(label=Block),nudge_x = 0.5,segment.alpha=0.5)+
-  ylim(-0.005,0.035)+
+  ylim(-0.005,0.045)+
   theme_bw()
 early_SUP_mort
 
@@ -2743,7 +2743,7 @@ mid_SUP_mort<-ggplot(data = wide_for_dam, aes(x=TMT,y=mid_prop_SUP_dead_slope))+
   labs(x="Treatment",y="Mid (10-35y)\nAnnual DF\nSuppression Mortality\n(proportion/year)")+
   geom_text_repel(aes(label=Block),nudge_x = 0.5,segment.alpha=0.5)+
   #geom_text(aes(label=Block),nudge_x = 0.5)+
-  ylim(-0.005,0.035)+
+  ylim(-0.005,0.045)+
   theme_bw()
 mid_SUP_mort
 mid_SUP_mort2<-mid_SUP_mort+labs(x="Treatment",y="Mid (10-35y)")
@@ -2753,16 +2753,16 @@ late_SUP_mort<-ggplot(data = wide_for_dam, aes(x=TMT,y=late_prop_SUP_dead_slope)
   labs(x="Treatment",y="Late (35-45y)\nAnnual DF\nSuppression Mortality\n(proportion/year)")+
   geom_text_repel(aes(label=Block),nudge_x = 0.5,segment.alpha=0.5)+
   #geom_text(aes(label=Block),nudge_x = 0.5)+
-  ylim(-0.005,0.035)+
+  ylim(-0.005,0.045)+
   theme_bw()
 late_SUP_mort
 late_SUP_mort2<-late_SUP_mort+labs(x="Treatment",y="Late (35-45y)")
 (early_SUP_mort2 | mid_SUP_mort2 | late_SUP_mort2)
 (early_LRR_mort2 |mid_LRR_mort2| late_LRR_mort2)/ (early_SUP_mort2 |mid_SUP_mort2| late_SUP_mort2)
-#pdf(here("Summary_Graphs_update","Early_mid_late_prop_SUP_dead_slope_boxplots.pdf"), height= 6, width = 12)
+pdf(here("Summary_Graphs_update","Early_mid_late_prop_SUP_dead_slope_boxplots.pdf"), height= 6, width = 12)
 #(early_SUP_mort2 | mid_SUP_mort2 | late_SUP_mort2)
 #dev.off()
-
+#
 #pdf(here("Summary_Graphs_update","Early_mid_late_prop_SUP_and_prop_LRR_dead_slope_boxplots.pdf"), height= 10, width = 12)
 #(early_LRR_mort2 |mid_LRR_mort2| late_LRR_mort2)/ (early_SUP_mort2 |mid_SUP_mort2| late_SUP_mort2)
 #dev.off()
