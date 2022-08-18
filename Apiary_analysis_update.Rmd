@@ -2768,6 +2768,96 @@ pdf(here("Summary_Graphs_update","Early_mid_late_prop_SUP_dead_slope_boxplots.pd
 #dev.off()
 
 ```
+# plotting tree diameters over time and coloring by LRR status
+
+```{r}
+#make test data set to confirm the appropriate data structure
+#with only live time points
+TreeID<-c(101,101,101,102,102,103,103,103,104,104,104)
+Age<-c(8,22,34,10,26,12,24,36,8,34,45)
+DBH<-c(5,8,15,4,7,9,15,25,6,12,19)
+LRR<-c("N","N","N","Y","Y","N","N","N","Y","Y","Y")
+df<-data.frame(TreeID,Age,DBH,LRR)
+df
+d<-ggplot()+geom_path(data=df, group=TreeID, aes(x=Age, y=DBH,colour=LRR))+theme_bw()
+d
+#with NA DBH for dead tree at a given age, also attempting to add trend line and 95%CI
+TreeID2<-c(101,101,101,102,102,102,103,103,103,104,104,104)
+Age2<-c(8,22,34,10,26,36,12,24,36,8,34,45)
+DBH2<-c(5,8,15,4,7,NA,9,15,25,6,12,19)
+LRR2<-c("N","N","N","Y","Y","Y","N","N","N","Y","Y","Y")
+df2<-data.frame(TreeID2,Age2,DBH2,LRR2)
+df2
+d2<-ggplot(df2,aes(x=Age2, y=DBH2,colour=LRR2))+geom_path(group=TreeID2)+theme_bw()+geom_smooth(method = lm)
+d2
+#either structure seems to work, so I will likely use the DBH=NA to preserve data.
+#this would also allow for adding a custom timepoint/age at year of death when this was recorded/estimated along with diameter of dead tree. 
+
+#the dataset "lessA1A3" seems to be the best starting point to generate the input for this analysis
+#seeing which columns to keep
+head(lessA1A3)
+# 1,4:7,11:13,21
+growth_test<-lessA1A3[,c(1,4:7,10:13,28,30)]
+#calculate a live DBH in cm
+growth_test$live_DBH_cm<-ifelse(growth_test$Tree_status=="Alive", #test if alive
+                                growth_test$DBH_mm /10, #if yes, then divide mm DBH by 10
+                                NA) #otherwise (Dead or NA), make NA
+#need to propagate LRR flag to all time points for the same tree. Could maybe use YEAR_dbl.
+#may be a good idea to first generate a vector that contains the Tree_IDs for which LRR==1 in any year
+LRR_trees<-growth_test[which(growth_test$LRR==1),1]
+LRR_list<-c(unique(LRR_trees$Tree_ID))
+SUP_trees<-growth_test[which(growth_test$SUP==1),1]
+SUP_list<-c(unique(SUP_trees$Tree_ID))
+
+growth_test$Cond_flag<-ifelse(!is.na(growth_test$Tree_status), #test not NA
+                             ifelse(growth_test$Tree_ID %in% LRR_list, #if so, test LRR
+                             "LRR", #if so, print LRR
+                             ifelse(growth_test$Tree_ID %in% SUP_list,#if not test SUPP
+                              "SUP", #if so, print SUP
+                             "NONE")), #if not, print NONE
+                             NA) #if not not NA, print NA
+growth_test2<-growth_test %>% filter(!is.na(growth_test$DF_age))
+dbh_plot<-ggplot(growth_test2,aes(DF_age,live_DBH_cm,colour=Cond_flag))+geom_path(group=growth_test2$Tree_ID, alpha=0.1, na.rm = TRUE)+theme_bw()+geom_smooth(method = lm)+facet_row(growth_test2$TRT)+scale_color_viridis_d()
+dbh_plot
+
+#the plot produced from the above code works but the trendlines may not be representative because they calculate the slope across three measurements (two slopes). Since the LRR trees are more likely not to have a third measurement, this may bias the overall slope. Could perhaps limit the datasets to two measurements, and thus one slope per tree per interval. 25y treatments only have one interval. DF and 12y have two intervals that don't necessarily overlap. Could just use same windows for comparison as slope boxplots (12 and 25 with Early, 12 and DF with mid, and DF with Late)
+
+#could use just DF trees and just 1st and 2nd measurements. This would  This still wouldn't account for trees that died of LRR, unless we were able to do the age at death corrections from the datasheet notes.
+#keep ages 8,12,33,36 i.e. "Mid"
+growth_test_mid<-growth_test2 %>% filter(growth_test2$DF_age==8|growth_test2$DF_age==12|growth_test2$DF_age==33|growth_test2$DF_age==36)
+dbh_plot_mid<-ggplot(growth_test_mid,aes(DF_age,live_DBH_cm,colour=Cond_flag))+geom_path(group=growth_test_mid$Tree_ID, alpha=0.15, na.rm = TRUE)+theme_bw()+geom_smooth(method = lm)+facet_row(growth_test_mid$TRT)+scale_color_viridis_d()
+dbh_plot_mid
+##keep ages 8,11,20,24 i.e. "Early"
+growth_test_early<-growth_test2 %>% filter(growth_test2$DF_age==8|growth_test2$DF_age==11|growth_test2$DF_age==20|growth_test2$DF_age==24)
+dbh_plot_early<-ggplot(growth_test_early,aes(DF_age,live_DBH_cm,colour=Cond_flag))+geom_path(group=growth_test_early$Tree_ID, alpha=0.15, na.rm = TRUE)+theme_bw()+geom_smooth(method = lm)+facet_row(growth_test_early$TRT)+scale_color_viridis_d()
+dbh_plot_early
+##keep ages 36,45 i.e. "Late"
+growth_test_late<-growth_test2 %>% filter(growth_test2$DF_age==36|growth_test2$DF_age==45)
+dbh_plot_late<-ggplot(growth_test_late,aes(DF_age,live_DBH_cm,colour=Cond_flag))+geom_path(group=growth_test_late$Tree_ID, alpha=0.15, na.rm = TRUE)+theme_bw()+geom_smooth(method = lm)+facet_row(growth_test_late$TRT)+scale_color_viridis_d()
+dbh_plot_late
+
+#there may be a couple of reasons the two lines don't differ in the rotation treatments
+#1) suppression in the non-LRR trees also reduced growth (could add suppression flag too, would need to recode)
+    #Did this and it seemed to help
+#2) for the 25y treatments there were so few (if any) trees that had LRR and were alive that they don't mean much (see divergence of CI)
+
+#These charts include only trees that were alive at the time of diameter measurement.  In the "early" phase of the 12y rotations and the "mid" phase of DF, the could have died at a later measurement date (most) or they could have been alive at harvest.
+#See if it is possible to add custom ages and diameters at mortality for dead trees? Or is it obvious that trees and died within the measurement window would have reduced growth even if they are alive?
+
+#does it make sense for the 95% CI to be so small given the range of the measured data? Am I generating them incorrectly and/or misunderstanding what they mean?
+
+#run a true anova / linear model to test the slopes, not just geom_smooth()
+
+#out of curiosity, group by REP
+growth_test_rep<-growth_test %>% filter(!is.na(growth_test$DF_age))
+dbh_plot_rep<-ggplot(growth_test_rep,aes(DF_age,live_DBH_cm,colour=factor(REP)))+geom_path(group=growth_test_rep$Tree_ID, alpha=0.1, na.rm = TRUE)+theme_bw()+geom_smooth(method = lm)+scale_color_viridis_d()
+dbh_plot_rep
+
+growth_test_mid<-growth_test2 %>% filter(growth_test2$DF_age==8|growth_test2$DF_age==12|growth_test2$DF_age==33|growth_test2$DF_age==36)
+dbh_plot_mid_rep<-ggplot(growth_test_mid,aes(DF_age,live_DBH_cm,colour=Cond_flag))+geom_path(group=growth_test_mid$Tree_ID, alpha=0.15, na.rm = TRUE)+theme_bw()+geom_smooth(method = lm) +facet_grid(rows=vars(growth_test_mid$REP),cols=vars(growth_test_mid$TRT)) +scale_color_viridis_d()
+dbh_plot_mid_rep
+```
+
 
 # ANOVAs and ordinal logistic regression for rates of mortality and BA increment
 example provided by stats consult https://rpubs.com/tmcurley/twowayanova
