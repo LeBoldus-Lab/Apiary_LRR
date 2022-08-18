@@ -2825,16 +2825,32 @@ dbh_plot
 #could use just DF trees and just 1st and 2nd measurements. This would  This still wouldn't account for trees that died of LRR, unless we were able to do the age at death corrections from the datasheet notes.
 #keep ages 8,12,33,36 i.e. "Mid"
 growth_test_mid<-growth_test2 %>% filter(growth_test2$DF_age==8|growth_test2$DF_age==12|growth_test2$DF_age==33|growth_test2$DF_age==36)
-dbh_plot_mid<-ggplot(growth_test_mid,aes(DF_age,live_DBH_cm,colour=Cond_flag))+geom_path(group=growth_test_mid$Tree_ID, alpha=0.15, na.rm = TRUE)+theme_bw()+geom_smooth(method = lm)+facet_row(growth_test_mid$TRT)+scale_color_viridis_d()
+
+dbh_plot_mid<-ggplot(growth_test_mid,aes(DF_age,live_DBH_cm)) +geom_path(group=growth_test_mid$Tree_ID, alpha=0.15, aes(colour=Cond_flag)) +theme_bw() +geom_smooth(method = lm, aes( linetype=Cond_flag,fill=Cond_flag,colour=Cond_flag)) +facet_row(growth_test_mid$TRT) +scale_color_viridis_d() +labs(title="Midle Phase Growth", x="Douglas Fir Age",y="DBH (mm)") +scale_fill_viridis_d()
 dbh_plot_mid
+
 ##keep ages 8,11,20,24 i.e. "Early"
 growth_test_early<-growth_test2 %>% filter(growth_test2$DF_age==8|growth_test2$DF_age==11|growth_test2$DF_age==20|growth_test2$DF_age==24)
-dbh_plot_early<-ggplot(growth_test_early,aes(DF_age,live_DBH_cm,colour=Cond_flag))+geom_path(group=growth_test_early$Tree_ID, alpha=0.15, na.rm = TRUE)+theme_bw()+geom_smooth(method = lm)+facet_row(growth_test_early$TRT)+scale_color_viridis_d()
+
+dbh_plot_early<-ggplot(growth_test_early,aes(DF_age,live_DBH_cm)) +geom_path(group=growth_test_early$Tree_ID, alpha=0.15, aes(colour=Cond_flag)) +theme_bw() +geom_smooth(method = lm, aes( linetype=Cond_flag,fill=Cond_flag,colour=Cond_flag)) +facet_row(growth_test_early$TRT) +scale_color_viridis_d() +labs(title="Early Phase Growth", x="Douglas Fir Age",y="DBH (mm)") +scale_fill_viridis_d()
 dbh_plot_early
+
 ##keep ages 36,45 i.e. "Late"
 growth_test_late<-growth_test2 %>% filter(growth_test2$DF_age==36|growth_test2$DF_age==45)
-dbh_plot_late<-ggplot(growth_test_late,aes(DF_age,live_DBH_cm,colour=Cond_flag))+geom_path(group=growth_test_late$Tree_ID, alpha=0.15, na.rm = TRUE)+theme_bw()+geom_smooth(method = lm)+facet_row(growth_test_late$TRT)+scale_color_viridis_d()
+
+dbh_plot_late<-ggplot(growth_test_late,aes(DF_age,live_DBH_cm)) +geom_path(group=growth_test_late$Tree_ID, alpha=0.15, aes(colour=Cond_flag)) +theme_bw() +geom_smooth(method = lm, aes( linetype=Cond_flag,fill=Cond_flag,colour=Cond_flag)) +facet_row(growth_test_late$TRT) +scale_color_viridis_d() +labs(title="Late Phase Growth", x="Douglas Fir Age",y="DBH (mm)") +scale_fill_viridis_d()
 dbh_plot_late
+#print PDF
+
+#pdf(here("Summary_Graphs_update","Early_mid_late_growth_by_LRR_SUPP_NOT.pdf"), height= 20, width = 24)
+#layout<-"
+#BBBB#
+#BBBBC
+#AAAAC
+#AAAA#
+#"
+#dbh_plot_mid+dbh_plot_early+dbh_plot_late+plot_layout(design=layout)
+#dev.off()
 
 #there may be a couple of reasons the two lines don't differ in the rotation treatments
 #1) suppression in the non-LRR trees also reduced growth (could add suppression flag too, would need to recode)
@@ -2854,7 +2870,7 @@ dbh_plot_rep<-ggplot(growth_test_rep,aes(DF_age,live_DBH_cm,colour=factor(REP)))
 dbh_plot_rep
 
 growth_test_mid<-growth_test2 %>% filter(growth_test2$DF_age==8|growth_test2$DF_age==12|growth_test2$DF_age==33|growth_test2$DF_age==36)
-dbh_plot_mid_rep<-ggplot(growth_test_mid,aes(DF_age,live_DBH_cm,colour=Cond_flag))+geom_path(group=growth_test_mid$Tree_ID, alpha=0.15, na.rm = TRUE)+theme_bw()+geom_smooth(method = lm) +facet_grid(rows=vars(growth_test_mid$REP),cols=vars(growth_test_mid$TRT)) +scale_color_viridis_d()
+dbh_plot_mid_rep<-ggplot(growth_test_mid,aes(DF_age,live_DBH_cm,colour=Cond_flag,fill=Cond_flag,linetype=Cond_flag))+geom_path(group=growth_test_mid$Tree_ID, alpha=0.3, show.legend = FALSE)+theme_bw()+geom_smooth(method = lm) +facet_grid(rows=vars(growth_test_mid$REP),cols=vars(growth_test_mid$TRT)) +scale_color_viridis_d()+scale_fill_viridis_d()
 dbh_plot_mid_rep
 ```
 
