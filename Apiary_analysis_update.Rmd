@@ -2759,7 +2759,7 @@ late_SUP_mort
 late_SUP_mort2<-late_SUP_mort+labs(x="Treatment",y="Late (35-45y)")
 (early_SUP_mort2 | mid_SUP_mort2 | late_SUP_mort2)
 (early_LRR_mort2 |mid_LRR_mort2| late_LRR_mort2)/ (early_SUP_mort2 |mid_SUP_mort2| late_SUP_mort2)
-pdf(here("Summary_Graphs_update","Early_mid_late_prop_SUP_dead_slope_boxplots.pdf"), height= 6, width = 12)
+#pdf(here("Summary_Graphs_update","Early_mid_late_prop_SUP_dead_slope_boxplots.pdf"), height= 6, width = 12)
 #(early_SUP_mort2 | mid_SUP_mort2 | late_SUP_mort2)
 #dev.off()
 #
@@ -3266,11 +3266,9 @@ library(ggfortify)
 #select relevant columns from tree-level wide data set
 survival_keep<-c("Tree_ID","REP","TRT_code","DEAD_YEAR","STS_2011","NSTS")
 survival_data<-as.data.frame(full_data[,(colnames(full_data) %in% survival_keep)])
-############################
-##############################
-################################
-##############remove reps 1 and 3 from RA12
-
+#remove reps 1 and 3 from RA12
+survival_data<-survival_data[-(which(survival_data$TRT_code=="A"& survival_data$REP=="1")),]
+survival_data<-survival_data[-(which(survival_data$TRT_code=="A"& survival_data$REP=="3")),]
 #assign status=0 for trees that were alive in 2020 and status=1 to trees that died during the study
 survival_data$status<-ifelse(survival_data$NSTS=="1",0,1)
 #use combination of TRT_code, NSTS, and DEAD_year to calculate "survival time" for each tree.
@@ -3288,6 +3286,45 @@ survival_data$time<-ifelse(survival_data$status==0, #if tree is alive in 2020
                            )
 
 #use "LRR_list" and "SUP_list" to add grouping flags to trees. From lines 2808 and 2810
+survival_data$Cond_flag<-    ifelse(survival_data$Tree_ID %in% LRR_list, # test LRR
+                             "LRR", #if so, print LRR
+                             ifelse(survival_data$Tree_ID %in% SUP_list,#if not, test SUPP
+                              "SUP", #if so, print SUP
+                             "NONE")) #if not, print NONE
+#now try making survival object and Kaplan-Meier estimates
+km<-Surv(survival_data$time, survival_data$status)
+km_fit <- survfit(Surv(survival_data$time, survival_data$status) ~ 1)
+summary(km_fit, times = c(5*(1:9)))
+autoplot(km_fit, xlim=c(0,50))
 
+#split by condition flag
+km_cond_fit <- survfit(Surv(time, status) ~ Cond_flag, data = survival_data)
+summary(km_cond_fit, times = c(5*(1:9)))
+autoplot(km_cond_fit, xlim=c(0,50),xlab = "Years")
 
+#rerunning with just DF treatment
+dfsurv<-survival_data[which(survival_data$TRT_code=="C"),]
+#split by condition flag
+df_fit <- survfit(Surv(time, status) ~ 1, data = dfsurv)
+p0<-autoplot(df_fit, xlim=c(0,50),xlab = "Years",ylab = "Survival of Douglas Fir in Continuous Rotation")
+df_cond_fit <- survfit(Surv(time, status) ~ Cond_flag, data = dfsurv)
+p0
+summary(df_cond_fit, times = c(5*(1:9)))
+p0c<-autoplot(df_cond_fit, xlim=c(0,50),xlab = "Years",ylab = "Survival of Douglas Fir in Continuous Rotation")
+p0c
+#could run for TRTs A and B together as well
+ABsurv<-survival_data[which(survival_data$TRT_code=="A"|survival_data$TRT_code=="B"),]
+#split by condition flag
+ABsurv_fit <- survfit(Surv(time, status) ~ 1, data = ABsurv)
+p12<-autoplot(ABsurv_fit, xlim=c(0,50),xlab = "Years",ylab = "Survival of Douglas Fir in 12y Rotation", ylim = c(0,1))
+ABsurv_cond_fit <- survfit(Surv(time, status) ~ Cond_flag, data = ABsurv)
+p12
+summary(ABsurv_cond_fit, times = c(5*(1:9)))
+p12c<-autoplot(ABsurv_cond_fit, xlim=c(0,50),xlab = "Years",ylab = "Survival of Douglas Fir in 12y Rotation")
+p12c
+p0+p12
+p0c+p12c
+#pdf(here("Summary_Graphs_update","Surv_curve_by_condition_12y_vs_DF.pdf"), height= 6, width = 12)
+#p0c+p12c
+#dev.off()
 ```
