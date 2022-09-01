@@ -3333,6 +3333,16 @@ p0c+p12c
 #p0c+p12c
 #dev.off()
 
+#split by rep
+df_rep_fit <- survfit(Surv(time, status) ~ REP, data = dfsurv)
+summary(df_rep_fit, times = c(5*(1:9)))
+p0r<-autoplot(df_rep_fit, xlim=c(0,50),xlab = "Years",ylab = "Survival of Douglas Fir in Continuous Rotation")+scale_fill_viridis_d()+scale_color_viridis_d()
+p0r
+ABsurv_rep_fit <- survfit(Surv(time, status) ~ REP, data = ABsurv)
+summary(ABsurv_rep_fit, times = c(5*(1:9)))
+p12r<-autoplot(ABsurv_rep_fit, xlim=c(0,50),xlab = "Years",ylab = "Survival of Douglas Fir in 12y Rotation")+scale_fill_viridis_d()+scale_color_viridis_d()
+p12r
+
 #trying a cox proportional hazard model to include covariates
 #this probably shouldn't be done on the full dataset since it seems to think that ABDE treatments die after there are no more measurements
 cox<- coxph(Surv(time,status) ~ TRT_code + REP + Cond_flag, data = survival_data)
