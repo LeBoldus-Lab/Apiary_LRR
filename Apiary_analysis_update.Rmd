@@ -163,7 +163,7 @@ new_combined_data$Tree_ID<-paste(new_combined_data$SUBPLOT_ID,new_combined_data$
 
 #attempting to combine new_combined_data (transcribed) and combined_data (excell sheet from Anna)
 #keeping 1995 height data to add nominal small diameters to short trees in 1995
-small_keep<-c("DIA_87_mm","DIA_95_mm","DIA_11_mm","STS_87","STS_95","STS_11","DAM_11","Dead_YEAR","Tree_ID","HT_95")
+small_keep<-c("DIA_87_mm","DIA_95_mm","DIA_11_mm","STS_87","STS_95","STS_11","DAM_11","DEAD_YEAR","Tree_ID","HT_95")
 new_combined_data_small<-as.data.frame(new_combined_data[,(colnames(new_combined_data) %in% small_keep)])
 full_data<-merge.data.frame(new_combined_data_small, combined_data, by= "Tree_ID", all.y = TRUE)
 
@@ -3253,4 +3253,41 @@ kwlSUPtrt
 #pwlSUPtrt
 
 #note significant treatment effect in lmm and when modeled alone with KW 
+```
+
+## Survival analysis
+based off of example here https://rviews.rstudio.com/2017/09/25/survival-analysis-with-r/ , with an explanation of "censoring" provided here https://shariq-mohammed.github.io/files/cbsa2019/1-intro-to-survival.html indicating that trees alive in 2020 would be censored at that age (death was not observed).
+Will be using "DEAD_YEAR" variable from the 2011 measurements to assign time to death. Trees dying after 2011 will be assigned 2020 as time of death, since we don't have a more precise measurement.
+
+```{r}
+library(survival)
+library(ranger)
+library(ggfortify)
+#select relevant columns from tree-level wide data set
+survival_keep<-c("Tree_ID","REP","TRT_code","DEAD_YEAR","STS_2011","NSTS")
+survival_data<-as.data.frame(full_data[,(colnames(full_data) %in% survival_keep)])
+############################
+##############################
+################################
+##############remove reps 1 and 3 from RA12
+
+#assign status=0 for trees that were alive in 2020 and status=1 to trees that died during the study
+survival_data$status<-ifelse(survival_data$NSTS=="1",0,1)
+#use combination of TRT_code, NSTS, and DEAD_year to calculate "survival time" for each tree.
+#to simplify calculating survival time, start with assigning a start year for each treatment
+survival_data$begin<-ifelse(survival_data$TRT_code=="A"|survival_data$TRT_code=="B",
+                            1987,
+                            ifelse(survival_data$TRT_code=="C",
+                            1975, 2000))
+survival_data$time<-ifelse(survival_data$status==0, #if tree is alive in 2020
+                              (2020-survival_data$begin), #subtract begin from 2020
+                              ifelse(survival_data$STS_2011=="1", # if tree is alive in 2011
+                                      (2020-survival_data$begin), #then subtract begin from 2020
+                                     (survival_data$DEAD_YEAR- survival_data$begin) #if not, then subtract begin from DEAD_YEAR
+                           )
+                           )
+
+#use "LRR_list" and "SUP_list" to add grouping flags to trees. From lines 2808 and 2810
+
+
 ```
