@@ -3295,13 +3295,13 @@ survival_data$Cond_flag<-    ifelse(survival_data$Tree_ID %in% LRR_list, # test 
 km<-Surv(survival_data$time, survival_data$status)
 km_fit <- survfit(Surv(survival_data$time, survival_data$status) ~ 1)
 summary(km_fit, times = c(5*(1:9)))
-autoplot(km_fit, xlim=c(0,50))
-
+pkm<-autoplot(km_fit, xlim=c(0,50))
+pkm
 #split by condition flag
 km_cond_fit <- survfit(Surv(time, status) ~ Cond_flag, data = survival_data)
 summary(km_cond_fit, times = c(5*(1:9)))
-autoplot(km_cond_fit, xlim=c(0,50),xlab = "Years")
-
+pkmc<-autoplot(km_cond_fit, xlim=c(0,50),xlab = "Years")
+pkmc
 #rerunning with just DF treatment
 dfsurv<-survival_data[which(survival_data$TRT_code=="C"),]
 #split by condition flag
@@ -3327,4 +3327,14 @@ p0c+p12c
 #pdf(here("Summary_Graphs_update","Surv_curve_by_condition_12y_vs_DF.pdf"), height= 6, width = 12)
 #p0c+p12c
 #dev.off()
+
+#trying a cox proportional hazard model to include covariates
+#this probably shouldn't be done on the full dataset since it seems to think that ABDE treatments die after there are no more measurements
+cox<- coxph(Surv(time,status) ~ TRT_code + REP + Cond_flag, data = survival_data)
+summary(cox)
+cox_fit <- survfit(cox)
+pc<-autoplot(cox_fit, xlim=c(0,50))
+pc
+pkm|pc
+#may need to specify reference levels for all of the variables (TRT_code C, Cond_flag= NONE, REP=1)
 ```
