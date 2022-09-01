@@ -31,7 +31,7 @@ library(emmeans)
 ```
 
 ## Importing data
-Two multi-sheet workboooks were provided by Anna Leon of Weyerhauser (Anna.Leon@weyerhaeuser.com). One with keys for metadata codes and one with coded data plus a dictionary for column names
+Two multi-sheet workbooks were provided by Anna Leon of Weyerhauser (Anna.Leon@weyerhaeuser.com). One with keys for metadata codes and one with coded data plus a dictionary for column names
 
 Also recieve raw datasheets which were transcribed into Excell and imported.
 
