@@ -19,6 +19,7 @@ library(readr)
 library(tidyverse)
 library(ggplot2)
 library(ggforce)
+library(ggpattern)
 ```
 
 ## Importing transcribed compass points and converting units
@@ -26,9 +27,9 @@ library(ggforce)
 Initial LRR incidence measurements pre-harvvest were made from a single reference point within each 2-chain grid block.  First we must establish the location of this reference point within each block, relative to as many as 4 chain grid intersections. When multiple azimuths/bearings to chain points are given, the calculated location is averaged.
 
 ```{r, echo=FALSE}
-por_compass_df<-read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/Poria_survey_70s.xlsx", sheet = "Poria_compass_points", range = "A1:AP83", col_names = TRUE)
+por_compass_df<-read_excel(here("Poria_survey_70s.xlsx"), sheet = "Poria_compass_points", range = "A1:AP83", col_names = TRUE)
 #path for lab computer
-#por_compass_df<-read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Poria_survey_70s.xlsx", sheet = "Poria_compass_points", range = "A1:AP83", col_names = TRUE)
+
 #subset four compass points for testing including some with "C" and negative numbers
 #compass_test<-por_compass_df[c(1:4, 35:37),]
 
@@ -331,8 +332,7 @@ points(por_compass_df$ft_X_ave,por_compass_df$ft_Y_ave,col="black", cex = 2.5)
 
 Similar measurements were made post-harvest to identify LRR symptoms in cut stumps that hadn't been observed in the first harvest. Compass stations were referenced with one chain grid corner.
 ```{r, echo=FALSE}
-#cut_compass_df<-read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Poria_survey_70s.xlsx", sheet = "Cut_stump_compass_points", range = "A1:G43", col_names = TRUE)
-cut_compass_df<-read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/Poria_survey_70s.xlsx", sheet = "Cut_stump_compass_points", range = "A1:G43", col_names = TRUE)
+cut_compass_df<-read_excel(here("Poria_survey_70s.xlsx"), sheet = "Cut_stump_compass_points", range = "A1:G43", col_names = TRUE)
 #glimpse(cut_compass_df)
 #first change "C" "0"
 cut_compass_df$Y_1 <- as.double(ifelse(cut_compass_df$Y_1 == "C", "0", cut_compass_df$Y_1))
@@ -362,7 +362,7 @@ Centers for circular 1/20 acre observation subplots were mapped relative to one 
 ```{r, echo=FALSE}
 #first attempt inputting the written chain and compass subplot locations
 #subplot_df<-read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Poria_survey_70s.xlsx", sheet = "Recorded_subplot_locations", range = "A1:U126", col_names = TRUE)
-subplot_df<-read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/Poria_survey_70s.xlsx", sheet = "Recorded_subplot_locations", range = "A1:U126", col_names = TRUE)
+subplot_df<-read_excel(here("Poria_survey_70s.xlsx"), sheet = "Recorded_subplot_locations", range = "A1:U126", col_names = TRUE)
 #glimpse(subplot_df)
 ##then convert chain grid to computer grid
 subplot_df$comp_X_1 <- (-(subplot_df$chain_x /2))+17 
@@ -410,7 +410,7 @@ points(subplot_df$loc_X_final,subplot_df$loc_Y_final,col="blue", cex=2)
 
 Plots were defined by corners referenced to the chain grid.  Initially input from excel, later coded in a different structure to facilitate using with geom_polygon()
 ```{r, echo=FALSE}
-#plot_df<-read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/Poria_survey_70s.xlsx", sheet = "Plot_corners", range = "E1:W26", col_names = TRUE)
+#plot_df<-read_excel(here("Poria_survey_70s.xlsx"), sheet = "Plot_corners", range = "E1:W26", col_names = TRUE)
 #glimpse(plot_df)
 
 #create new DF with positions changed to feet from SE corner. repeat for all 8 possible vertices
@@ -483,6 +483,31 @@ positions <- data.frame(
 datapoly <- merge(values, positions, by = c("id"))
 
 #saveRDS(datapoly,"C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Plot_polygons.Rds")
+
+#create new polygons to hash over reps/stands 1 and 3 for RA12 trt "A"
+Xids <- factor(c("A3","A1"))
+Xvalues <- data.frame(
+  Xid = Xids,
+  XTRT = c("A: RA12","A: RA12")
+)
+#X coordinates for all vertices, fill to 8 entries with NA
+Xx= c(7.75,7.75,9.7,9.7,12,12,NA,NA, #A3
+     8,10,12,14,14,NA,NA,NA #A1
+)
+Xx_ft=((-(Xx /2))+17)*132
+#Y coordinates for all vertices, fill to 8 entries with NA
+Xy=c(0,4,4,2,2,0,NA,NA,#A3
+    4,5.5,5.6,6,4,NA,NA,NA#A1
+    )
+Xy_ft=((Xy + 10) /2)*132
+
+Xpositions <- data.frame(
+  Xid = rep(Xids, each = 8),
+  x =Xx_ft,
+  y = Xy_ft
+)
+Xdatapoly <- merge(Xvalues, Xpositions, by = c("Xid"))
+#saveRDS(Xdatapoly,"C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/XPlot_polygons.Rds")
 ```
 
 #plotting plots, subplots, and chain grid
@@ -518,11 +543,10 @@ plot_sub_grid
 ```
 
 #importing poria trees
-Species, condition, and diameter measuremetns for poria killed trees were recorded relative to the compass reference points from above.
+Species, condition, and diameter measurements for poria killed trees were recorded relative to the compass reference points from above.
 
 ```{r, echo=FALSE}
-#por_tree_df<-read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Poria_survey_70s.xlsx", sheet = "Poria_trees", range = "A1:O757", col_names = TRUE)
-por_tree_df<-read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/Poria_survey_70s.xlsx", sheet = "Poria_trees", range = "A1:O757", col_names = TRUE)
+por_tree_df<-read_excel(here("Poria_survey_70s.xlsx"), sheet = "Poria_trees", range = "A1:O757", col_names = TRUE)
 #compass_test<-por_compass_df[c(1:4, 35:37),]
 
 #convert bearings to fill in missing azimuths
@@ -611,8 +635,7 @@ Smilarly, species, condition, and diameter measuremetns for cut-stump detected L
 
 ```{r, echo=FALSE}
 #import the recorded trees relative to compass points
-#cut_tree_df<-read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Poria_survey_70s.xlsx", sheet = "Cut_stump_trees", range = "A1:G179", col_names = TRUE)
-cut_tree_df<-read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/Poria_survey_70s.xlsx", sheet = "Cut_stump_trees", range = "A1:G179", col_names = TRUE)
+cut_tree_df<-read_excel(here("Poria_survey_70s.xlsx"), sheet = "Cut_stump_trees", range = "A1:G179", col_names = TRUE)
 #compass_test<-por_compass_df[c(1:4, 35:37),]
 
 #Adding Block compass points for Poria survey
@@ -641,7 +664,7 @@ por_and_cut$Age_class<-factor(por_and_cut$Age_class, levels=c("Live, cut stump d
 
 #import tree locations derived from image_J map
 #  IJ_stumps<-read_excel("C:/Users/showalt_d/Documents/GitHub/Apiary_LRR/Poria_survey_70s.xlsx", sheet = "Image_J_cut_stump", range = "A1:L73", col_names = TRUE)
-  IJ_stumps<-read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/Poria_survey_70s.xlsx", sheet = "Image_J_cut_stump", range = "A1:L73", col_names = TRUE)
+  IJ_stumps<-read_excel(here("Poria_survey_70s.xlsx"), sheet = "Image_J_cut_stump", range = "A1:L73", col_names = TRUE)
   IJ_stumps$ref_X_ft<-IJ_stumps$ref_x*132
   IJ_stumps$ref_Y_ft<-IJ_stumps$ref_y*132
   #adjust N to grid Y positive
@@ -660,7 +683,7 @@ IJ_stumps_merge$Diameter<-sample(cut_diameters, 72, replace = TRUE)
   por_and_cut_IJ$Age_class<-factor(por_and_cut_IJ$Age_class, levels=c("Live, cut stump detection","Live with Symptoms","Dead <10 years","Dead >10 years"), ordered = TRUE)
 ```
 
-#adding Inialy LRR incidence trees to site map
+#adding Initial LRR incidence trees to site map
 
 ```{r, echo=FALSE}
 
@@ -670,11 +693,16 @@ block_polys<-ggplot()+geom_polygon(aes(x = datapoly$x, y = datapoly$y, fill= dat
 #add subplots and grid
 subplots_and_grid <- block_polys +
   geom_label(data=subplot_df, x=subplot_df$loc_X_final, y= subplot_df$loc_Y_final,label= subplot_df$subplot, label.size = NA, size=3, alpha=0.0)+
-  scale_x_continuous("Grid ft NW",breaks = seq(0,1716,132))+
-  scale_y_continuous("Grid ft SW",breaks = seq(0,1452,132))+
-  theme_bw()+
-  theme(panel.grid.major = element_line(colour="black", size=0.5),panel.grid.minor = element_blank())+
+  #scale_x_continuous("Grid ft NW",breaks = seq(0,1716,132))+
+  #scale_y_continuous("Grid ft SW",breaks = seq(0,1452,132))+
+  #theme_bw()+
+  #theme(panel.grid.major = element_line(colour="black", size=0.5),panel.grid.minor = element_blank())+
   #theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank())+
+  theme(panel.grid = element_blank(),
+        axis.title = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        panel.background = element_blank())+
   geom_circle(data=subplot_df,aes(x0 = subplot_df$loc_X_final, y0 = subplot_df$loc_Y_final, r = 26.3))
 #add initial incidence
 incidence<-subplots_and_grid+ geom_point(aes(x=por_and_cut$loc_X,y=por_and_cut$loc_Y, shape=por_and_cut$Age_class, ), alpha=0.6)+ labs(shape = "Pre-establisment\nLRR Incidence")+
@@ -685,7 +713,7 @@ geom_segment(aes(x = 10, y = 1310, xend = 100, yend = 1220),
 geom_text(aes(x=112,y=1212,label="N", fontface = "bold"))
 incidence
 
-#pdf("C:/Users/showa/Documents/GitHub/Apiary_LRR/Summary_Graphs_update/Map_with_incidence.pdf", height= 19.5, width = 28.5)
+#pdf(here("Summary_Graphs_update","Map_with_incidence.pdf"), height= 19.5, width = 28.5)
 #incidence
 #dev.off()
 

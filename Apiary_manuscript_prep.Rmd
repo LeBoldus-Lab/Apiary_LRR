@@ -1,0 +1,3237 @@
+---
+title: "Apiary_publication_prep"
+author: "David Showalter"
+date: "9/12/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Loading libraries
+
+```{r, message=FALSE}
+library(readxl)
+library(readr)
+library(tidyverse)
+library(ggplot2)
+#library(xlsx)
+library(ggrepel)
+library(patchwork)
+library(here)
+library(lme4)
+library(car)
+library(lmerTest)
+library(emmeans)
+```
+
+## Tree inventory statistics
+See "Apiary_analysis_update.Rmd" for details on data curation and summarization. Tree inventory summary table was generated from stand summary stats
+located at here("Apiary_inventory_table.xlsx")
+
+```{r, message=FALSE}
+
+
+```
+
+## Mapping
+
+```{r, message=FALSE}
+
+#attempting to combine new_combined_data (transcribed) and combined_data (excell sheet from Anna)
+#keeping 1995 height data to add nominal small diameters to short trees in 1995
+small_keep<-c("DIA_87_mm","DIA_95_mm","DIA_11_mm","STS_87","STS_95","STS_11","DAM_11","DEAD_YEAR","Tree_ID","HT_95")
+new_combined_data_small<-as.data.frame(new_combined_data[,(colnames(new_combined_data) %in% small_keep)])
+full_data<-merge.data.frame(new_combined_data_small, combined_data, by= "Tree_ID", all.y = TRUE)
+
+#Using ODBH values for missing DIA_11_mm values
+full_data$DBH_11<-ifelse(is.na(full_data$DIA_11_mm),full_data$ODBH,full_data$DIA_11_mm)
+
+#and for status values
+full_data$STS_2011<-ifelse(is.na(full_data$STS_11),full_data$OSTS,full_data$STS_11)
+#ABC<- full_data[full_data$TRT=="RA10Y"|full_data$TRT=="CW10Y"|full_data$TRT=="DF0Y",]
+
+#seeing if LRR or root rot damage codes carry over from 2011 to 2020
+test<-full_data[which((full_data$DAM_11=="800"|full_data$DAM_11=="806"|full_data$DAM_11=="807")& (full_data$DAM_11!=full_data$DAM_20| is.na(full_data$DAM_20))),c(1,9,27)]
+nrow(test)
+
+#adding known damage from 2011 to 2020 or if root rot 8## is changed to unknown 100 or suppression 400
+#full_data$DAM_2020<-ifelse(is.na(full_data$DAM_20),full_data$DAM_11,full_data$DAM_20) #This killed a bunch of real data
+#full_data$DAM_2020b<-ifelse((is.na(full_data$DAM_20)|full_data$DAM_20=="100"|full_data$DAM_20=="400")&(full_data$DAM_11=="800"|full_data$DAM_11=#="806"|full_data$DAM_11=="807"),full_data$DAM_11,full_data$DAM_20)
+
+full_data$DAM_2020b<-ifelse(!is.na(full_data$DAM_11)&(full_data$DAM_11=="800"|full_data$DAM_11=="806"|full_data$DAM_11=="807"),
+                            ifelse(is.na(full_data$DAM_20)|full_data$DAM_20=="400"|full_data$DAM_20=="100",full_data$DAM_11,full_data$DAM_20),
+                            full_data$DAM_20)
+
+test2<-full_data[which((full_data$DAM_11=="800"|full_data$DAM_11=="806"|full_data$DAM_11=="807")& (full_data$DAM_11!=full_data$DAM_2020b| is.na(full_data$DAM_2020b))),c(1,9,27)]
+nrow(test2)
+
+#write.csv(full_data, file=here("raw_data","full_data.csv"), row.names = FALSE)
+
+#saveRDS(full_data, file=here("raw_data","full_data.Rds"))
+
+```
+
+## Converting to long data format
+```{r}
+#pivot to long data by old and new
+#pivoting data from wide to long format
+
+#checking which Damage columns belong to which dates
+DAM_20_summary<-full_data %>% group_by(NSTS,STS_2011,DAM_2020b) %>% summarise(DAM_20_sum =n())
+DAM_11_summary<-full_data %>% group_by(NSTS,STS_2011,DAM_11) %>% summarise(DAM_11_sum =n())
+#checking similarity of column types before combining
+#glimpse(full_data)
+#as.character  Tree_ID TREE LASTTREE  STS_87 STS_95  STS_11 STS_2011 OSTS  NSTS  DAM1.x(2011) DAM1.y(2020)
+full_data$Tree_ID<-as.character(full_data$Tree_ID)
+full_data$TREE<-as.character(full_data$TREE)
+full_data$LASTTREE<-as.character(full_data$LASTTREE)
+full_data$STS_87<-as.character(full_data$STS_87)
+full_data$STS_95<-as.character(full_data$STS_95)
+full_data$STS_11<-as.character(full_data$STS_11)
+full_data$STS_2011<-as.character(full_data$STS_2011)
+full_data$OSTS<-as.character(full_data$OSTS)
+full_data$NSTS<-as.character(full_data$NSTS)
+full_data$DAM_2020b<-as.character(full_data$DAM_2020b)
+full_data$DAM_11<-as.character(full_data$DAM_11)
+
+#as.double DIA_87_mm  DIA_97_mm DIA_11_mm DBH_11 ODBH NDBH
+full_data$DIA_87_mm<-as.double(full_data$DIA_87_mm)
+full_data$DIA_95_mm<-as.double(full_data$DIA_95_mm)
+full_data$DIA_11_mm<-as.double(full_data$DIA_11_mm)
+full_data$DBH_11<-as.double(full_data$DBH_11)
+full_data$ODBH<-as.double(full_data$ODBH)
+full_data$NDBH<-as.double(full_data$NDBH)
+
+#as.factor PLOT REP SUBPLOT TRT TRT_code  SUBPLOT_ID
+full_data$PLOT<-as.factor(full_data$PLOT)
+#full_data$REP<-as.factor(full_data$REP)
+full_data$SUBPLOT<-as.factor(full_data$SUBPLOT)
+full_data$TRT<-as.factor(full_data$TRT)
+full_data$TRT_code<-as.factor(full_data$TRT_code)
+full_data$SUBPLOT_ID<-as.factor(full_data$SUBPLOT_ID)
+
+
+#for diameters
+long_data<- pivot_longer(full_data, cols = c("DIA_87_mm","DIA_95_mm","DBH_11","NDBH"), names_to = "YEAR", values_to = "DBH_mm")
+#for status
+status<-pivot_longer(full_data, cols = c("STS_87","STS_95","STS_2011","NSTS"), names_to = "YEAR", values_to = "STATUS")
+
+#for 2011 and 2020 damage codes with dummy variables for 87 95 because the damage was not recorded in those years
+full_data$DAM_87<-NA
+full_data$DAM_95<-NA
+damage<-pivot_longer(full_data, cols = c("DAM_87","DAM_95","DAM_11","DAM_2020b"), names_to = "YEAR", values_to = "DAM")
+
+#combining
+long_data$STATUS<-as.character(status$STATUS)
+#long_data$HEIGHT<-as.character(height$HEIGHT)
+long_data$DAMAGE<-as.character(damage$DAM)
+
+#replacing numbers for "YEAR" and also adding a "YEAR" factor variable
+long_data$YEAR_dbl<-as.double(ifelse(long_data$YEAR=="DIA_87_mm", 1987,
+                                     ifelse(long_data$YEAR=="DIA_95_mm", 1995,
+                                            ifelse(long_data$YEAR=="DBH_11", 2011,
+                                                   ifelse(long_data$YEAR=="NDBH", 2020, NA)))))
+long_data$YEAR_fac<-as.factor(long_data$YEAR_dbl)
+
+#making descriptive status variable
+long_data$Tree_status<-as.character(ifelse(long_data$STATUS=="1", "Alive",
+                                     ifelse(long_data$STATUS=="3", "Dead", NA)))
+
+#and a suppression flag
+long_data$SUPP<-ifelse((long_data$STATUS=="3"|long_data$STATUS=="1"), (ifelse(long_data$DAMAGE=="400", "Suppressed", NA)), NA)
+#combined suppression and status
+long_data$SUP_MORT<- as.character(paste(long_data$SUPP,long_data$Tree_status,sep="_"))
+
+#and a root rot flag
+long_data$ROOT<-as.character(ifelse((long_data$DAMAGE=="806"|long_data$DAMAGE=="807"|long_data$DAMAGE=="808"), "ROOT DISEASE", NA))
+long_data$PW_R<-as.character(ifelse((long_data$DAMAGE=="806"|long_data$DAMAGE=="807"), "LRR", NA))
+long_data$PW<-as.character(ifelse((long_data$DAMAGE=="807"), 1, 0))
+#combined suppression and LRR
+long_data$SUP_LRR<- as.character(paste(long_data$SUPP,long_data$PW_R,sep="_"))
+
+
+#adding nominal diameter to small trees too short to have a diameter at breast height
+long_data$DBH_mm_nom<-ifelse(long_data$YEAR_dbl==1995& long_data$STATUS=="1" & long_data$HT_95<5 & is.na(long_data$DBH_mm)==TRUE & is.na(long_data$HT_95)==FALSE
+,2.5 
+,long_data$DBH_mm)
+#making live basal area calculation for each tree using status and diameter
+long_data$DBH_cm<-ifelse(long_data$STATUS=="1",long_data$DBH_mm_nom/10 , NA)
+long_data$Live_BA_sq_m<-as.double(ifelse(long_data$STATUS=="1", (3.14159*(long_data$DBH_cm^2)/40000), NA))
+
+#creating DF_age variable based on treatment and estimated measurement year
+
+long_data$DF_age<-NA
+long_data$DF_age<-as.numeric(
+  ifelse( long_data$YEAR=="NDBH" #test 2020
+            , #yes 2020
+          ifelse((long_data$TRT=="RA20Y" | long_data$TRT=="CW20Y") #test 20Y
+            , 20  #yes 20Y
+            , #no 20Y
+            ifelse((long_data$TRT=="RA10Y" | long_data$TRT=="CW10Y") #test 10y
+              , 33  #yes 10Y
+              , 45 #no 10Y 
+            )# TRT 10 test close
+          ) #TRT 20 test Close
+          , #no 2020
+          ifelse( long_data$YEAR=="DBH_11",  #test 2011
+          ifelse( #yes 2011
+          (long_data$TRT=="RA20Y" | long_data$TRT=="CW20Y"), # test 20Y
+          11 #yes 20y
+          , #no 20 y
+          ifelse((long_data$TRT=="RA10Y" | long_data$TRT=="CW10Y"), #test 10y
+                 24, #yes 10y
+                 36) #no 10Y therefore DF
+          ) #close 20y test
+          , #no 2011
+  ifelse(long_data$YEAR=="DIA_95_mm", #test 95
+        ifelse( #yes 95
+          (long_data$TRT=="RA10Y" | long_data$TRT=="CW10Y"), #test 10YTRT
+          8, #yes 10Y TRT
+          NA #no 10Y TRT (and therefore not sampled in 1995)
+          )   #close TRT test
+         , #no 95
+  ifelse(long_data$YEAR=="DIA_87_mm", #test 87
+         ifelse( #yes 87
+           long_data$TRT=="DF0Y", #test DF
+           12, #yes DF
+           NA), #no DF (and therefore no to all treatments)
+  NA #no 87 (and therefor no to all dates)
+  ) # 87 close
+  ) # 95 close
+  ) # 11 close
+  ) # 2020 close
+) #numeric close
+
+long_data$FVS_age<-NA
+long_data$FVS_age<-ifelse(long_data$DF_age==12,0,
+                          ifelse(long_data$DF_age==8,0,
+                                 ifelse(long_data$DF_age==24,16,
+                                        ifelse(long_data$DF_age==33,25,
+                                               ifelse(long_data$DF_age==36,24,
+                                                      ifelse(long_data$DF_age==45,35,
+                                                       ifelse(long_data$DF_age==11,0,
+                                                              ifelse(long_data$DF_age==20,9,
+                                                             NA))))))))
+
+#subsetting to keep only relevant columns
+
+keep_cols<- c("Tree_ID","TREE","PLOT","REP","SUBPLOT","SUBPLOT_ID","TRT","TRT_code","YEAR_fac","YEAR_dbl","DF_age","Tree_status","DBH_mm","Live_BA_sq_m","STATUS","DAMAGE", "SUPP", "ROOT","PW","PW_R","FVS_age","SUP_MORT","DBH_mm_nom","SUP_LRR")
+long_data_keep<-long_data[,names(long_data) %in% keep_cols]
+long_data_keep<-long_data_keep[,keep_cols]
+long_data_keep$Block<-ifelse(long_data_keep$REP==0,5,long_data_keep$REP)
+
+#dropping A3 and A1 plots due to missed harvest or missed red alder suppression
+#RACW10<-subset(long_data_keep, (TRT=="RA10Y" |TRT=="CW10Y"))
+lessA1A3<-subset(long_data_keep, (TRT!="RA10Y" |SUBPLOT_ID=="A01" |SUBPLOT_ID=="A02"|SUBPLOT_ID=="A03"|SUBPLOT_ID=="A04"|SUBPLOT_ID=="A05"|SUBPLOT_ID=="A21"|SUBPLOT_ID=="A22"|SUBPLOT_ID=="A23"|SUBPLOT_ID=="A24"|SUBPLOT_ID=="A25"|SUBPLOT_ID=="A41"|SUBPLOT_ID=="A42"|SUBPLOT_ID=="A43"|SUBPLOT_ID=="A44"|SUBPLOT_ID=="A45"))
+
+
+#ABC_long_keep<-long_data_keep[long_data_keep$TRT_code=="A"|long_data_keep$TRT_code=="B"|long_data_keep$TRT_code=="C",]
+
+#write.csv(long_data_keep, file=here("raw_data","long_data_keep.csv"), row.names = FALSE)
+#write.csv(lessA1A3, file=here("raw_data","long_data_keep_lessA1A3.csv"), row.names = FALSE)
+#saveRDS(long_data_keep, file=here("raw_data","long_data_keep.Rds"))
+#saveRDS(lessA1A3, file=here("raw_data","long_data_keep_lessA1A3.Rds"))
+```
+
+#looking at SUPP_DAMAGE by TRT BLOCK YEAR STATUS
+```{r}
+#lessA1A3<-readRDS(file=here("raw_data","long_data_keep_lessA1A3.Rds"))
+long_DAM_summary<-lessA1A3[which(lessA1A3$Tree_status=="Alive"|lessA1A3$Tree_status=="Dead"),] %>%group_by(TRT,Block,YEAR_fac,Tree_status,SUP_LRR) %>% summarise(SUP_LRR_sum =n())
+long_DAM_summary$Damage<-factor(long_DAM_summary$SUP_LRR, levels = c("Suppressed_NA","NA_NA","NA_LRR"))
+levels(long_DAM_summary$Damage) <- c('Suppression', 'Other/None', 'LRR')
+long_DAM_summary$TRT<-factor(long_DAM_summary$TRT, levels = c("DF0Y","RA10Y","CW10Y","RA20Y","CW20Y"))
+levels(long_DAM_summary$TRT) <- c('DF', 'RA 12','CW 12', 'RA 25','CW 25')
+#witih Block as x and facet column as Year
+d_alive<- ggplot(aes(x=Block,y=SUP_LRR_sum, fill=Damage),data=long_DAM_summary[which(long_DAM_summary$Tree_status=="Alive"),])+ geom_col()+ facet_grid(rows=vars(TRT),vars(YEAR_fac))+labs(title="Living trees",x= "Block",y="Count")+ ylim(0, 200)
+d_alive
+d_alive2<-d_alive + theme(legend.position="none")
+
+d_dead<- ggplot(aes(x=Block,y=SUP_LRR_sum, fill=Damage),data=long_DAM_summary[which(long_DAM_summary$Tree_status=="Dead"),])+ geom_col() + facet_grid(rows=vars(TRT),vars(YEAR_fac))+labs(title="Dead trees",x= "Block",y="Count")+ ylim(0, 200)
+d_dead
+d_dead2<-d_dead + ylab("")
+(d_alive2 | d_dead2)
+#ggsave(here("Summary_Graphs_update","Suppression_and_LRR_flags_by_Treatment_block_year_and_tree_status.pdf"), height= 12, width = 20, units="in")
+
+#witih year as x and facet column as Block
+d_aliveY<- ggplot(aes(x=YEAR_fac,y=SUP_LRR_sum, fill=Damage, group=Damage),data=long_DAM_summary[which(long_DAM_summary$Tree_status=="Alive"),])+ geom_col()+geom_line(position="stack", na.rm = FALSE)+ 
+  facet_grid(rows=vars(TRT),vars(Block))+labs(title="Living trees",x= "Year",y="Count")+ ylim(0, 200)+theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+d_aliveY
+d_aliveY2<-d_aliveY + theme(legend.position="none")
+
+d_deadY<- ggplot(aes(x=YEAR_fac,y=SUP_LRR_sum, fill=Damage, group=Damage),data=long_DAM_summary[which(long_DAM_summary$Tree_status=="Dead"),])+ geom_col()+geom_line(position="stack", na.rm = FALSE) + 
+  facet_grid(rows=vars(TRT),vars(Block))+labs(title="Dead trees",x= "Year",y="Count")+ ylim(0, 200)+theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+d_deadY
+d_deadY2<-d_deadY + ylab("")
+(d_aliveY2 | d_deadY2)
+#ggsave(here("Summary_Graphs_update","Suppression_and_LRR_flags_by_Treatment_year_block_and_tree_status.pdf"), height= 12, width = 20, units="in")
+
+```
+
+Based on the above graphical output I think it would make sense to make multiple mortality response variables according to Damage type associated. 
+Would need to recalculate proportions and slopes (proportion dead suppressed/ total trees) (could also do proportion dead suppressed/ total dead?)
+1) total mortality (what we have now).  
+2) suppression mortality (lessA1A3, Tree_status=="Dead" & SUPP==Suppressed) could use SUPP_LRR== "Suppressed_NA"
+3) LRR and unknown mortality (lessA1A3, Tree_status=="Dead" & (SUP_LRR=="NA_NA"|SUP_LRR=="NA_LRR")))
+4) LRR mortality (lessA1A3, Tree_status=="Dead" & PW_R=="LRR") could use SUPP_LRR=="NA_LRR"
+
+## Plotting status and live dbh distributions
+```{r}
+#lessA1A3<-readRDS(file=here("raw_data","long_data_keep_lessA1A3.Rds"))
+#attempting to plot damage type
+lessA1A3$SupLRR<-paste(lessA1A3$SUPP,lessA1A3$PW_R,sep="_")
+
+ggplot(data=subset(lessA1A3, lessA1A3$Tree_status=="Dead"|lessA1A3$Tree_status=="Alive") ,aes(x=factor(DF_age)))+
+  geom_bar(aes(position="fill",fill=SupLRR, na.rm = TRUE))+scale_fill_viridis_d()+
+  ylab("Proportion of Trees")+
+  xlab("Douglas Fir Age (years)")+
+  scale_x_discrete("Douglas Fir Age", drop=FALSE, limits= c("10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31","32","33","34","35","36","37","38","39","40","41","42","43","44","45","46"), breaks=c("0","8", "11","12", "20", "24", "33","36","45")) +
+facet_grid(rows=vars(TRT),vars(Tree_status), labeller = label_both)
+
+#ggsave(here("Summary_Graphs_update","SuppLRR_mort_by_TRT_Age.pdf"))
+
+ggplot(data=subset(lessA1A3, lessA1A3$Tree_status=="Dead"|lessA1A3$Tree_status=="Alive") ,aes(x=YEAR_dbl))+
+  geom_bar(aes(position="fill",fill=SupLRR, na.rm = TRUE))+scale_fill_viridis_d()+
+  ylab("Proportion of Trees")+
+  xlab("Douglas Fir Age (years)")+
+  facet_grid(rows=vars(TRT),vars(Tree_status), labeller = label_both)
+
+#ggsave(here("Summary_Graphs_update","SuppLRR_mort_by_TRT_Year.pdf"))
+
+#just suppression
+sup_plot_ABC<-ggplot(data=subset(lessA1A3, !is.na(SUPP)) ,aes(x=factor(DF_age),fill=SUPP))+
+  geom_bar(position="fill")+scale_fill_viridis_d()+
+  ylab("Proportion of Trees")+
+  xlab("Douglas Fir Age (years)")+
+  scale_x_discrete("Douglas Fir age", drop=FALSE, limits= c("10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31","32","33","34","35","36","37","38","39","40","41","42","43","44","45","46"), breaks=c("0","8", "11","12", "20", "24", "33","36","45")) +
+facet_grid(rows=vars(TRT), labeller = label_both)
+sup_plot_ABC
+
+
+#subset by treatments and treatments with similar ages
+RACW10<-subset(lessA1A3, (TRT=="RA10Y" |TRT=="CW10Y"))
+RACW20<-subset(lessA1A3, (TRT=="RA20Y" |TRT=="CW20Y"))
+RA10<-subset(lessA1A3, TRT=="RA10Y")
+CW10<-subset(lessA1A3, TRT=="CW10Y")
+DF0<-subset(lessA1A3, TRT=="DF0Y")
+CW20<-subset(lessA1A3, TRT=="CW20Y")
+RA20<-subset(lessA1A3, TRT=="RA20Y")
+
+#for ABC dataset
+#RACW10_ABC<-subset(ABC_long_keep, (TRT=="RA10Y" |TRT=="CW10Y"))
+#RA10_ABC<-subset(ABC_long_keep, TRT=="RA10Y")
+#CW10_ABC<-subset(ABC_long_keep, TRT=="CW10Y")
+#DF0_ABC<-subset(ABC_long_keep, TRT=="DF0Y")
+
+```
+
+## Rep and Subplot summaries for all treatments
+```{r}
+#looking at strange summary values for tree diameters
+RA10_8y_DBH<-lessA1A3[which(lessA1A3$TRT=="RA10Y" & lessA1A3$DF_age==8),c("Tree_ID","Tree_status","DBH_mm")]
+RA10_8y_DBH_Alive<-subset(RA10_8y_DBH, RA10_8y_DBH$Tree_status=="Alive")
+RA10_8y_DBH_Dead<-subset(RA10_8y_DBH, RA10_8y_DBH$Tree_status=="Dead")
+summary_RA10_8y_DBH<- data.frame("Stat"=c("count","median","min","max","IQR"),"All"=c(length(RA10_8y_DBH$DBH_mm),median(RA10_8y_DBH$DBH_mm),min(RA10_8y_DBH$DBH_mm),max(RA10_8y_DBH$DBH_mm),IQR(RA10_8y_DBH$DBH_mm)),"Alive"=c(length(RA10_8y_DBH_Alive$DBH_mm),median(RA10_8y_DBH_Alive$DBH_mm),min(RA10_8y_DBH_Alive$DBH_mm),max(RA10_8y_DBH_Alive$DBH_mm),IQR(RA10_8y_DBH_Alive$DBH_mm)),"Dead"=c(length(RA10_8y_DBH_Dead$DBH_mm),median(RA10_8y_DBH_Dead$DBH_mm),min(RA10_8y_DBH_Dead$DBH_mm),max(RA10_8y_DBH_Dead$DBH_mm),IQR(RA10_8y_DBH_Dead$DBH_mm)))
+p<-ggplot(data=RA10_8y_DBH, aes(DBH_mm, fill= Tree_status))+geom_histogram(position="identity",alpha=0.5)                                     
+p
+
+#turns out I was just setting the breaks and limits on the y axis strange.
+```
+
+```{r}
+#make varible containing total counts of trees with diameters
+median_dbh_Alive<-subset(lessA1A3, Tree_status=="Alive") %>% 
+  group_by(DF_age, TRT, Tree_status) %>% 
+  summarise(Median=round(median(DBH_mm_nom, na.rm=TRUE)), N=n())
+median_dbh_Dead<-subset(lessA1A3, Tree_status=="Dead") %>% 
+  group_by(DF_age, TRT, Tree_status) %>% 
+  summarise(Median=round(median(DBH_mm_nom, na.rm=TRUE)), N=n())
+#input<- subset(lessA1A3, (Tree_status=="Alive"|Tree_status=="Dead")& !is.na(DBH_mm_nom))
+pall<- subset(lessA1A3, (Tree_status=="Alive"|Tree_status=="Dead")& !is.na(DBH_mm_nom)) %>% 
+  ggplot(aes(DBH_mm_nom,fill=Tree_status))+
+  geom_histogram(position="identity", alpha=0.65, binwidth =25)+
+  scale_fill_viridis_d(begin = 0.33, end = 0.99)+
+  labs(title= "Size distrubtion of trees by Age and Treatment",x="DBH (mm)",y= "Trees") +
+  geom_label(data = median_dbh_Alive,aes(x=Median+250,y=300,label=paste0("Sum: \n",N,"\n Median: \n",Median,"mm"), alpha=0.05),  show.legend = FALSE, label.size = 0)+
+  geom_label(data = median_dbh_Dead,aes(x=75,y=300, label=paste0("Sum: \n",N,"\n Median: \n",Median,"mm"), fontface='italic', alpha=0.05), show.legend = FALSE, label.size = 0)+ 
+  geom_vline(data=median_dbh_Dead,aes(xintercept=Median), linetype=2, alpha=0.5)+
+  geom_vline(data=median_dbh_Alive,aes(xintercept=Median), alpha=0.5)+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  facet_grid(rows=vars(DF_age),vars(TRT), labeller = label_both)+
+  #scale_y_continuous(breaks = c(0,20,40,60,80,100),limits=c(0,100))+
+  xlim(0,600)+
+  theme_bw()
+pall
+#ggsave(here("Summary_Graphs_update","All_TRT_DBH_histos_by_age_and_rep.pdf"), height= 20, width = 12, units="in")
+
+```
+
+## Rep and Subplot summaries for RA10Y
+```{r}
+#make varible containing total counts of trees with diameters
+median_dbh_Alive<-subset(RA10, Tree_status=="Alive") %>% 
+  group_by(DF_age, Block, Tree_status) %>% 
+  summarise(Median=round(median(DBH_mm_nom, na.rm=TRUE)), N=n())
+median_dbh_Dead<-subset(RA10, Tree_status=="Dead") %>% 
+  group_by(DF_age, Block, Tree_status) %>% 
+  summarise(Median=round(median(DBH_mm_nom, na.rm=TRUE)), N=n())
+pRA10<- subset(RA10, !is.na(Tree_status)) %>% 
+  ggplot(aes(DBH_mm_nom,fill=Tree_status))+
+  geom_histogram(position="identity", alpha=0.65, binwidth =25)+
+  scale_fill_viridis_d(begin = 0.33, end = 0.99)+
+  labs(title= "Size distrubtion of trees in RA10 Treatment by Age and Block",x="DBH (mm)",y= "Trees") +
+  geom_label(data = median_dbh_Alive,aes(x=Median+200,y=88,label=paste0("Sum: \n",N,"\n Median: \n",Median,"mm"), alpha=0.05),  show.legend = FALSE, label.size = 0)+
+  geom_label(data = median_dbh_Dead,aes(x=55,y=88, label=paste0("Sum: \n",N,"\n Median: \n",Median,"mm"), fontface='italic', alpha=0.05), show.legend = FALSE, label.size = 0)+ 
+  geom_vline(data=median_dbh_Dead,aes(xintercept=Median), linetype=2, alpha=0.5)+
+  geom_vline(data=median_dbh_Alive,aes(xintercept=Median), alpha=0.5)+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  facet_grid(rows=vars(DF_age),vars(Block), labeller = label_both)+
+  scale_y_continuous(breaks = c(0,20,40,60,80,100),limits=c(0,100))+
+  xlim(0,600)+
+  theme_bw()
+pRA10
+#ggsave(here("Summary_Graphs_update","RA10_DBH_histos_by_age_and_Block.pdf"), height= 10, width = 12, units="in")
+
+RA10_R0<-subset(RA10, REP==0)
+RA10_R2<-subset(RA10, REP==2)
+RA10_R4<-subset(RA10, REP==4)
+
+#plotting0
+med10_0Alive<-subset(RA10_R0, Tree_status=="Alive") %>% 
+  group_by(DF_age, SUBPLOT, Tree_status) %>% 
+  summarise(Median=round(median(DBH_mm_nom, na.rm=TRUE)), N=n())
+med10_0Dead<-subset(RA10_R0, Tree_status=="Dead") %>% 
+  group_by(DF_age, SUBPLOT, Tree_status) %>% 
+  summarise(Median=round(median(DBH_mm_nom, na.rm=TRUE)), N=n())
+pRA10_0<- subset(RA10_R0, !is.na(Tree_status)) %>% 
+  ggplot(aes(DBH_mm_nom,fill=Tree_status))+
+  geom_histogram(position="identity", alpha=0.65, binwidth=25, )+
+  scale_fill_viridis_d(begin = 0.33, end = 0.99)+
+  labs(title= "Size distrubtion of trees in RA10 Block 5 by Age and Subplot",x="DBH (mm)",y= "Trees") +
+  geom_label(data = med10_0Alive,aes(x=Median+200,y=25,label=paste0("Sum: \n",N,"\n Median: \n",Median,"mm"), alpha=0.05),  show.legend = FALSE, label.size = 0)+
+  geom_label(data = med10_0Dead,aes(x=55,y=25, label=paste0("Sum: \n",N,"\n Median: \n",Median,"mm"), fontface='italic', alpha=0.05), show.legend = FALSE, label.size = 0)+ 
+  geom_vline(data=med10_0Dead,aes(xintercept=Median), linetype=2, alpha=0.5)+
+  geom_vline(data=med10_0Alive,aes(xintercept=Median), alpha=0.5)+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  facet_grid(rows=vars(DF_age),vars(SUBPLOT), labeller = label_both)+
+  ylim(0,30)+
+  xlim(0,600)+
+  theme_bw()
+pRA10_0
+#ggsave(here("Summary_Graphs_update","RA10_Block5_DBH_histos_by_age_and_subplot.pdf"), height= 10, width = 12, units="in")
+
+#plotting2
+med10_2Alive<-subset(RA10_R2, Tree_status=="Alive") %>% 
+  group_by(DF_age, SUBPLOT, Tree_status) %>% 
+  summarise(Median=round(median(DBH_mm_nom, na.rm=TRUE)), N=n())
+med10_2Dead<-subset(RA10_R2, Tree_status=="Dead") %>% 
+  group_by(DF_age, SUBPLOT, Tree_status) %>% 
+  summarise(Median=round(median(DBH_mm_nom, na.rm=TRUE)), N=n())
+pRA10_2<- subset(RA10_R2, !is.na(Tree_status)) %>% 
+  ggplot(aes(DBH_mm_nom,fill=Tree_status))+
+  geom_histogram(position="identity", alpha=0.65, binwidth=25, )+
+  scale_fill_viridis_d(begin = 0.33, end = 0.99)+
+  labs(title= "Size distrubtion of trees in RA10 Block 2 by Age and Subplot",x="DBH (mm)",y= "Trees") +
+  geom_label(data = med10_2Alive,aes(x=Median+200,y=25,label=paste0("Sum: \n",N,"\n Median: \n",Median,"mm"), alpha=0.05),  show.legend = FALSE, label.size = 0)+
+  geom_label(data = med10_2Dead,aes(x=55,y=25, label=paste0("Sum: \n",N,"\n Median: \n",Median,"mm"), fontface='italic', alpha=0.05), show.legend = FALSE, label.size = 0)+ 
+  geom_vline(data=med10_2Dead,aes(xintercept=Median), linetype=2, alpha=0.5)+
+  geom_vline(data=med10_2Alive,aes(xintercept=Median), alpha=0.5)+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  facet_grid(rows=vars(DF_age),vars(SUBPLOT), labeller = label_both)+
+  ylim(0,30)+
+  xlim(0,600)+
+  theme_bw()
+pRA10_2
+#ggsave(here("Summary_Graphs_update","RA10_Block2_DBH_histos_by_age_and_subplot.pdf"), height= 10, width = 12, units="in")
+
+#plotting4
+med10_4Alive<-subset(RA10_R4, Tree_status=="Alive") %>% 
+  group_by(DF_age, SUBPLOT, Tree_status) %>% 
+  summarise(Median=round(median(DBH_mm_nom, na.rm=TRUE)), N=n())
+med10_4Dead<-subset(RA10_R4, Tree_status=="Dead") %>% 
+  group_by(DF_age, SUBPLOT, Tree_status) %>% 
+  summarise(Median=round(median(DBH_mm_nom, na.rm=TRUE)), N=n())
+pRA10_4<- subset(RA10_R4, !is.na(Tree_status)) %>% 
+  ggplot(aes(DBH_mm_nom,fill=Tree_status))+
+  geom_histogram(position="identity", alpha=0.65, binwidth=25, )+
+  scale_fill_viridis_d(begin = 0.33, end = 0.99)+
+  labs(title= "Size distrubtion of trees in RA10 Block 4 by Age and Subplot",x="DBH (mm)",y= "Trees") +
+  geom_label(data = med10_4Alive,aes(x=Median+200,y=25,label=paste0("Sum: \n",N,"\n Median: \n",Median,"mm"), alpha=0.05),  show.legend = FALSE, label.size = 0)+
+  geom_label(data = med10_4Dead,aes(x=55,y=25, label=paste0("Sum: \n",N,"\n Median: \n",Median,"mm"), fontface='italic', alpha=0.05), show.legend = FALSE, label.size = 0)+ 
+  geom_vline(data=med10_4Dead,aes(xintercept=Median), linetype=2, alpha=0.5)+
+  geom_vline(data=med10_4Alive,aes(xintercept=Median), alpha=0.5)+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  facet_grid(rows=vars(DF_age),vars(SUBPLOT), labeller = label_both)+
+  ylim(0,30)+
+  xlim(0,600)+
+  theme_bw()
+pRA10_4
+#ggsave(here("Summary_Graphs_update","RA10_Block4_DBH_histos_by_age_and_subplot.pdf"), height= 10, width = 12, units="in")
+
+#Make Block and subplot summaries for other treatments like I did for RA10 and RA10 Blocks. update with medians and color adustment 
+
+```
+
+## Block and Subplot summaries for Treatments other than RA10Y
+```{r}
+#CW10
+medCW10_Alive<-subset(CW10, Tree_status=="Alive") %>% 
+  group_by(DF_age, Block, Tree_status) %>% 
+  summarise(Median=round(median(DBH_mm_nom, na.rm=TRUE)), N=n())
+medCW10_Dead<-subset(CW10, Tree_status=="Dead") %>% 
+  group_by(DF_age, Block, Tree_status) %>% 
+  summarise(Median=round(median(DBH_mm_nom, na.rm=TRUE)), N=n())
+pCW10<- subset(CW10, !is.na(Tree_status)) %>% 
+  ggplot(aes(DBH_mm_nom,fill=Tree_status))+
+  geom_histogram(position="identity", alpha=0.65, binwidth =25)+
+  scale_fill_viridis_d(begin = 0.33, end = 0.99)+
+  labs(title= "Size distrubtion of trees in CW10 Treatment by Age and Block",x="DBH (mm)",y= "Trees") +
+  geom_label(data = medCW10_Alive,aes(x=Median+200,y=88,label=paste0("Sum: \n",N,"\n Median: \n",Median,"mm"), alpha=0.05),  show.legend = FALSE, label.size = 0)+
+  geom_label(data = medCW10_Dead,aes(x=55,y=88, label=paste0("Sum: \n",N,"\n Median: \n",Median,"mm"), fontface='italic', alpha=0.05), show.legend = FALSE, label.size = 0)+ 
+  geom_vline(data=medCW10_Dead,aes(xintercept=Median), linetype=2, alpha=0.5)+
+  geom_vline(data=medCW10_Alive,aes(xintercept=Median), alpha=0.5)+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  facet_grid(rows=vars(DF_age),vars(Block), labeller = label_both)+
+  scale_y_continuous(breaks = c(0,20,40,60,80,100),limits=c(0,100))+
+  xlim(0,600)+
+  theme_bw()
+pCW10
+#ggsave(here("Summary_Graphs_update","CW10_DBH_histos_by_age_and_Block.pdf"), height= 10, width = 12, units="in")
+
+#ggsave(here("Summary_Graphs_update","CW10_DBH_histos_by_age_and_Block.pdf"))
+
+#Drilling down to look at subplots within Blocks
+CW10_R0<-subset(CW10, REP==0)
+CW10_R1<-subset(CW10, REP==1)
+CW10_R2<-subset(CW10, REP==2)
+CW10_R3<-subset(CW10, REP==3)
+CW10_R4<-subset(CW10, REP==4)
+
+#plotting0
+medCW10_0Alive<-subset(CW10_R0, Tree_status=="Alive") %>% 
+  group_by(DF_age, SUBPLOT, Tree_status) %>% 
+  summarise(Median=round(median(DBH_mm_nom, na.rm=TRUE)), N=n())
+medCW10_0Dead<-subset(CW10_R0, Tree_status=="Dead") %>% 
+  group_by(DF_age, SUBPLOT, Tree_status) %>% 
+  summarise(Median=round(median(DBH_mm_nom, na.rm=TRUE)), N=n())
+pCW10_0<- subset(CW10_R0, !is.na(Tree_status)) %>% 
+  ggplot(aes(DBH_mm_nom,fill=Tree_status))+
+  geom_histogram(position="identity", alpha=0.65, binwidth=25, )+
+  scale_fill_viridis_d(begin = 0.33, end = 0.99)+
+  labs(title= "Size distrubtion of trees in CW10 Block 5 by Age and Subplot",x="DBH (mm)",y= "Trees") +
+  geom_label(data = medCW10_0Alive,aes(x=Median+200,y=25,label=paste0("Sum: \n",N,"\n Median: \n",Median,"mm"), alpha=0.05),  show.legend = FALSE, label.size = 0)+
+  geom_label(data = medCW10_0Dead,aes(x=55,y=25, label=paste0("Sum: \n",N,"\n Median: \n",Median,"mm"), fontface='italic', alpha=0.05), show.legend = FALSE, label.size = 0)+ 
+  geom_vline(data=medCW10_0Dead,aes(xintercept=Median), linetype=2, alpha=0.5)+
+  geom_vline(data=medCW10_0Alive,aes(xintercept=Median), alpha=0.5)+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  facet_grid(rows=vars(DF_age),vars(SUBPLOT), labeller = label_both)+
+  ylim(0,30)+
+  xlim(0,600)+
+  theme_bw()
+pCW10_0
+#ggsave(here("Summary_Graphs_update","CW10_Block5_DBH_histos_by_age_and_subplot.pdf"), height= 10, width = 12, units="in")
+
+#plotting1
+medCW10_1Alive<-subset(CW10_R1, Tree_status=="Alive") %>% 
+  group_by(DF_age, SUBPLOT, Tree_status) %>% 
+  summarise(Median=round(median(DBH_mm_nom, na.rm=TRUE)), N=n())
+medCW10_1Dead<-subset(CW10_R1, Tree_status=="Dead") %>% 
+  group_by(DF_age, SUBPLOT, Tree_status) %>% 
+  summarise(Median=round(median(DBH_mm_nom, na.rm=TRUE)), N=n())
+pCW10_1<- subset(CW10_R1, !is.na(Tree_status)) %>% 
+  ggplot(aes(DBH_mm_nom,fill=Tree_status))+
+  geom_histogram(position="identity", alpha=0.65, binwidth=25, )+
+  scale_fill_viridis_d(begin = 0.33, end = 0.99)+
+  labs(title= "Size distrubtion of trees in CW10 Block 1 by Age and Subplot",x="DBH (mm)",y= "Trees") +
+  geom_label(data = medCW10_1Alive,aes(x=Median+200,y=25,label=paste0("Sum: \n",N,"\n Median: \n",Median,"mm"), alpha=0.05),  show.legend = FALSE, label.size = 0)+
+  geom_label(data = medCW10_1Dead,aes(x=55,y=25, label=paste0("Sum: \n",N,"\n Median: \n",Median,"mm"), fontface='italic', alpha=0.05), show.legend = FALSE, label.size = 0)+ 
+  geom_vline(data=medCW10_1Dead,aes(xintercept=Median), linetype=2, alpha=0.5)+
+  geom_vline(data=medCW10_1Alive,aes(xintercept=Median), alpha=0.5)+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  facet_grid(rows=vars(DF_age),vars(SUBPLOT), labeller = label_both)+
+  ylim(0,30)+
+  xlim(0,600)+
+  theme_bw()
+pCW10_1
+#ggsave(here("Summary_Graphs_update","CW10_Block1_DBH_histos_by_age_and_subplot.pdf"), height= 10, width = 12, units="in")
+
+#plotting2
+medCW10_2Alive<-subset(CW10_R2, Tree_status=="Alive") %>% 
+  group_by(DF_age, SUBPLOT, Tree_status) %>% 
+  summarise(Median=round(median(DBH_mm_nom, na.rm=TRUE)), N=n())
+medCW10_2Dead<-subset(CW10_R2, Tree_status=="Dead") %>% 
+  group_by(DF_age, SUBPLOT, Tree_status) %>% 
+  summarise(Median=round(median(DBH_mm_nom, na.rm=TRUE)), N=n())
+pCW10_2<- subset(CW10_R2, !is.na(Tree_status)) %>% 
+  ggplot(aes(DBH_mm_nom,fill=Tree_status))+
+  geom_histogram(position="identity", alpha=0.65, binwidth=25, )+
+  scale_fill_viridis_d(begin = 0.33, end = 0.99)+
+  labs(title= "Size distrubtion of trees in CW10 Block 2 by Age and Subplot",x="DBH (mm)",y= "Trees") +
+  geom_label(data = medCW10_2Alive,aes(x=Median+200,y=25,label=paste0("Sum: \n",N,"\n Median: \n",Median,"mm"), alpha=0.05),  show.legend = FALSE, label.size = 0)+
+  geom_label(data = medCW10_2Dead,aes(x=55,y=25, label=paste0("Sum: \n",N,"\n Median: \n",Median,"mm"), fontface='italic', alpha=0.05), show.legend = FALSE, label.size = 0)+ 
+  geom_vline(data=medCW10_2Dead,aes(xintercept=Median), linetype=2, alpha=0.5)+
+  geom_vline(data=medCW10_2Alive,aes(xintercept=Median), alpha=0.5)+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  facet_grid(rows=vars(DF_age),vars(SUBPLOT), labeller = label_both)+
+  ylim(0,30)+
+  xlim(0,600)+
+  theme_bw()
+pCW10_2
+#ggsave(here("Summary_Graphs_update","CW10_Block2_DBH_histos_by_age_and_subplot.pdf"), height= 10, width = 12, units="in")
+
+#plotting3
+medCW10_3Alive<-subset(CW10_R3, Tree_status=="Alive") %>% 
+  group_by(DF_age, SUBPLOT, Tree_status) %>% 
+  summarise(Median=round(median(DBH_mm_nom, na.rm=TRUE)), N=n())
+medCW10_3Dead<-subset(CW10_R3, Tree_status=="Dead") %>% 
+  group_by(DF_age, SUBPLOT, Tree_status) %>% 
+  summarise(Median=round(median(DBH_mm_nom, na.rm=TRUE)), N=n())
+pCW10_3<- subset(CW10_R3, !is.na(Tree_status)) %>% 
+  ggplot(aes(DBH_mm_nom,fill=Tree_status))+
+  geom_histogram(position="identity", alpha=0.65, binwidth=25, )+
+  scale_fill_viridis_d(begin = 0.33, end = 0.99)+
+  labs(title= "Size distrubtion of trees in CW10 Block 3 by Age and Subplot",x="DBH (mm)",y= "Trees") +
+  geom_label(data = medCW10_3Alive,aes(x=Median+200,y=25,label=paste0("Sum: \n",N,"\n Median: \n",Median,"mm"), alpha=0.05),  show.legend = FALSE, label.size = 0)+
+  geom_label(data = medCW10_3Dead,aes(x=55,y=25, label=paste0("Sum: \n",N,"\n Median: \n",Median,"mm"), fontface='italic', alpha=0.05), show.legend = FALSE, label.size = 0)+ 
+  geom_vline(data=medCW10_3Dead,aes(xintercept=Median), linetype=2, alpha=0.5)+
+  geom_vline(data=medCW10_3Alive,aes(xintercept=Median), alpha=0.5)+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  facet_grid(rows=vars(DF_age),vars(SUBPLOT), labeller = label_both)+
+  ylim(0,30)+
+  xlim(0,600)+
+  theme_bw()
+pCW10_3
+#ggsave(here("Summary_Graphs_update","CW10_Block3_DBH_histos_by_age_and_subplot.pdf"), height= 10, width = 12, units="in")
+
+#plotting4
+medCW10_4Alive<-subset(CW10_R4, Tree_status=="Alive") %>% 
+  group_by(DF_age, SUBPLOT, Tree_status) %>% 
+  summarise(Median=round(median(DBH_mm_nom, na.rm=TRUE)), N=n())
+medCW10_4Dead<-subset(CW10_R4, Tree_status=="Dead") %>% 
+  group_by(DF_age, SUBPLOT, Tree_status) %>% 
+  summarise(Median=round(median(DBH_mm_nom, na.rm=TRUE)), N=n())
+pCW10_4<- subset(CW10_R4, !is.na(Tree_status)) %>% 
+  ggplot(aes(DBH_mm_nom,fill=Tree_status))+
+  geom_histogram(position="identity", alpha=0.65, binwidth=25, )+
+  scale_fill_viridis_d(begin = 0.33, end = 0.99)+
+  labs(title= "Size distrubtion of trees in CW10 Block 4 by Age and Subplot",x="DBH (mm)",y= "Trees") +
+  geom_label(data = medCW10_4Alive,aes(x=Median+200,y=25,label=paste0("Sum: \n",N,"\n Median: \n",Median,"mm"), alpha=0.05),  show.legend = FALSE, label.size = 0)+
+  geom_label(data = medCW10_4Dead,aes(x=55,y=25, label=paste0("Sum: \n",N,"\n Median: \n",Median,"mm"), fontface='italic', alpha=0.05), show.legend = FALSE, label.size = 0)+ 
+  geom_vline(data=medCW10_4Dead,aes(xintercept=Median), linetype=2, alpha=0.5)+
+  geom_vline(data=medCW10_4Alive,aes(xintercept=Median), alpha=0.5)+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  facet_grid(rows=vars(DF_age),vars(SUBPLOT), labeller = label_both)+
+  ylim(0,30)+
+  xlim(0,600)+
+  theme_bw()
+pCW10_4
+#ggsave(here("Summary_Graphs_update","CW10_Block4_DBH_histos_by_age_and_subplot.pdf"), height= 10, width = 12, units="in")
+```
+
+```{r}
+#CW20
+medCW20_Alive<-subset(CW20, Tree_status=="Alive") %>% 
+  group_by(DF_age, Block, Tree_status) %>% 
+  summarise(Median=round(median(DBH_mm_nom, na.rm=TRUE)), N=n())
+medCW20_Dead<-subset(CW20, Tree_status=="Dead") %>% 
+  group_by(DF_age, Block, Tree_status) %>% 
+  summarise(Median=round(median(DBH_mm_nom, na.rm=TRUE)), N=n())
+pCW20<- subset(CW20, !is.na(Tree_status)) %>% 
+  ggplot(aes(DBH_mm_nom,fill=Tree_status))+
+  geom_histogram(position="identity", alpha=0.65, binwidth =25)+
+  scale_fill_viridis_d(begin = 0.33, end = 0.99)+
+  labs(title= "Size distrubtion of trees in CW20 Treatment by Age and Block",x="DBH (mm)",y= "Trees") +
+  geom_label(data = medCW20_Alive,aes(x=Median+200,y=88,label=paste0("Sum: \n",N,"\n Median: \n",Median,"mm"), alpha=0.05),  show.legend = FALSE, label.size = 0)+
+  geom_label(data = medCW20_Dead,aes(x=55,y=88, label=paste0("Sum: \n",N,"\n Median: \n",Median,"mm"), fontface='italic', alpha=0.05), show.legend = FALSE, label.size = 0)+ 
+  geom_vline(data=medCW20_Dead,aes(xintercept=Median), linetype=2, alpha=0.5)+
+  geom_vline(data=medCW20_Alive,aes(xintercept=Median), alpha=0.5)+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  facet_grid(rows=vars(DF_age),vars(Block), labeller = label_both)+
+  scale_y_continuous(breaks = c(0,20,40,60,80,100),limits=c(0,100))+
+  xlim(0,400)+
+  theme_bw()
+pCW20
+#ggsave(here("Summary_Graphs_update","CW20_DBH_histos_by_age_and_Block.pdf"), height= 10, width = 12, units="in")
+
+#Drilling down to look at subplots within Blocks
+CW20_R0<-subset(CW20, REP==0)
+CW20_R1<-subset(CW20, REP==1)
+CW20_R2<-subset(CW20, REP==2)
+CW20_R3<-subset(CW20, REP==3)
+CW20_R4<-subset(CW20, REP==4)
+
+#plotting0
+medCW20_0Alive<-subset(CW20_R0, Tree_status=="Alive") %>% 
+  group_by(DF_age, SUBPLOT, Tree_status) %>% 
+  summarise(Median=round(median(DBH_mm_nom, na.rm=TRUE)), N=n())
+medCW20_0Dead<-subset(CW20_R0, Tree_status=="Dead") %>% 
+  group_by(DF_age, SUBPLOT, Tree_status) %>% 
+  summarise(Median=round(median(DBH_mm_nom, na.rm=TRUE)), N=n())
+pCW20_0<- subset(CW20_R0, !is.na(Tree_status)) %>% 
+  ggplot(aes(DBH_mm_nom,fill=Tree_status))+
+  geom_histogram(position="identity", alpha=0.65, binwidth=25, )+
+  scale_fill_viridis_d(begin = 0.33, end = 0.99)+
+  labs(title= "Size distrubtion of trees in CW20 Block 5 by Age and Subplot",x="DBH (mm)",y= "Trees") +
+  geom_label(data = medCW20_0Alive,aes(x=Median+200,y=25,label=paste0("Sum: \n",N,"\n Median: \n",Median,"mm"), alpha=0.05),  show.legend = FALSE, label.size = 0)+
+  geom_label(data = medCW20_0Dead,aes(x=55,y=25, label=paste0("Sum: \n",N,"\n Median: \n",Median,"mm"), fontface='italic', alpha=0.05), show.legend = FALSE, label.size = 0)+ 
+  geom_vline(data=medCW20_0Dead,aes(xintercept=Median), linetype=2, alpha=0.5)+
+  geom_vline(data=medCW20_0Alive,aes(xintercept=Median), alpha=0.5)+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  facet_grid(rows=vars(DF_age),vars(SUBPLOT), labeller = label_both)+
+  ylim(0,30)+
+  xlim(0,400)+
+  theme_bw()
+pCW20_0
+#ggsave(here("Summary_Graphs_update","CW20_Block5_DBH_histos_by_age_and_subplot.pdf"), height= 10, width = 12, units="in")
+
+#plotting1
+medCW20_1Alive<-subset(CW20_R1, Tree_status=="Alive") %>% 
+  group_by(DF_age, SUBPLOT, Tree_status) %>% 
+  summarise(Median=round(median(DBH_mm_nom, na.rm=TRUE)), N=n())
+medCW20_1Dead<-subset(CW20_R1, Tree_status=="Dead") %>% 
+  group_by(DF_age, SUBPLOT, Tree_status) %>% 
+  summarise(Median=round(median(DBH_mm_nom, na.rm=TRUE)), N=n())
+pCW20_1<- subset(CW20_R1, !is.na(Tree_status)) %>% 
+  ggplot(aes(DBH_mm_nom,fill=Tree_status))+
+  geom_histogram(position="identity", alpha=0.65, binwidth=25, )+
+  scale_fill_viridis_d(begin = 0.33, end = 0.99)+
+  labs(title= "Size distrubtion of trees in CW20 Block 1 by Age and Subplot",x="DBH (mm)",y= "Trees") +
+  geom_label(data = medCW20_1Alive,aes(x=Median+200,y=25,label=paste0("Sum: \n",N,"\n Median: \n",Median,"mm"), alpha=0.05),  show.legend = FALSE, label.size = 0)+
+  geom_label(data = medCW20_1Dead,aes(x=55,y=25, label=paste0("Sum: \n",N,"\n Median: \n",Median,"mm"), fontface='italic', alpha=0.05), show.legend = FALSE, label.size = 0)+ 
+  geom_vline(data=medCW20_1Dead,aes(xintercept=Median), linetype=2, alpha=0.5)+
+  geom_vline(data=medCW20_1Alive,aes(xintercept=Median), alpha=0.5)+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  facet_grid(rows=vars(DF_age),vars(SUBPLOT), labeller = label_both)+
+  ylim(0,30)+
+  xlim(0,400)+
+  theme_bw()
+pCW20_1
+#ggsave(here("Summary_Graphs_update","CW20_Block1_DBH_histos_by_age_and_subplot.pdf"), height= 10, width = 12, units="in")
+
+#plotting2
+medCW20_2Alive<-subset(CW20_R2, Tree_status=="Alive") %>% 
+  group_by(DF_age, SUBPLOT, Tree_status) %>% 
+  summarise(Median=round(median(DBH_mm_nom, na.rm=TRUE)), N=n())
+medCW20_2Dead<-subset(CW20_R2, Tree_status=="Dead") %>% 
+  group_by(DF_age, SUBPLOT, Tree_status) %>% 
+  summarise(Median=round(median(DBH_mm_nom, na.rm=TRUE)), N=n())
+pCW20_2<- subset(CW20_R2, !is.na(Tree_status)) %>% 
+  ggplot(aes(DBH_mm_nom,fill=Tree_status))+
+  geom_histogram(position="identity", alpha=0.65, binwidth=25, )+
+  scale_fill_viridis_d(begin = 0.33, end = 0.99)+
+  labs(title= "Size distrubtion of trees in CW20 Block 2 by Age and Subplot",x="DBH (mm)",y= "Trees") +
+  geom_label(data = medCW20_2Alive,aes(x=Median+200,y=25,label=paste0("Sum: \n",N,"\n Median: \n",Median,"mm"), alpha=0.05),  show.legend = FALSE, label.size = 0)+
+  geom_label(data = medCW20_2Dead,aes(x=55,y=25, label=paste0("Sum: \n",N,"\n Median: \n",Median,"mm"), fontface='italic', alpha=0.05), show.legend = FALSE, label.size = 0)+ 
+  geom_vline(data=medCW20_2Dead,aes(xintercept=Median), linetype=2, alpha=0.5)+
+  geom_vline(data=medCW20_2Alive,aes(xintercept=Median), alpha=0.5)+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  facet_grid(rows=vars(DF_age),vars(SUBPLOT), labeller = label_both)+
+  ylim(0,30)+
+  xlim(0,400)+
+  theme_bw()
+pCW20_2
+#ggsave(here("Summary_Graphs_update","CW20_Block2_DBH_histos_by_age_and_subplot.pdf"), height= 10, width = 12, units="in")
+
+#plotting3
+medCW20_3Alive<-subset(CW20_R3, Tree_status=="Alive") %>% 
+  group_by(DF_age, SUBPLOT, Tree_status) %>% 
+  summarise(Median=round(median(DBH_mm_nom, na.rm=TRUE)), N=n())
+medCW20_3Dead<-subset(CW20_R3, Tree_status=="Dead") %>% 
+  group_by(DF_age, SUBPLOT, Tree_status) %>% 
+  summarise(Median=round(median(DBH_mm_nom, na.rm=TRUE)), N=n())
+pCW20_3<- subset(CW20_R3, !is.na(Tree_status)) %>% 
+  ggplot(aes(DBH_mm_nom,fill=Tree_status))+
+  geom_histogram(position="identity", alpha=0.65, binwidth=25, )+
+  scale_fill_viridis_d(begin = 0.33, end = 0.99)+
+  labs(title= "Size distrubtion of trees in CW20 Block 3 by Age and Subplot",x="DBH (mm)",y= "Trees") +
+  geom_label(data = medCW20_3Alive,aes(x=Median+200,y=25,label=paste0("Sum: \n",N,"\n Median: \n",Median,"mm"), alpha=0.05),  show.legend = FALSE, label.size = 0)+
+  geom_label(data = medCW20_3Dead,aes(x=55,y=25, label=paste0("Sum: \n",N,"\n Median: \n",Median,"mm"), fontface='italic', alpha=0.05), show.legend = FALSE, label.size = 0)+ 
+  geom_vline(data=medCW20_3Dead,aes(xintercept=Median), linetype=2, alpha=0.5)+
+  geom_vline(data=medCW20_3Alive,aes(xintercept=Median), alpha=0.5)+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  facet_grid(rows=vars(DF_age),vars(SUBPLOT), labeller = label_both)+
+  ylim(0,30)+
+  xlim(0,400)+
+  theme_bw()
+pCW20_3
+#ggsave(here("Summary_Graphs_update","CW20_Block3_DBH_histos_by_age_and_subplot.pdf"), height= 10, width = 12, units="in")
+
+#plotting4
+medCW20_4Alive<-subset(CW20_R4, Tree_status=="Alive") %>% 
+  group_by(DF_age, SUBPLOT, Tree_status) %>% 
+  summarise(Median=round(median(DBH_mm_nom, na.rm=TRUE)), N=n())
+medCW20_4Dead<-subset(CW20_R4, Tree_status=="Dead") %>% 
+  group_by(DF_age, SUBPLOT, Tree_status) %>% 
+  summarise(Median=round(median(DBH_mm_nom, na.rm=TRUE)), N=n())
+pCW20_4<- subset(CW20_R4, !is.na(Tree_status)) %>% 
+  ggplot(aes(DBH_mm_nom,fill=Tree_status))+
+  geom_histogram(position="identity", alpha=0.65, binwidth=25, )+
+  scale_fill_viridis_d(begin = 0.33, end = 0.99)+
+  labs(title= "Size distrubtion of trees in CW20 Block 4 by Age and Subplot",x="DBH (mm)",y= "Trees") +
+  geom_label(data = medCW20_4Alive,aes(x=Median+200,y=25,label=paste0("Sum: \n",N,"\n Median: \n",Median,"mm"), alpha=0.05),  show.legend = FALSE, label.size = 0)+
+  geom_label(data = medCW20_4Dead,aes(x=55,y=25, label=paste0("Sum: \n",N,"\n Median: \n",Median,"mm"), fontface='italic', alpha=0.05), show.legend = FALSE, label.size = 0)+ 
+  geom_vline(data=medCW20_4Dead,aes(xintercept=Median), linetype=2, alpha=0.5)+
+  geom_vline(data=medCW20_4Alive,aes(xintercept=Median), alpha=0.5)+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  facet_grid(rows=vars(DF_age),vars(SUBPLOT), labeller = label_both)+
+  ylim(0,30)+
+  xlim(0,400)+
+  theme_bw()
+pCW20_4
+#ggsave(here("Summary_Graphs_update","CW20_Block4_DBH_histos_by_age_and_subplot.pdf"), height= 10, width = 12, units="in")
+```
+
+```{r}
+#RA20
+
+#UPDATE WITH NEW STYLE
+
+#CW20
+medRA20_Alive<-subset(RA20, Tree_status=="Alive") %>% 
+  group_by(DF_age, Block, Tree_status) %>% 
+  summarise(Median=round(median(DBH_mm_nom, na.rm=TRUE)), N=n())
+medRA20_Dead<-subset(RA20, Tree_status=="Dead") %>% 
+  group_by(DF_age, Block, Tree_status) %>% 
+  summarise(Median=round(median(DBH_mm_nom, na.rm=TRUE)), N=n())
+pRA20<- subset(RA20, !is.na(Tree_status)) %>% 
+  ggplot(aes(DBH_mm_nom,fill=Tree_status))+
+  geom_histogram(position="identity", alpha=0.65, binwidth =25)+
+  scale_fill_viridis_d(begin = 0.33, end = 0.99)+
+  labs(title= "Size distrubtion of trees in RA20 Treatment by Age and Block",x="DBH (mm)",y= "Trees") +
+  geom_label(data = medRA20_Alive,aes(x=Median+200,y=88,label=paste0("Sum: \n",N,"\n Median: \n",Median,"mm"), alpha=0.05),  show.legend = FALSE, label.size = 0)+
+  geom_label(data = medRA20_Dead,aes(x=55,y=88, label=paste0("Sum: \n",N,"\n Median: \n",Median,"mm"), fontface='italic', alpha=0.05), show.legend = FALSE, label.size = 0)+ 
+  geom_vline(data=medRA20_Dead,aes(xintercept=Median), linetype=2, alpha=0.5)+
+  geom_vline(data=medRA20_Alive,aes(xintercept=Median), alpha=0.5)+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  facet_grid(rows=vars(DF_age),vars(Block), labeller = label_both)+
+  scale_y_continuous(breaks = c(0,20,40,60,80,100),limits=c(0,100))+
+  xlim(0,400)+
+  theme_bw()
+pRA20
+#ggsave(here("Summary_Graphs_update","RA20_DBH_histos_by_age_and_Block.pdf"), height= 10, width = 12, units="in")
+
+#Drilling down to look at subplots within Blocks
+RA20_R0<-subset(RA20, REP==0)
+RA20_R1<-subset(RA20, REP==1)
+RA20_R2<-subset(RA20, REP==2)
+RA20_R3<-subset(RA20, REP==3)
+RA20_R4<-subset(RA20, REP==4)
+
+#plotting0
+medRA20_0Alive<-subset(RA20_R0, Tree_status=="Alive") %>% 
+  group_by(DF_age, SUBPLOT, Tree_status) %>% 
+  summarise(Median=round(median(DBH_mm_nom, na.rm=TRUE)), N=n())
+medRA20_0Dead<-subset(RA20_R0, Tree_status=="Dead") %>% 
+  group_by(DF_age, SUBPLOT, Tree_status) %>% 
+  summarise(Median=round(median(DBH_mm_nom, na.rm=TRUE)), N=n())
+pRA20_0<- subset(RA20_R0, !is.na(Tree_status)) %>% 
+  ggplot(aes(DBH_mm_nom,fill=Tree_status))+
+  geom_histogram(position="identity", alpha=0.65, binwidth=25, )+
+  scale_fill_viridis_d(begin = 0.33, end = 0.99)+
+  labs(title= "Size distrubtion of trees in RA20 Block 5 by Age and Subplot",x="DBH (mm)",y= "Trees") +
+  geom_label(data = medRA20_0Alive,aes(x=Median+200,y=25,label=paste0("Sum: \n",N,"\n Median: \n",Median,"mm"), alpha=0.05),  show.legend = FALSE, label.size = 0)+
+  geom_label(data = medRA20_0Dead,aes(x=55,y=25, label=paste0("Sum: \n",N,"\n Median: \n",Median,"mm"), fontface='italic', alpha=0.05), show.legend = FALSE, label.size = 0)+ 
+  geom_vline(data=medRA20_0Dead,aes(xintercept=Median), linetype=2, alpha=0.5)+
+  geom_vline(data=medRA20_0Alive,aes(xintercept=Median), alpha=0.5)+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  facet_grid(rows=vars(DF_age),vars(SUBPLOT), labeller = label_both)+
+  ylim(0,30)+
+  xlim(0,400)+
+  theme_bw()
+pRA20_0
+#ggsave(here("Summary_Graphs_update","RA20_Block5_DBH_histos_by_age_and_subplot.pdf"), height= 10, width = 12, units="in")
+
+#plotting1
+medRA20_1Alive<-subset(RA20_R1, Tree_status=="Alive") %>% 
+  group_by(DF_age, SUBPLOT, Tree_status) %>% 
+  summarise(Median=round(median(DBH_mm_nom, na.rm=TRUE)), N=n())
+medRA20_1Dead<-subset(RA20_R1, Tree_status=="Dead") %>% 
+  group_by(DF_age, SUBPLOT, Tree_status) %>% 
+  summarise(Median=round(median(DBH_mm_nom, na.rm=TRUE)), N=n())
+pRA20_1<- subset(RA20_R1, !is.na(Tree_status)) %>% 
+  ggplot(aes(DBH_mm_nom,fill=Tree_status))+
+  geom_histogram(position="identity", alpha=0.65, binwidth=25, )+
+  scale_fill_viridis_d(begin = 0.33, end = 0.99)+
+  labs(title= "Size distrubtion of trees in RA20 Block 1 by Age and Subplot",x="DBH (mm)",y= "Trees") +
+  geom_label(data = medRA20_1Alive,aes(x=Median+200,y=25,label=paste0("Sum: \n",N,"\n Median: \n",Median,"mm"), alpha=0.05),  show.legend = FALSE, label.size = 0)+
+  geom_label(data = medRA20_1Dead,aes(x=55,y=25, label=paste0("Sum: \n",N,"\n Median: \n",Median,"mm"), fontface='italic', alpha=0.05), show.legend = FALSE, label.size = 0)+ 
+  geom_vline(data=medRA20_1Dead,aes(xintercept=Median), linetype=2, alpha=0.5)+
+  geom_vline(data=medRA20_1Alive,aes(xintercept=Median), alpha=0.5)+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  facet_grid(rows=vars(DF_age),vars(SUBPLOT), labeller = label_both)+
+  ylim(0,30)+
+  xlim(0,400)+
+  theme_bw()
+pRA20_1
+#ggsave(here("Summary_Graphs_update","RA20_Block1_DBH_histos_by_age_and_subplot.pdf"), height= 10, width = 12, units="in")
+
+#plotting2
+medRA20_2Alive<-subset(RA20_R2, Tree_status=="Alive") %>% 
+  group_by(DF_age, SUBPLOT, Tree_status) %>% 
+  summarise(Median=round(median(DBH_mm_nom, na.rm=TRUE)), N=n())
+medRA20_2Dead<-subset(RA20_R2, Tree_status=="Dead") %>% 
+  group_by(DF_age, SUBPLOT, Tree_status) %>% 
+  summarise(Median=round(median(DBH_mm_nom, na.rm=TRUE)), N=n())
+pRA20_2<- subset(RA20_R2, !is.na(Tree_status)) %>% 
+  ggplot(aes(DBH_mm_nom,fill=Tree_status))+
+  geom_histogram(position="identity", alpha=0.65, binwidth=25, )+
+  scale_fill_viridis_d(begin = 0.33, end = 0.99)+
+  labs(title= "Size distrubtion of trees in RA20 Block 2 by Age and Subplot",x="DBH (mm)",y= "Trees") +
+  geom_label(data = medRA20_2Alive,aes(x=Median+200,y=25,label=paste0("Sum: \n",N,"\n Median: \n",Median,"mm"), alpha=0.05),  show.legend = FALSE, label.size = 0)+
+  geom_label(data = medRA20_2Dead,aes(x=55,y=25, label=paste0("Sum: \n",N,"\n Median: \n",Median,"mm"), fontface='italic', alpha=0.05), show.legend = FALSE, label.size = 0)+ 
+  geom_vline(data=medRA20_2Dead,aes(xintercept=Median), linetype=2, alpha=0.5)+
+  geom_vline(data=medRA20_2Alive,aes(xintercept=Median), alpha=0.5)+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  facet_grid(rows=vars(DF_age),vars(SUBPLOT), labeller = label_both)+
+  ylim(0,30)+
+  xlim(0,400)+
+  theme_bw()
+pRA20_2
+#ggsave(here("Summary_Graphs_update","RA20_Block2_DBH_histos_by_age_and_subplot.pdf"), height= 10, width = 12, units="in")
+
+#plotting3
+medRA20_3Alive<-subset(RA20_R3, Tree_status=="Alive") %>% 
+  group_by(DF_age, SUBPLOT, Tree_status) %>% 
+  summarise(Median=round(median(DBH_mm_nom, na.rm=TRUE)), N=n())
+medRA20_3Dead<-subset(RA20_R3, Tree_status=="Dead") %>% 
+  group_by(DF_age, SUBPLOT, Tree_status) %>% 
+  summarise(Median=round(median(DBH_mm_nom, na.rm=TRUE)), N=n())
+pRA20_3<- subset(RA20_R3, !is.na(Tree_status)) %>% 
+  ggplot(aes(DBH_mm_nom,fill=Tree_status))+
+  geom_histogram(position="identity", alpha=0.65, binwidth=25, )+
+  scale_fill_viridis_d(begin = 0.33, end = 0.99)+
+  labs(title= "Size distrubtion of trees in RA20 Block 3 by Age and Subplot",x="DBH (mm)",y= "Trees") +
+  geom_label(data = medRA20_3Alive,aes(x=Median+200,y=25,label=paste0("Sum: \n",N,"\n Median: \n",Median,"mm"), alpha=0.05),  show.legend = FALSE, label.size = 0)+
+  geom_label(data = medRA20_3Dead,aes(x=55,y=25, label=paste0("Sum: \n",N,"\n Median: \n",Median,"mm"), fontface='italic', alpha=0.05), show.legend = FALSE, label.size = 0)+ 
+  geom_vline(data=medRA20_3Dead,aes(xintercept=Median), linetype=2, alpha=0.5)+
+  geom_vline(data=medRA20_3Alive,aes(xintercept=Median), alpha=0.5)+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  facet_grid(rows=vars(DF_age),vars(SUBPLOT), labeller = label_both)+
+  ylim(0,30)+
+  xlim(0,400)+
+  theme_bw()
+pRA20_3
+#ggsave(here("Summary_Graphs_update","RA20_Block3_DBH_histos_by_age_and_subplot.pdf"), height= 10, width = 12, units="in")
+
+#plotting4
+medRA20_4Alive<-subset(RA20_R4, Tree_status=="Alive") %>% 
+  group_by(DF_age, SUBPLOT, Tree_status) %>% 
+  summarise(Median=round(median(DBH_mm_nom, na.rm=TRUE)), N=n())
+medRA20_4Dead<-subset(RA20_R4, Tree_status=="Dead") %>% 
+  group_by(DF_age, SUBPLOT, Tree_status) %>% 
+  summarise(Median=round(median(DBH_mm_nom, na.rm=TRUE)), N=n())
+pRA20_4<- subset(RA20_R4, !is.na(Tree_status)) %>% 
+  ggplot(aes(DBH_mm_nom,fill=Tree_status))+
+  geom_histogram(position="identity", alpha=0.65, binwidth=25, )+
+  scale_fill_viridis_d(begin = 0.33, end = 0.99)+
+  labs(title= "Size distrubtion of trees in RA20 Block 4 by Age and Subplot",x="DBH (mm)",y= "Trees") +
+  geom_label(data = medRA20_4Alive,aes(x=Median+200,y=25,label=paste0("Sum: \n",N,"\n Median: \n",Median,"mm"), alpha=0.05),  show.legend = FALSE, label.size = 0)+
+  geom_label(data = medRA20_4Dead,aes(x=55,y=25, label=paste0("Sum: \n",N,"\n Median: \n",Median,"mm"), fontface='italic', alpha=0.05), show.legend = FALSE, label.size = 0)+ 
+  geom_vline(data=medRA20_4Dead,aes(xintercept=Median), linetype=2, alpha=0.5)+
+  geom_vline(data=medRA20_4Alive,aes(xintercept=Median), alpha=0.5)+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  facet_grid(rows=vars(DF_age),vars(SUBPLOT), labeller = label_both)+
+  ylim(0,30)+
+  xlim(0,400)+
+  theme_bw()
+pRA20_4
+#ggsave(here("Summary_Graphs_update","RA20_Block4_DBH_histos_by_age_and_subplot.pdf"), height= 10, width = 12, units="in")
+```
+
+```{r}
+#DF0
+#make varible containing total counts of trees with diameters
+medDF0_Alive<-subset(DF0, Tree_status=="Alive") %>% 
+  group_by(DF_age, Block, Tree_status) %>% 
+  summarise(Median=round(median(DBH_mm_nom, na.rm=TRUE)), N=n())
+medDF0_Dead<-subset(DF0, Tree_status=="Dead") %>% 
+  group_by(DF_age, Block, Tree_status) %>% 
+  summarise(Median=round(median(DBH_mm_nom, na.rm=TRUE)), N=n())
+pDF0<- subset(DF0, !is.na(Tree_status)) %>% 
+  ggplot(aes(DBH_mm_nom,fill=Tree_status))+
+  geom_histogram(position="identity", alpha=0.65, binwidth =25)+
+  scale_fill_viridis_d(begin = 0.33, end = 0.99)+
+  labs(title= "Size distrubtion of trees in DF0 Treatment by Age and Block",x="DBH (mm)",y= "Trees") +
+  geom_label(data = medDF0_Alive,aes(x=Median+200,y=88,label=paste0("Sum: \n",N,"\n Median: \n",Median,"mm"), alpha=0.05),  show.legend = FALSE, label.size = 0)+
+  geom_label(data = medDF0_Dead,aes(x=55,y=88, label=paste0("Sum: \n",N,"\n Median: \n",Median,"mm"), fontface='italic', alpha=0.05), show.legend = FALSE, label.size = 0)+ 
+  geom_vline(data=medDF0_Dead,aes(xintercept=Median), linetype=2, alpha=0.5)+
+  geom_vline(data=medDF0_Alive,aes(xintercept=Median), alpha=0.5)+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  facet_grid(rows=vars(DF_age),vars(Block), labeller = label_both)+
+  scale_y_continuous(breaks = c(0,20,40,60,80,100),limits=c(0,100))+
+  xlim(0,600)+
+  theme_bw()
+pDF0
+#ggsave(here("Summary_Graphs_update","DF0_DBH_histos_by_age_and_Block.pdf"), height= 10, width = 12, units="in")
+
+#Drilling down to look at subplots within Blocks
+DF0_R0<-subset(DF0, REP==0)
+DF0_R1<-subset(DF0, REP==1)
+DF0_R2<-subset(DF0, REP==2)
+DF0_R3<-subset(DF0, REP==3)
+DF0_R4<-subset(DF0, REP==4)
+
+#plotting0
+medDF0_0Alive<-subset(DF0_R0, Tree_status=="Alive") %>% 
+  group_by(DF_age, SUBPLOT, Tree_status) %>% 
+  summarise(Median=round(median(DBH_mm_nom, na.rm=TRUE)), N=n())
+medDF0_0Dead<-subset(DF0_R0, Tree_status=="Dead") %>% 
+  group_by(DF_age, SUBPLOT, Tree_status) %>% 
+  summarise(Median=round(median(DBH_mm_nom, na.rm=TRUE)), N=n())
+pDF0_0<- subset(DF0_R0, !is.na(Tree_status)) %>% 
+  ggplot(aes(DBH_mm_nom,fill=Tree_status))+
+  geom_histogram(position="identity", alpha=0.65, binwidth=25, )+
+  scale_fill_viridis_d(begin = 0.33, end = 0.99)+
+  labs(title= "Size distrubtion of trees in DF0 Block 5 by Age and Subplot",x="DBH (mm)",y= "Trees") +
+  geom_label(data = medDF0_0Alive,aes(x=Median+200,y=25,label=paste0("Sum: \n",N,"\n Median: \n",Median,"mm"), alpha=0.05),  show.legend = FALSE, label.size = 0)+
+  geom_label(data = medDF0_0Dead,aes(x=55,y=25, label=paste0("Sum: \n",N,"\n Median: \n",Median,"mm"), fontface='italic', alpha=0.05), show.legend = FALSE, label.size = 0)+ 
+  geom_vline(data=medDF0_0Dead,aes(xintercept=Median), linetype=2, alpha=0.5)+
+  geom_vline(data=medDF0_0Alive,aes(xintercept=Median), alpha=0.5)+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  facet_grid(rows=vars(DF_age),vars(SUBPLOT), labeller = label_both)+
+  ylim(0,30)+
+  xlim(0,600)+
+  theme_bw()
+pDF0_0
+#ggsave(here("Summary_Graphs_update","DF0_Block5_DBH_histos_by_age_and_subplot.pdf"), height= 10, width = 12, units="in")
+
+#plotting1
+medDF0_1Alive<-subset(DF0_R1, Tree_status=="Alive") %>% 
+  group_by(DF_age, SUBPLOT, Tree_status) %>% 
+  summarise(Median=round(median(DBH_mm_nom, na.rm=TRUE)), N=n())
+medDF0_1Dead<-subset(DF0_R1, Tree_status=="Dead") %>% 
+  group_by(DF_age, SUBPLOT, Tree_status) %>% 
+  summarise(Median=round(median(DBH_mm_nom, na.rm=TRUE)), N=n())
+pDF0_1<- subset(DF0_R1, !is.na(Tree_status)) %>% 
+  ggplot(aes(DBH_mm_nom,fill=Tree_status))+
+  geom_histogram(position="identity", alpha=0.65, binwidth=25, )+
+  scale_fill_viridis_d(begin = 0.33, end = 0.99)+
+  labs(title= "Size distrubtion of trees in DF0 Block 1 by Age and Subplot",x="DBH (mm)",y= "Trees") +
+  geom_label(data = medDF0_1Alive,aes(x=Median+200,y=25,label=paste0("Sum: \n",N,"\n Median: \n",Median,"mm"), alpha=0.05),  show.legend = FALSE, label.size = 0)+
+  geom_label(data = medDF0_1Dead,aes(x=55,y=25, label=paste0("Sum: \n",N,"\n Median: \n",Median,"mm"), fontface='italic', alpha=0.05), show.legend = FALSE, label.size = 0)+ 
+  geom_vline(data=medDF0_1Dead,aes(xintercept=Median), linetype=2, alpha=0.5)+
+  geom_vline(data=medDF0_1Alive,aes(xintercept=Median), alpha=0.5)+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  facet_grid(rows=vars(DF_age),vars(SUBPLOT), labeller = label_both)+
+  ylim(0,30)+
+  xlim(0,600)+
+  theme_bw()
+pDF0_1
+#ggsave(here("Summary_Graphs_update","DF0_Block1_DBH_histos_by_age_and_subplot.pdf"), height= 10, width = 12, units="in")
+
+#plotting2
+medDF0_2Alive<-subset(DF0_R2, Tree_status=="Alive") %>% 
+  group_by(DF_age, SUBPLOT, Tree_status) %>% 
+  summarise(Median=round(median(DBH_mm_nom, na.rm=TRUE)), N=n())
+medDF0_2Dead<-subset(DF0_R2, Tree_status=="Dead") %>% 
+  group_by(DF_age, SUBPLOT, Tree_status) %>% 
+  summarise(Median=round(median(DBH_mm_nom, na.rm=TRUE)), N=n())
+pDF0_2<- subset(DF0_R2, !is.na(Tree_status)) %>% 
+  ggplot(aes(DBH_mm_nom,fill=Tree_status))+
+  geom_histogram(position="identity", alpha=0.65, binwidth=25, )+
+  scale_fill_viridis_d(begin = 0.33, end = 0.99)+
+  labs(title= "Size distrubtion of trees in DF0 Block 2 by Age and Subplot",x="DBH (mm)",y= "Trees") +
+  geom_label(data = medDF0_2Alive,aes(x=Median+150,y=25,label=paste0("Sum: \n",N,"\n Median: \n",Median,"mm"), alpha=0.05),  show.legend = FALSE, label.size = 0)+
+  geom_label(data = medDF0_2Dead,aes(x=55,y=25, label=paste0("Sum: \n",N,"\n Median: \n",Median,"mm"), fontface='italic', alpha=0.05), show.legend = FALSE, label.size = 0)+ 
+  geom_vline(data=medDF0_2Dead,aes(xintercept=Median), linetype=2, alpha=0.5)+
+  geom_vline(data=medDF0_2Alive,aes(xintercept=Median), alpha=0.5)+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  facet_grid(rows=vars(DF_age),vars(SUBPLOT), labeller = label_both)+
+  ylim(0,30)+
+  xlim(0,600)+
+  theme_bw()
+pDF0_2
+#ggsave(here("Summary_Graphs_update","DF0_Block2_DBH_histos_by_age_and_subplot.pdf"), height= 10, width = 12, units="in")
+
+#plotting3
+medDF0_3Alive<-subset(DF0_R3, Tree_status=="Alive") %>% 
+  group_by(DF_age, SUBPLOT, Tree_status) %>% 
+  summarise(Median=round(median(DBH_mm_nom, na.rm=TRUE)), N=n())
+medDF0_3Dead<-subset(DF0_R3, Tree_status=="Dead") %>% 
+  group_by(DF_age, SUBPLOT, Tree_status) %>% 
+  summarise(Median=round(median(DBH_mm_nom, na.rm=TRUE)), N=n())
+pDF0_3<- subset(DF0_R3, !is.na(Tree_status)) %>% 
+  ggplot(aes(DBH_mm_nom,fill=Tree_status))+
+  geom_histogram(position="identity", alpha=0.65, binwidth=25, )+
+  scale_fill_viridis_d(begin = 0.33, end = 0.99)+
+  labs(title= "Size distrubtion of trees in DF0 Block 3 by Age and Subplot",x="DBH (mm)",y= "Trees") +
+  geom_label(data = medDF0_3Alive,aes(x=Median+175,y=25,label=paste0("Sum: \n",N,"\n Median: \n",Median,"mm"), alpha=0.05),  show.legend = FALSE, label.size = 0)+
+  geom_label(data = medDF0_3Dead,aes(x=55,y=25, label=paste0("Sum: \n",N,"\n Median: \n",Median,"mm"), fontface='italic', alpha=0.05), show.legend = FALSE, label.size = 0)+ 
+  geom_vline(data=medDF0_3Dead,aes(xintercept=Median), linetype=2, alpha=0.5)+
+  geom_vline(data=medDF0_3Alive,aes(xintercept=Median), alpha=0.5)+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  facet_grid(rows=vars(DF_age),vars(SUBPLOT), labeller = label_both)+
+  ylim(0,30)+
+  xlim(0,600)+
+  theme_bw()
+pDF0_3
+#ggsave(here("Summary_Graphs_update","DF0_Block3_DBH_histos_by_age_and_subplot.pdf"), height= 10, width = 12, units="in")
+
+#plotting4
+medDF0_4Alive<-subset(DF0_R4, Tree_status=="Alive") %>% 
+  group_by(DF_age, SUBPLOT, Tree_status) %>% 
+  summarise(Median=round(median(DBH_mm_nom, na.rm=TRUE)), N=n())
+medDF0_4Dead<-subset(DF0_R4, Tree_status=="Dead") %>% 
+  group_by(DF_age, SUBPLOT, Tree_status) %>% 
+  summarise(Median=round(median(DBH_mm_nom, na.rm=TRUE)), N=n())
+pDF0_4<- subset(DF0_R4, !is.na(Tree_status)) %>% 
+  ggplot(aes(DBH_mm_nom,fill=Tree_status))+
+  geom_histogram(position="identity", alpha=0.65, binwidth=25, )+
+  scale_fill_viridis_d(begin = 0.33, end = 0.99)+
+  labs(title= "Size distrubtion of trees in DF0 Block 4 by Age and Subplot",x="DBH (mm)",y= "Trees") +
+  geom_label(data = medDF0_4Alive,aes(x=Median+200,y=25,label=paste0("Sum: \n",N,"\n Median: \n",Median,"mm"), alpha=0.05),  show.legend = FALSE, label.size = 0)+
+  geom_label(data = medDF0_4Dead,aes(x=55,y=25, label=paste0("Sum: \n",N,"\n Median: \n",Median,"mm"), fontface='italic', alpha=0.05), show.legend = FALSE, label.size = 0)+ 
+  geom_vline(data=medDF0_4Dead,aes(xintercept=Median), linetype=2, alpha=0.5)+
+  geom_vline(data=medDF0_4Alive,aes(xintercept=Median), alpha=0.5)+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  facet_grid(rows=vars(DF_age),vars(SUBPLOT), labeller = label_both)+
+  ylim(0,30)+
+  xlim(0,600)+
+  theme_bw()
+pDF0_4
+#ggsave(here("Summary_Graphs_update","DF0_Block4_DBH_histos_by_age_and_subplot.pdf"), height= 10, width = 12, units="in")
+
+#printing all plots in one file
+MyPlots<-list(pall,pRA10,pRA10_0,pRA10_2,pRA10_4,pCW10,pCW10_0,pCW10_1,pCW10_2,pCW10_3,pCW10_4,pRA20,pRA20_0,pRA20_1,pRA20_2,pRA20_3,pRA20_4,pCW20,pCW20_0,pCW20_1,pCW20_2,pCW20_3,pCW20_4,pDF0,pDF0_0,pDF0_1,pDF0_2,pDF0_3,pDF0_4)
+#MyPlots<-list(pRA10,pRA10_0,pRA10_1,pRA10_2,pRA10_3,pRA10_4,pCW10,pCW10_0,pCW10_1,pCW10_2,pCW10_3,pCW10_4,pDF0,pDF0_0,pDF0_1,pDF0_2,pDF0_3,pDF0_4)
+
+#pdf(here("Summary_Graphs_update","lessA1A3_Block_and_subplot_summaries_by_treatment.pdf"), height= 10, width = 12)
+#MyPlots
+#dev.off()
+```
+
+## Generating Plot and Stand level summaries
+```{r}
+#building from Woods Creek approach
+#lessA1A3<-readRDS(file=here("raw_data","long_data_keep_lessA1A3.Rds"))
+
+#creating unique tree ID variable of format TRT_REP_SUBPLOT_TREE
+lessA1A3$Tree_ID_TRS<-paste(lessA1A3$TRT_code,lessA1A3$REP,lessA1A3$SUBPLOT,lessA1A3$TREE, sep = "_")
+#creating unique subplotplot ID factor varaible of format TRT_REP_SUBPLOT
+lessA1A3$Subplot_ID_TRS<-paste(lessA1A3$TRT_code,lessA1A3$REP,lessA1A3$SUBPLOT, sep = "_")
+
+#creating subplot level DF excluding trees with no status recorded (like 1987 measurements for ABDE and 1995 for CDE)
+#sources for: 
+  #removing STATUS=NA https://stackoverflow.com/questions/29501188/dplyr-removing-nas-from-group-by-variable 
+  #excluding Live_BA_sq_m = 0 https://stackoverflow.com/questions/54805570/dplyr-summarise-keep-na-if-all-summarised-values-are-na/54805923
+#subplot_df<-long_data_keep %>% filter(!is.na(STATUS)) %>% group_by(Subplot_ID_TRS, YEAR_fac,TRT, STATUS, .drop = TRUE) %>% summarise(count = n(), Live_BA_sq_m = if(all(is.na(Live_BA_sq_m))) NA_real_ else sum(Live_BA_sq_m, na.rm=TRUE))
+#using DF age instead of year and adding PW and PW+root rot counts
+#converting BA to BA m^2/ha 1/20 acre = 0.02023428 hectares
+
+#creating individual columns for damage types to summarise
+lessA1A3$LRR<-ifelse(lessA1A3$SUP_LRR=="NA_LRR",1,NA)
+lessA1A3$No_dam<-ifelse(lessA1A3$SUP_LRR=="NA_NA",1,NA)
+lessA1A3$SUP<-ifelse(lessA1A3$SUP_LRR=="Suppressed_NA",1,NA)
+lessA1A3$LRRNO<-ifelse(lessA1A3$SUP_LRR=="NA_LRR"|lessA1A3$SUP_LRR=="NA_NA",1,NA)
+lessA1A3$all_DAM<-ifelse(lessA1A3$SUP_LRR=="NA_LRR"|lessA1A3$SUP_LRR=="NA_NA"|lessA1A3$SUP_LRR=="Suppressed_NA",1,NA)
+
+
+subplot_df_age<-lessA1A3 %>% filter(!is.na(STATUS)) %>% group_by(Subplot_ID_TRS, DF_age,TRT, STATUS, .drop = TRUE) %>% summarise(count = n(), Live_BA_mpha = if(all(is.na(Live_BA_sq_m))) NA_real_ else sum(Live_BA_sq_m/0.02023428, na.rm=TRUE),LRR=sum(LRR, na.rm = TRUE), No_dam=sum(No_dam, na.rm = TRUE),SUP=sum(SUP,na.rm = TRUE), LRRNO=sum(LRRNO, na.rm=TRUE),all_DAM=sum(all_DAM, na.rm=TRUE), YEAR_dbl=median(YEAR_dbl, na.rm = TRUE), DF_age=median(DF_age, na.rm = TRUE))
+#subplot_df_year<-lessA1A3 %>% filter(!is.na(STATUS)) %>% group_by(Subplot_ID_TRS, YEAR_dbl,TRT, STATUS, .drop = TRUE) %>% summarise(count = n(), #Live_BA_mpha = if(all(is.na(Live_BA_sq_m))) NA_real_ else sum(Live_BA_sq_m/0.02023428, na.rm=TRUE),PW=sum(!is.na(PW)), PW_R=sum(!is.na(PW_R)), #DF_age=median(DF_age, na.rm = TRUE))
+
+# 1 sq m = 10.7639 sq ft
+#subplot_df_age$Live_BA_sq_ft<-subplot_df_age$Live_BA_sq_m*10.7639
+#subplot_df_age$Live_BA_fpa<-subplot_df_age$Live_BA_sq_ft/.053
+#subplot_df_year$Live_BA_sq_ft<-subplot_df_year$Live_BA_sq_m*10.7639
+#subplot_df_year$Live_BA_fpa<-subplot_df_year$Live_BA_sq_ft/.053
+
+#adding the separate TMT, BLOCK, and PLOT columns
+subplot_df_age<-subplot_df_age %>% separate(Subplot_ID_TRS, c("TRT","REP","SUBPLOT"),"_",remove = FALSE)
+#subplot_df_year<-subplot_df_year %>% separate(Subplot_ID_TRS, c("TRT","REP","SUBPLOT"),"_",remove = FALSE)
+
+#adding sq ft/acr in addition to sq m/ha  1m/ha = 4.356 ft/a
+subplot_df_age$Live_BA_fpa<-subplot_df_age$Live_BA_mpha*4.356
+#subplot_df_year$Live_BA_fpa<-subplot_df_year$Live_BA_mpha*4.356
+#subplot_df_age$TRT<-as.factor(subplot_df_age$TRT)
+#subplot_df_age$REP<-as.factor(subplot_df_age$REP)
+#subplot_df_age$SUBPLOT<-as.factor(subplot_df_age$SUBPLOT)
+
+#creating unique stand ID factor varaible of format TRT_BLOCK
+subplot_df_age$Stand_ID_TR<-paste(subplot_df_age$TRT,subplot_df_age$REP, sep = "_")
+#subplot_df_year$Stand_ID_TR<-paste(subplot_df_year$TRT,subplot_df_year$REP, sep = "_")
+# updating to calculate stand-level Live-BA mph and fpa by taking the mean of subplots rather than summing so I can account for missing data/subplots
+
+#instead I will just use REP and as a proxy for FVS parameter related to initial incidence, since that is what was used to determine the blocking anyway. Rep 1=0.2, Rep 2=0.4, Rep 3=0.6 Rep 4=0.8 Rep 0=1.0
+
+stand_df_age<- subplot_df_age %>% filter(!is.na(STATUS)) %>% group_by(Stand_ID_TR, DF_age, TRT, STATUS, .drop = TRUE) %>% summarise(count = sum(count, na.rm=TRUE), Live_BA_mpha = if(all(is.na(Live_BA_mpha))) NA_real_ else mean(Live_BA_mpha, na.rm=TRUE),  LRR=sum(LRR, na.rm = TRUE), No_dam=sum(No_dam, na.rm = TRUE),SUP=sum(SUP,na.rm = TRUE), LRRNO=sum(LRRNO, na.rm=TRUE),all_DAM=sum(all_DAM, na.rm=TRUE), YEAR_dbl=median(YEAR_dbl, na.rm = TRUE))
+
+#stand_df_year<- subplot_df_year %>% filter(!is.na(STATUS)) %>% group_by(Stand_ID_TR, YEAR_dbl, TRT, STATUS, .drop = TRUE) %>% summarise(count = #sum(count, na.rm=TRUE), Live_BA_mpha = if(all(is.na(Live_BA_mpha))) NA_real_ else mean(Live_BA_mpha, na.rm=TRUE), PW=sum(PW), PW_R=sum(PW_R), #DF_age=median(DF_age, na.rm = TRUE))
+
+#adding the separate REP column
+stand_df_age<-stand_df_age %>% separate(Stand_ID_TR, c(NA,"REP"),"_",remove = FALSE)
+#stand_df_year<-stand_df_year %>% separate(Stand_ID_TR, c(NA,"REP"),"_",remove = FALSE)
+#stand_df_age$REP<-as.factor(stand_df_age$REP)
+
+#subplot_ABC<- subplot_df_age[subplot_df_age$TRT=="A"|subplot_df_age$TRT=="B"|subplot_df_age$TRT=="C",]
+#stand_ABC<- stand_df_age[stand_df_age$TRT=="A"|stand_df_age$TRT=="B"|stand_df_age$TRT=="C",]
+
+#subplot_ABC_year<- subplot_df_year[subplot_df_year$TRT=="A"|subplot_df_year$TRT=="B"|subplot_df_year$TRT=="C",]
+#stand_ABC_year<- stand_df_year[stand_df_year$TRT=="A"|stand_df_year$TRT=="B"|stand_df_year$TRT=="C",]
+
+#subplot_ABC$SEV<-ifelse(subplot_ABC$REP=="0","5",subplot_ABC$REP)
+#stand_ABC$SEV<-ifelse(stand_ABC$REP=="0","5",stand_ABC$REP)
+#subplot_ABC$Treatment<-ifelse(subplot_ABC$TRT=="A",
+#                            "10RA",
+#                            ifelse(subplot_ABC$TRT=="B",
+#                               "10CW", "DF"))
+#stand_ABC$Treatment<-ifelse(stand_ABC$TRT=="A",
+#                            "10RA",
+#                            ifelse(stand_ABC$TRT=="B",
+#                               "10CW", "DF"))
+#adding sq ft/acr in addition to sq m/ha  1m/ha = 4.356 ft/a
+#stand_ABC$Live_BA_fpa<-stand_ABC$Live_BA_mpha*4.356
+
+#subplot_df_year$SEV<-ifelse(subplot_df_year$REP=="0","5",subplot_df_year$REP)
+#stand_df_year$SEV<-ifelse(stand_df_year$REP=="0","5",stand_df_year$REP)
+#subplot_df_year$Treatment<-ifelse(subplot_df_year$TRT=="A",
+#                            "10RA",
+#                            ifelse(subplot_df_year$TRT=="B",
+#                               "10CW", 
+#                               ifelse(subplot_df_year$TRT=="C",
+#                                "DF",
+#                                ifelse(subplot_df_year$TRT=="D",
+#                                  "RA20", "CW20"
+#                               ))))
+#stand_df_year$Treatment<-ifelse(stand_df_year$TRT=="A",
+#                            "10RA",
+#                            ifelse(stand_df_year$TRT=="B",
+#                               "10CW", 
+#                               ifelse(stand_df_year$TRT=="C",
+#                                "DF",
+#                                ifelse(stand_df_year$TRT=="D",
+#                                  "RA20", "CW20"
+#                               ))))
+subplot_df_age$SEV<-ifelse(subplot_df_age$REP=="0","5",subplot_df_age$REP)
+stand_df_age$SEV<-ifelse(stand_df_age$REP=="0","5",stand_df_age$REP)
+subplot_df_age$Treatment<-ifelse(subplot_df_age$TRT=="A",
+                            "A_12RA",
+                            ifelse(subplot_df_age$TRT=="B",
+                               "B_12CW", 
+                               ifelse(subplot_df_age$TRT=="C",
+                                "C_DF",
+                                ifelse(subplot_df_age$TRT=="D",
+                                  "D_25RA", "E_25CW"
+                               ))))
+stand_df_age$Treatment<-ifelse(stand_df_age$TRT=="A",
+                            "A_12RA",
+                            ifelse(stand_df_age$TRT=="B",
+                               "B_12CW", 
+                               ifelse(stand_df_age$TRT=="C",
+                                "C_DF",
+                                ifelse(stand_df_age$TRT=="D",
+                                  "D_25RA", "E_25CW"
+                               ))))
+
+
+#adding sq ft/acr in addition to sq m/ha  1m/ha = 4.356 ft/a
+#stand_df_year$Live_BA_fpa<-stand_df_year$Live_BA_mpha*4.356
+stand_df_age$Live_BA_fpa<-stand_df_age$Live_BA_mpha*4.356
+#saveRDS(subplot_df_age,here("subplot_df_age.Rds"))
+#saveRDS(stand_df_age,here("stand_level_df_age.Rds"))
+#saveRDS(subplot_ABC,here("subplot_level_ABC.Rds"))
+#saveRDS(stand_ABC,here("stand_level_ABC.Rds"))
+#write_csv(subplot_df_age, here("subplot_df_age.csv"))
+#write_csv(stand_df_age, here("stand_df_age.csv"))
+#write_csv(subplot_ABC, here("subplot_level_ABC.csv"))
+#write_csv(stand_ABC, here("stand_level_ABC.csv"))
+```
+
+#Creating FVS_input format
+```{r}
+#importing sample FVS_Input sheets to get the right format
+FVS_GroupAddFilesAndKeywords <- read_excel(here("FVS_inputs","FVS_Input_Template.xlsx"), sheet = "FVS_GroupAddFilesAndKeywords", range = "A1:C1", col_names = TRUE)
+GROUPS<-"All_Stands"
+#GROUPS<-c("All_Stands","A","B","C","D","AB","DE",1,2,3,4,5)
+FVSKEYWORDS<-c(
+"Database
+DSNin
+C:/FVS/Apiary_WRDM/FVS_Data.db
+StandSQL
+SELECT * FROM FVS_StandInit WHERE Stand_CN = '%Stand_CN%'
+EndSQL
+TreeSQL
+SELECT * FROM FVS_TreeInit WHERE Stand_CN = '%Stand_CN%'
+EndSQL
+END")
+
+#FVSKEYWORDS<-c(
+#"Database
+#DSNin
+#FVS_Data.db
+#StandSQL
+#SELECT * FROM FVS_StandInit WHERE Stand_CN = '%Stand_CN%'
+#EndSQL
+#TreeSQL
+#SELECT * FROM FVS_TreeInit WHERE Stand_CN = '%Stand_CN%'
+#EndSQL
+#END",
+#"Database
+#DSNin
+#FVS_Data.db
+#StandSQL
+#SELECT * FROM FVS_PlotInit WHERE StandPlot_CN = '%Stand_CN%'
+#EndSQL
+#TreeSQL
+#SELECT * FROM FVS_TreeInit WHERE StandPlot_CN = '%Stand_CN%'
+#EndSQL
+#END"
+#)
+###FINISH THE VECTOR ABOVE WITH THE OTHER GROUPS
+
+GFK_Input = data.frame(matrix(nrow = length(GROUPS), ncol = ncol(FVS_GroupAddFilesAndKeywords)))
+colnames(GFK_Input)<-colnames(FVS_GroupAddFilesAndKeywords)
+GFK_Input$GROUPS<-GROUPS
+GFK_Input$FVSKEYWORDS<-FVSKEYWORDS
+
+FVS_StandInit <- read_excel(here("FVS_inputs","FVS_Input_Template.xlsx"), sheet = "FVS_StandInit", range = "A1:BP1", col_names = TRUE)
+FVS_TreeInit <- read_excel(here("FVS_inputs","FVS_Input_Template.xlsx"), sheet = "FVS_TreeInit", range = "A1:AM1", col_names = TRUE)
+FVS_PlotInit <- read_excel(here("FVS_inputs","FVS_Input_Template.xlsx"), sheet = "FVS_PlotInit", range = "A1:BU1", col_names = TRUE)
+#A0 Treatment A REP "0" is being called Treatment 1 Stand 5,  A1 = Stand 1, A2= stand 2, A3= Stand 3, A4= Stand 4
+lessA1A3<-readRDS(file=here("raw_data","long_data_keep_lessA1A3.Rds"))
+
+#Calculate necessary ID variables
+FVS_Prep<-filter(lessA1A3, FVS_age==0 & !is.na(Tree_status))
+FVS_Prep$Tnum<-as.numeric(ifelse(FVS_Prep$TRT_code=="A",1,
+                                 ifelse(FVS_Prep$TRT_code=="B",2,
+                                  ifelse(FVS_Prep$TRT_code=="C",3,
+                                         ifelse(FVS_Prep$TRT_code=="D",4,
+                                        5)))))
+FVS_Prep$BLOCK<-as.numeric(ifelse(FVS_Prep$REP==0,5,FVS_Prep$REP))
+FVS_Prep$StandNum<-as.numeric(((FVS_Prep$Tnum -1)*5)+FVS_Prep$BLOCK)
+FVS_Prep$PlotNum<-as.numeric(((FVS_Prep$StandNum -1)*5)+as.numeric(FVS_Prep$SUBPLOT))
+#create an input file based on template and input data
+FVS_TreeInit_Test = data.frame(matrix(nrow = nrow(FVS_Prep), ncol = ncol(FVS_TreeInit))) 
+# assign column names
+colnames(FVS_TreeInit_Test) = colnames(FVS_TreeInit)
+#populate
+FVS_TreeInit_Test$STAND_CN<-FVS_Prep$StandNum
+FVS_TreeInit_Test$STAND_CN <- sprintf("%02d",FVS_TreeInit_Test$STAND_CN) # fix to 2 characters
+FVS_TreeInit_Test$STAND_ID<-FVS_TreeInit_Test$STAND_CN
+FVS_TreeInit_Test$PLOT_ID<-FVS_Prep$PlotNum
+FVS_TreeInit_Test$PLOT_ID <- sprintf("%03d",FVS_TreeInit_Test$PLOT_ID) # fix to 3 characters
+FVS_TreeInit_Test$PLOT_CN<-FVS_TreeInit_Test$PLOT_ID
+FVS_TreeInit_Test$STANDPLOT_CN<-paste0(FVS_TreeInit_Test$STAND_CN,FVS_TreeInit_Test$PLOT_CN)
+FVS_TreeInit_Test$STANDPLOT_CN <- sprintf("%05s",FVS_TreeInit_Test$STANDPLOT_CN) # fix to 5 characters
+FVS_TreeInit_Test$STANDPLOT_ID<-FVS_TreeInit_Test$STANDPLOT_CN
+FVS_TreeInit_Test$TREE_ID<-FVS_Prep$Tree_ID
+FVS_TreeInit_Test$HISTORY<-ifelse(FVS_Prep$STATUS=="3","7",FVS_Prep$STATUS)
+FVS_TreeInit_Test$DIAMETER<-(FVS_Prep$DBH_mm * 0.03937)
+FVS_TreeInit_Test$SPECIES<-"DF"
+FVS_TreeInit_Test$VARIANT<-"pn"
+
+```
+
+#including cut stumps in FVS inputs
+
+```{r, echo=FALSE}
+trees_less_10_sub<-readRDS(here("Initial_LRR_trees_dead_less_than_10_year.Rds"))
+sp_trees_less_10<-readRDS(here("Initial_LRR_trees_dead_less_than_10_year_in_subplots.Rds"))
+
+
+#adding damage code =62 for LRR, history=7 dead and update column names to FVS format
+sp_trees_less_10$HISTORY<-7
+sp_trees_less_10$DAMAGE1<-62
+names(sp_trees_less_10)[names(sp_trees_less_10) == 'Diameter'] <- 'DIAMETER'
+names(sp_trees_less_10)[names(sp_trees_less_10) == 'Species'] <- 'SPECIES'
+#can then subset sp_trees_less_10 based on subplots to generate outputs
+#Calculate necessary ID variables
+FVS_Stump_Prep<-subset(sp_trees_less_10, sp_trees_less_10$sub_p=="C01"|sp_trees_less_10$sub_p=="C02"|sp_trees_less_10$sub_p=="C03"|sp_trees_less_10$sub_p=="C04"|sp_trees_less_10$sub_p=="C05"|sp_trees_less_10$sub_p=="C11"|sp_trees_less_10$sub_p=="C12"|sp_trees_less_10$sub_p=="C13"|sp_trees_less_10$sub_p=="C14"|sp_trees_less_10$sub_p=="C15"|sp_trees_less_10$sub_p=="C21"|sp_trees_less_10$sub_p=="C22"|sp_trees_less_10$sub_p=="C23"|sp_trees_less_10$sub_p=="C24"|sp_trees_less_10$sub_p=="C25"|sp_trees_less_10$sub_p=="C31"|sp_trees_less_10$sub_p=="C32"|sp_trees_less_10$sub_p=="C33"|sp_trees_less_10$sub_p=="C34"|sp_trees_less_10$sub_p=="C35"|sp_trees_less_10$sub_p=="C41"|sp_trees_less_10$sub_p=="C42"|sp_trees_less_10$sub_p=="C43"|sp_trees_less_10$sub_p=="C44"|sp_trees_less_10$sub_p=="C45")
+#split subplot ID to get TRT BLOCK and SUBPLOP IDS
+df<-data.frame(str_split_fixed(FVS_Stump_Prep$sub_p, "", 3))
+colnames(df)<- c("TRT_code","BLOCK","SUBPLOT")
+#renaming Block 0 to Block 5
+df$BLOCK<-as.numeric(ifelse(df$BLOCK==0,5,df$BLOCK))
+df$SUBPLOT<-as.numeric(df$SUBPLOT)
+FVS_Stump_Prep<-cbind(FVS_Stump_Prep,df)
+FVS_Stump_Prep$Tnum<-as.numeric(ifelse(FVS_Stump_Prep$TRT_code=="A",1,
+                                 ifelse(FVS_Stump_Prep$TRT_code=="B",2,
+                                  ifelse(FVS_Stump_Prep$TRT_code=="C",3,
+                                         ifelse(FVS_Stump_Prep$TRT_code=="D",4,
+                                        5)))))
+FVS_Stump_Prep$StandNum<-as.numeric(((FVS_Stump_Prep$Tnum -1)*5)+FVS_Stump_Prep$BLOCK)
+FVS_Stump_Prep$PlotNum<-as.numeric(((FVS_Stump_Prep$StandNum -1)*5)+as.numeric(FVS_Stump_Prep$SUBPLOT))
+
+#write stump file and sort and edit FVS inputs using excell.
+write.csv(FVS_Stump_Prep,here("FVS_inputs_update","FVS_stumps_trtC.csv"))
+
+#create an input file based on template and input data
+#FVS_TreeInit_Test2 = data.frame(matrix(nrow = nrow(FVS_Stump_Prep), ncol = ncol(FVS_TreeInit))) 
+# assign column names
+#colnames(FVS_TreeInit_Test2) = colnames(FVS_TreeInit)
+#populate
+#FVS_TreeInit_Test2$STAND_CN<-FVS_Stump_Prep$StandNum
+#FVS_TreeInit_Test2$STAND_CN <- sprintf("%02d",FVS_TreeInit_Test2$STAND_CN) # fix to 2 characters
+#FVS_TreeInit_Test2$STAND_ID<-FVS_Stump_Prep$StandNum
+#FVS_TreeInit_Test2$STAND_ID <- sprintf("%02d",FVS_TreeInit_Test2$STAND_ID) # fix to 2 characters
+#FVS_TreeInit_Test2$PLOT_ID<-FVS_Stump_Prep$PlotNum
+#FVS_TreeInit_Test2$PLOT_ID <- sprintf("%03d",FVS_TreeInit_Test2$PLOT_ID) # fix to 3 characters
+#FVS_TreeInit_Test2$PLOT_CN<-FVS_Stump_Prep$PlotNum
+#FVS_TreeInit_Test2$PLOT_CN <- sprintf("%03d",FVS_TreeInit_Test2$PLOT_CN) # fix to 3 characters
+#FVS_TreeInit_Test2$STANDPLOT_CN<-paste0(FVS_TreeInit_Test2$STAND_CN,FVS_TreeInit_Test2$PLOT_CN)
+#FVS_TreeInit_Test2$STANDPLOT_CN <- sprintf("%05s",FVS_TreeInit_Test2$STANDPLOT_CN) # fix to 5 characters
+#FVS_TreeInit_Test2$STANDPLOT_ID<-paste0(FVS_TreeInit_Test2$STAND_ID,FVS_TreeInit_Test2$PLOT_ID)
+#FVS_TreeInit_Test2$STANDPLOT_ID <- sprintf("%05s",FVS_TreeInit_Test2$STANDPLOT_ID) # fix to 5 characters
+#FVS_TreeInit_Test2$TREE_ID<-FVS_Stump_Prep$entry
+#FVS_TreeInit_Test2$HISTORY<-7
+#FVS_TreeInit_Test2$DIAMETER<-(FVS_Stump_Prep$DIAMETER)
+#FVS_TreeInit_Test2$SPECIES<-FVS_Stump_Prep$SPECIES
+#FVS_TreeInit_Test2$VARIANT<-"pn"
+#add stumps to seedlings input
+#FVS_TreeInit_Input<-rbind(FVS_TreeInit_Test,FVS_TreeInit_Test2)
+#FVS_TreeInit_Input$SITE_TREE_FLAG<-0
+```
+
+#generate plot and stand FVS inputs
+```{r, echo=FALSE}
+#GENERATE PLOT INPUTS
+STANDPLOT_ID<-c(unique(FVS_TreeInit_Input$STANDPLOT_ID))
+Plot_prep<-as.data.frame(STANDPLOT_ID)
+colnames(Plot_prep)<-"STANDPLOT_ID"
+#split subplot ID to get TRT BLOCK and SUBPLOP IDS
+df<-data.frame(str_split_fixed(Plot_prep$STANDPLOT_ID, "", 5))
+df$STAND_ID<-paste(df$X1,df$X2,sep="")
+df$PLOT_ID<-paste(df$X3,df$X4,df$X5,sep ="")
+FVS_Plot_Prep<-cbind(Plot_prep,df)
+#create an input file based on template and input data
+FVS_PlotInit_Input = data.frame(matrix(nrow = nrow(FVS_Plot_Prep), ncol = ncol(FVS_PlotInit))) 
+# assign column names
+colnames(FVS_PlotInit_Input) = colnames(FVS_PlotInit)
+FVS_PlotInit_Input$STANDPLOT_CN<-FVS_Plot_Prep$STANDPLOT_ID
+FVS_PlotInit_Input$STANDPLOT_ID<-FVS_Plot_Prep$STANDPLOT_ID
+FVS_PlotInit_Input$PLOT_CN<-FVS_Plot_Prep$PLOT_ID
+FVS_PlotInit_Input$PLOT_ID<-FVS_Plot_Prep$PLOT_ID
+FVS_PlotInit_Input$STAND_ID<-FVS_Plot_Prep$STAND_ID
+FVS_PlotInit_Input$STAND_CN<-FVS_Plot_Prep$STAND_ID
+FVS_PlotInit_Input$INV_PLOT_SIZE=20
+FVS_PlotInit_Input$BRK_DBH=999
+FVS_PlotInit_Input$VARIANT<-"pn"
+FVS_PlotInit_Input$REGION=6
+FVS_PlotInit_Input$FOREST=12
+FVS_PlotInit_Input$AGE=0
+
+#FVS_PlotInit_Input$GROUPS<-c("All_Plots A AB 5 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots A AB 5 Project = #Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots A AB 5 Project = Apiary_WRDM Forest_Type=200 Variant=pn #Location_Code=612","All_Plots A AB 5 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots A AB 5 Project = Apiary_WRDM #Forest_Type=200 Variant=pn Location_Code=612","All_Plots A AB 2 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots A AB 2 #Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots A AB 2 Project = Apiary_WRDM Forest_Type=200 Variant=pn #Location_Code=612","All_Plots A AB 2 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots A AB 2 Project = Apiary_WRDM #Forest_Type=200 Variant=pn Location_Code=612","All_Plots A AB 4 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots A AB 4 #Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots A AB 4 Project = Apiary_WRDM Forest_Type=200 Variant=pn #Location_Code=612","All_Plots A AB 4 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots A AB 4 Project = Apiary_WRDM #Forest_Type=200 Variant=pn Location_Code=612","All_Plots B AB 5 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots B AB 5 #Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots B AB 5 Project = Apiary_WRDM Forest_Type=200 Variant=pn #Location_Code=612","All_Plots B AB 5 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots B AB 5 Project = Apiary_WRDM #Forest_Type=200 Variant=pn Location_Code=612","All_Plots B AB 1 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots B AB 1 #Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots B AB 1 Project = Apiary_WRDM Forest_Type=200 Variant=pn #Location_Code=612","All_Plots B AB 1 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots B AB 1 Project = Apiary_WRDM #Forest_Type=200 Variant=pn Location_Code=612","All_Plots B AB 2 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots B AB 2 #Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots B AB 2 Project = Apiary_WRDM Forest_Type=200 Variant=pn #Location_Code=612","All_Plots B AB 2 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots B AB 2 Project = Apiary_WRDM #Forest_Type=200 Variant=pn Location_Code=612","All_Plots B AB 3 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots B AB 3 #Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots B AB 3 Project = Apiary_WRDM Forest_Type=200 Variant=pn #Location_Code=612","All_Plots B AB 3 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots B AB 3 Project = Apiary_WRDM #Forest_Type=200 Variant=pn Location_Code=612","All_Plots B AB 4 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots B AB 4 #Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots B AB 4 Project = Apiary_WRDM Forest_Type=200 Variant=pn #Location_Code=612","All_Plots B AB 4 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots B AB 4 Project = Apiary_WRDM #Forest_Type=200 Variant=pn Location_Code=612","All_Plots C 5 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots C 5 #Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots C 5 Project = Apiary_WRDM Forest_Type=200 Variant=pn #Location_Code=612","All_Plots C 5 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots C 5 Project = Apiary_WRDM #Forest_Type=200 Variant=pn Location_Code=612","All_Plots C 1 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots C 1 #Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots C 1 Project = Apiary_WRDM Forest_Type=200 Variant=pn #Location_Code=612","All_Plots C 1 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots C 1 Project = Apiary_WRDM #Forest_Type=200 Variant=pn Location_Code=612","All_Plots C 2 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots C 2 #Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots C 2 Project = Apiary_WRDM Forest_Type=200 Variant=pn #Location_Code=612","All_Plots C 2 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots C 2 Project = Apiary_WRDM #Forest_Type=200 Variant=pn Location_Code=612","All_Plots C 3 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots C 3 #Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots C 3 Project = Apiary_WRDM Forest_Type=200 Variant=pn #Location_Code=612","All_Plots C 3 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots C 3 Project = Apiary_WRDM #Forest_Type=200 Variant=pn Location_Code=612","All_Plots C 4 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots C 4 #Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots C 4 Project = Apiary_WRDM Forest_Type=200 Variant=pn #Location_Code=612","All_Plots C 4 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots C 4 Project = Apiary_WRDM #Forest_Type=200 Variant=pn Location_Code=612","All_Plots D DE 5 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots D DE 5 #Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots D DE 5 Project = Apiary_WRDM Forest_Type=200 Variant=pn #Location_Code=612","All_Plots D DE 5 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots D DE 5 Project = Apiary_WRDM #Forest_Type=200 Variant=pn Location_Code=612","All_Plots D DE 1 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots D DE 1 #Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots D DE 1 Project = Apiary_WRDM Forest_Type=200 Variant=pn #Location_Code=612","All_Plots D DE 1 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots D DE 1 Project = Apiary_WRDM #Forest_Type=200 Variant=pn Location_Code=612","All_Plots D DE 2 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots D DE 2 #Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots D DE 2 Project = Apiary_WRDM Forest_Type=200 Variant=pn #Location_Code=612","All_Plots D DE 2 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots D DE 2 Project = Apiary_WRDM #Forest_Type=200 Variant=pn Location_Code=612","All_Plots D DE 3 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots D DE 3 #Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots D DE 3 Project = Apiary_WRDM Forest_Type=200 Variant=pn #Location_Code=612","All_Plots D DE 3 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots D DE 3 Project = Apiary_WRDM #Forest_Type=200 Variant=pn Location_Code=612","All_Plots D DE 4 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots D DE 4 #Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots D DE 4 Project = Apiary_WRDM Forest_Type=200 Variant=pn #Location_Code=612","All_Plots D DE 4 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots D DE 4 Project = Apiary_WRDM #Forest_Type=200 Variant=pn Location_Code=612","All_Plots E DE 5 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots E DE 5 #Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots E DE 5 Project = Apiary_WRDM Forest_Type=200 Variant=pn #Location_Code=612","All_Plots E DE 5 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots E DE 5 Project = Apiary_WRDM #Forest_Type=200 Variant=pn Location_Code=612","All_Plots E DE 1 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots E DE 1 #Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots E DE 1 Project = Apiary_WRDM Forest_Type=200 Variant=pn #Location_Code=612","All_Plots E DE 1 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots E DE 1 Project = Apiary_WRDM #Forest_Type=200 Variant=pn Location_Code=612","All_Plots E DE 2 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots E DE 2 #Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots E DE 2 Project = Apiary_WRDM Forest_Type=200 Variant=pn #Location_Code=612","All_Plots E DE 2 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots E DE 2 Project = Apiary_WRDM #Forest_Type=200 Variant=pn Location_Code=612","All_Plots E DE 3 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots E DE 3 #Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots E DE 3 Project = Apiary_WRDM Forest_Type=200 Variant=pn #Location_Code=612","All_Plots E DE 3 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots E DE 3 Project = Apiary_WRDM #Forest_Type=200 Variant=pn Location_Code=612","All_Plots E DE 4 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots E DE 4 #Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots E DE 4 Project = Apiary_WRDM Forest_Type=200 Variant=pn #Location_Code=612","All_Plots E DE 4 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612","All_Plots E DE 4 Project = Apiary_WRDM #Forest_Type=200 Variant=pn Location_Code=612")
+#
+#GENERATE STAND INPUTS
+STAND_ID<-c(unique(FVS_TreeInit_Input$STAND_ID))
+Stand_prep<-as.data.frame(STAND_ID)
+FVS_StandInit_Input = data.frame(matrix(nrow = nrow(Stand_prep), ncol = ncol(FVS_StandInit)))
+colnames(FVS_StandInit_Input) = colnames(FVS_StandInit)
+FVS_StandInit_Input$STAND_CN<-Stand_prep$STAND_ID
+FVS_StandInit_Input$STAND_ID<-Stand_prep$STAND_ID
+FVS_StandInit_Input$ASPECT=45
+FVS_StandInit_Input$SLOPE=25
+FVS_StandInit_Input$ELEVATION=18
+FVS_StandInit_Input$INV_PLOT_SIZE=20
+FVS_StandInit_Input$BRK_DBH=999
+FVS_StandInit_Input$NUM_PLOTS=5
+FVS_StandInit_Input$NONSTK_PLOTS=0
+FVS_StandInit_Input$REGION=6
+FVS_StandInit_Input$FOREST=12
+FVS_StandInit_Input$VARIANT<-"pn"
+FVS_StandInit_Input$AGE=0
+FVS_StandInit_Input$GROUPS<-"All_Stands"
+#FVS_StandInit_Input$GROUPS<-c(
+#"All_Stands A AB 5 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612",
+#"All_Stands A AB 2 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612",
+#"All_Stands A AB 4 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612",
+#"All_Stands B AB 5 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612",
+#"All_Stands B AB 1 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612",
+#"All_Stands B AB 2 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612",
+#"All_Stands B AB 3 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612",
+#"All_Stands B AB 4 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612",
+#"All_Stands C 5 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612",
+#"All_Stands C 1 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612",
+#"All_Stands C 2 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612",
+#"All_Stands C 3 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612",
+#"All_Stands C 4 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612",
+#"All_Stands D DE 5 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612",
+#"All_Stands D DE 1 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612",
+#"All_Stands D DE 2 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612",
+#"All_Stands D DE 3 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612",
+#"All_Stands D DE 4 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612",
+#"All_Stands E DE 5 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612",
+#"All_Stands E DE 1 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612",
+#"All_Stands E DE 2 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612",
+#"All_Stands E DE 3 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612",
+#"All_Stands E DE 4 Project = Apiary_WRDM Forest_Type=200 Variant=pn Location_Code=612")
+
+```
+
+#input seedling positions and calculate distances from infected trees
+```{r, echo=FALSE}
+#once seedling positions have been input (perhaps just start with DF treatment C)
+#run a loop to test if seedlings are within 30 ft of an infested tree and use to populate DAMAGE & SEVERITY codes
+#us example below as a place to start
+  #sp<-subplot_df[,c("subplot","loc_X_final","loc_Y_final")]
+  #colnames(sp)=c("subplot","h","k")
+  #
+  #trees<-por_and_cut_IJ
+  #colnames(trees)=c("Block","Species","Age_class","x","y","Diameter")
+  #trees$entry<-1:nrow(trees)
+  #result_df <- data.frame()
+  #
+  # for (j in 1:nrow(sp)){for (i in 1:nrow(trees)){
+  #output<-c(ifelse(isTRUE(27>=sqrt((trees[i,"x"]-sp[j,"h"])^2 + (trees[i,"y"]-sp[j,"k"])^2)),trees[i,"entry"], NA), 
+  #          ifelse(isTRUE(27>=sqrt((trees[i,"x"]-sp[j,"h"])^2 + (trees[i,"y"]-sp[j,"k"])^2)),sp[j,"subplot"], NA))
+  #result_df <- rbind(result_df,output)
+  #
+  #}}
+  #colnames(result_df)<-c("entry","sub_p")
+  #filter_result<-subset(result_df, !is.na(result_df$entry))
+  #trees_w_subp<-merge(trees,filter_result,by= "entry", all.x = TRUE)
+  #trees_less_10_sub<-subset(trees_w_subp, trees_w_subp$Age_class!="Dead >10 years")
+  #sp_trees_less_10<-subset(trees_less_10_sub, !is.na(trees_less_10_sub$sub_p))
+
+#extract columns necessary for FVS from poria, cut stump, and IJ cut stump dataframes
+
+#Generate FVS inputs to include initial incidence trees with species, history, severity, diameter
+#seedlings already have a history designation (7 dead or 1 alive) based on stats codes,this should stay
+#seedlings within 30 ft of infected stump, regardless of history,  should have Dam 62, Sev 01
+#seedlings not within 30 ft of infected stump, regardless of history,  should have no Dam, no Sev, 
+#stumps <10Y since mortality should have  Dam 62 ITH 7, DBH, species, subplot_ID
+#Need to manually assign whether or not each subplot is within a disease centers and add subplot number to PLREAD IF USING 1 DISEASE CETNER
+#Or I need to estimate the number of disease centers in each subplot
+
+```
+
+#write FVS input files
+```{r,echo=FALSE}
+#use the commands below to write xlsx workbooks with multiple sheets which match the FVS_input structure
+#use paste() and R objects to customize output file name
+#could also make a list of the object names for each sheet and then run a for loop to process multiple inputs.
+#or could generate one large input using the STAND and PLOT structure and then just select the relevant stands within FVS when performing the runs.
+write.xlsx2(GFK_Input, file=here("FVS_inputs_update","FVS_Input_Test.xlsx"), sheetName="FVS_GroupAddFilesAndKeywords", row.names=FALSE, showNA = FALSE)
+write.xlsx2(FVS_StandInit_Input, file=here("FVS_inputs_update","FVS_Input_Test.xlsx"), sheetName="FVS_StandInit", append=TRUE, row.names=FALSE, showNA = FALSE)
+write.xlsx2(FVS_TreeInit_Input, file=here("FVS_inputs_update","FVS_Input_Test.xlsx"), sheetName="FVS_TreeInit", append=TRUE, row.names=FALSE, showNA = FALSE)
+write.xlsx2(FVS_PlotInit_Input, file=here("FVS_inputs_update","FVS_Input_Test.xlsx"), sheetName="FVS_PlotInit", append=TRUE, row.names=FALSE, showNA = FALSE)
+```
+
+# Writing basic FVS input files (Shawn's runs)
+```{r}
+#T1S2
+T1S2<- filter(FVS_Prep, Tnum=='10' & BLOCK==2)
+TMT1_STND2_FVS_TreeInit<-T1S2[,c("STAND_CN","STAND_ID","PLOT_CN","PLOT_ID","STANDPLOT_CN","STANDPLOT_ID","TREE_ID","HISTORY","DIAMETER")]
+write_csv(TMT1_STND2_FVS_TreeInit, here("FVS_inputs_update","TMT1_STND2_FVS_TreeInit.csv"))
+#T1S4
+T1S4<- filter(FVS_Prep, Tnum=='10' & BLOCK==4)
+TMT1_STND4_FVS_TreeInit<-T1S4[,c("STAND_CN","STAND_ID","PLOT_CN","PLOT_ID","STANDPLOT_CN","STANDPLOT_ID","TREE_ID","HISTORY","DIAMETER")]
+write_csv(TMT1_STND4_FVS_TreeInit, here("FVS_inputs_update","TMT1_STND4_FVS_TreeInit.csv"))
+#T1S5
+T1S5<- filter(FVS_Prep, Tnum=='10' & BLOCK==5)
+TMT1_STND5_FVS_TreeInit<-T1S5[,c("STAND_CN","STAND_ID","PLOT_CN","PLOT_ID","STANDPLOT_CN","STANDPLOT_ID","TREE_ID","HISTORY","DIAMETER")]
+write_csv(TMT1_STND5_FVS_TreeInit, here("FVS_inputs_update","TMT1_STND5_FVS_TreeInit.csv"))
+#T2S1
+T2S1<- filter(FVS_Prep, Tnum=='20' & BLOCK==1)
+TMT2_STND1_FVS_TreeInit<-T2S1[,c("STAND_CN","STAND_ID","PLOT_CN","PLOT_ID","STANDPLOT_CN","STANDPLOT_ID","TREE_ID","HISTORY","DIAMETER")]
+write_csv(TMT2_STND1_FVS_TreeInit, here("FVS_inputs_update","TMT2_STND1_FVS_TreeInit.csv"))
+#T2S2
+T2S2<- filter(FVS_Prep, Tnum=='20' & BLOCK==2)
+TMT2_STND2_FVS_TreeInit<-T2S2[,c("STAND_CN","STAND_ID","PLOT_CN","PLOT_ID","STANDPLOT_CN","STANDPLOT_ID","TREE_ID","HISTORY","DIAMETER")]
+write_csv(TMT2_STND2_FVS_TreeInit, here("FVS_inputs_update","TMT2_STND2_FVS_TreeInit.csv"))
+#T2S3
+T2S3<- filter(FVS_Prep, Tnum=='20' & BLOCK==3)
+TMT2_STND3_FVS_TreeInit<-T2S3[,c("STAND_CN","STAND_ID","PLOT_CN","PLOT_ID","STANDPLOT_CN","STANDPLOT_ID","TREE_ID","HISTORY","DIAMETER")]
+write_csv(TMT2_STND3_FVS_TreeInit, here("FVS_inputs_update","TMT2_STND3_FVS_TreeInit.csv"))
+#T2S4
+T2S4<- filter(FVS_Prep, Tnum=='20' & BLOCK==4)
+TMT2_STND4_FVS_TreeInit<-T2S4[,c("STAND_CN","STAND_ID","PLOT_CN","PLOT_ID","STANDPLOT_CN","STANDPLOT_ID","TREE_ID","HISTORY","DIAMETER")]
+write_csv(TMT2_STND4_FVS_TreeInit, here("FVS_inputs_update","TMT2_STND4_FVS_TreeInit.csv"))
+#T2S5
+T2S5<- filter(FVS_Prep, Tnum=='20' & BLOCK==5)
+TMT2_STND5_FVS_TreeInit<-T2S5[,c("STAND_CN","STAND_ID","PLOT_CN","PLOT_ID","STANDPLOT_CN","STANDPLOT_ID","TREE_ID","HISTORY","DIAMETER")]
+write_csv(TMT2_STND5_FVS_TreeInit, here("FVS_inputs_update","TMT2_STND5_FVS_TreeInit.csv"))
+#T3S1
+T3S1<- filter(FVS_Prep, Tnum=='30' & BLOCK==1)
+TMT3_STND1_FVS_TreeInit<-T3S1[,c("STAND_CN","STAND_ID","PLOT_CN","PLOT_ID","STANDPLOT_CN","STANDPLOT_ID","TREE_ID","HISTORY","DIAMETER")]
+write_csv(TMT3_STND1_FVS_TreeInit, here("FVS_inputs_update","TMT3_STND1_FVS_TreeInit.csv"))
+#T3S2
+T3S2<- filter(FVS_Prep, Tnum=='30' & BLOCK==2)
+TMT3_STND2_FVS_TreeInit<-T3S2[,c("STAND_CN","STAND_ID","PLOT_CN","PLOT_ID","STANDPLOT_CN","STANDPLOT_ID","TREE_ID","HISTORY","DIAMETER")]
+write_csv(TMT3_STND2_FVS_TreeInit, here("FVS_inputs_update","TMT3_STND2_FVS_TreeInit.csv"))
+#T3S3
+T3S3<- filter(FVS_Prep, Tnum=='30' & BLOCK==3)
+TMT3_STND3_FVS_TreeInit<-T3S3[,c("STAND_CN","STAND_ID","PLOT_CN","PLOT_ID","STANDPLOT_CN","STANDPLOT_ID","TREE_ID","HISTORY","DIAMETER")]
+write_csv(TMT3_STND3_FVS_TreeInit, here("FVS_inputs_update","TMT3_STND3_FVS_TreeInit.csv"))
+#T3S4
+T3S4<- filter(FVS_Prep, Tnum=='30' & BLOCK==4)
+TMT3_STND4_FVS_TreeInit<-T3S4[,c("STAND_CN","STAND_ID","PLOT_CN","PLOT_ID","STANDPLOT_CN","STANDPLOT_ID","TREE_ID","HISTORY","DIAMETER")]
+write_csv(TMT3_STND4_FVS_TreeInit, here("FVS_inputs_update","TMT3_STND4_FVS_TreeInit.csv"))
+#T3S5
+T3S5<- filter(FVS_Prep, Tnum=='30' & BLOCK==5)
+TMT3_STND5_FVS_TreeInit<-T3S5[,c("STAND_CN","STAND_ID","PLOT_CN","PLOT_ID","STANDPLOT_CN","STANDPLOT_ID","TREE_ID","HISTORY","DIAMETER")]
+write_csv(TMT3_STND5_FVS_TreeInit, here("FVS_inputs_update","TMT3_STND5_FVS_TreeInit.csv"))
+#T4S1
+T4S1<- filter(FVS_Prep, Tnum=='40' & BLOCK==1)
+TMT4_STND1_FVS_TreeInit<-T4S1[,c("STAND_CN","STAND_ID","PLOT_CN","PLOT_ID","STANDPLOT_CN","STANDPLOT_ID","TREE_ID","HISTORY","DIAMETER")]
+write_csv(TMT4_STND1_FVS_TreeInit, here("FVS_inputs_update","TMT4_STND1_FVS_TreeInit.csv"))
+#T4S2
+T4S2<- filter(FVS_Prep, Tnum=='40' & BLOCK==2)
+TMT4_STND2_FVS_TreeInit<-T4S2[,c("STAND_CN","STAND_ID","PLOT_CN","PLOT_ID","STANDPLOT_CN","STANDPLOT_ID","TREE_ID","HISTORY","DIAMETER")]
+write_csv(TMT4_STND2_FVS_TreeInit, here("FVS_inputs_update","TMT4_STND2_FVS_TreeInit.csv"))
+#T4S3
+T4S3<- filter(FVS_Prep, Tnum=='40' & BLOCK==3)
+TMT4_STND3_FVS_TreeInit<-T4S3[,c("STAND_CN","STAND_ID","PLOT_CN","PLOT_ID","STANDPLOT_CN","STANDPLOT_ID","TREE_ID","HISTORY","DIAMETER")]
+write_csv(TMT4_STND3_FVS_TreeInit, here("FVS_inputs_update","TMT4_STND3_FVS_TreeInit.csv"))
+#T4S4
+T4S4<- filter(FVS_Prep, Tnum=='40' & BLOCK==4)
+TMT4_STND4_FVS_TreeInit<-T4S4[,c("STAND_CN","STAND_ID","PLOT_CN","PLOT_ID","STANDPLOT_CN","STANDPLOT_ID","TREE_ID","HISTORY","DIAMETER")]
+write_csv(TMT4_STND4_FVS_TreeInit, here("FVS_inputs_update","TMT4_STND4_FVS_TreeInit.csv"))
+#T4S5
+T4S5<- filter(FVS_Prep, Tnum=='40' & BLOCK==5)
+TMT4_STND5_FVS_TreeInit<-T4S5[,c("STAND_CN","STAND_ID","PLOT_CN","PLOT_ID","STANDPLOT_CN","STANDPLOT_ID","TREE_ID","HISTORY","DIAMETER")]
+write_csv(TMT4_STND5_FVS_TreeInit, here("FVS_inputs_update","TMT4_STND5_FVS_TreeInit.csv"))
+#T5S1
+T5S1<- filter(FVS_Prep, Tnum=='50' & BLOCK==1)
+TMT5_STND1_FVS_TreeInit<-T5S1[,c("STAND_CN","STAND_ID","PLOT_CN","PLOT_ID","STANDPLOT_CN","STANDPLOT_ID","TREE_ID","HISTORY","DIAMETER")]
+write_csv(TMT5_STND1_FVS_TreeInit, here("FVS_inputs_update","TMT5_STND1_FVS_TreeInit.csv"))
+#T5S2
+T5S2<- filter(FVS_Prep, Tnum=='50' & BLOCK==2)
+TMT5_STND2_FVS_TreeInit<-T5S2[,c("STAND_CN","STAND_ID","PLOT_CN","PLOT_ID","STANDPLOT_CN","STANDPLOT_ID","TREE_ID","HISTORY","DIAMETER")]
+write_csv(TMT5_STND2_FVS_TreeInit, here("FVS_inputs_update","TMT5_STND2_FVS_TreeInit.csv"))
+#T5S3
+T5S3<- filter(FVS_Prep, Tnum=='50' & BLOCK==3)
+TMT5_STND3_FVS_TreeInit<-T5S3[,c("STAND_CN","STAND_ID","PLOT_CN","PLOT_ID","STANDPLOT_CN","STANDPLOT_ID","TREE_ID","HISTORY","DIAMETER")]
+write_csv(TMT5_STND3_FVS_TreeInit, here("FVS_inputs_update","TMT5_STND3_FVS_TreeInit.csv"))
+#T5S4
+T5S4<- filter(FVS_Prep, Tnum=='50' & BLOCK==4)
+TMT5_STND4_FVS_TreeInit<-T5S4[,c("STAND_CN","STAND_ID","PLOT_CN","PLOT_ID","STANDPLOT_CN","STANDPLOT_ID","TREE_ID","HISTORY","DIAMETER")]
+write_csv(TMT5_STND4_FVS_TreeInit, here("FVS_inputs_update","TMT5_STND4_FVS_TreeInit.csv"))
+#T5S5
+T5S5<- filter(FVS_Prep, Tnum=='50' & BLOCK==5)
+TMT5_STND5_FVS_TreeInit<-T5S5[,c("STAND_CN","STAND_ID","PLOT_CN","PLOT_ID","STANDPLOT_CN","STANDPLOT_ID","TREE_ID","HISTORY","DIAMETER")]
+write_csv(TMT5_STND5_FVS_TreeInit, here("FVS_inputs_update","TMT5_STND5_FVS_TreeInit.csv"))
+```
+
+# preparing and writing simple BA outputs
+```{r}
+output_prep<-filter(stand_df_year, STATUS=="1")
+
+#T1S2
+BA_T1S2<- filter(output_prep, TRT=="A" & SEV==2)
+BA_TMT1_STND2<-BA_T1S2[,c("Stand_ID_TR","REP","YEAR_dbl","TRT","count","Live_BA_mpha", "Live_BA_fpa","SEV")]
+write_csv(BA_TMT1_STND2, here("FVS_inputs_update","BA_TMT1_STND2.csv"))
+#T1S4
+BA_T1S4<- filter(output_prep, TRT=="A" & SEV==4)
+BA_TMT1_STND4<-BA_T1S4[,c("Stand_ID_TR","REP","YEAR_dbl","TRT","count","Live_BA_mpha", "Live_BA_fpa","SEV")]
+write_csv(BA_TMT1_STND4, here("FVS_inputs_update","BA_TMT1_STND4.csv"))
+#BA_T1S5
+BA_BA_T1S5<- filter(output_prep, TRT=="A" & SEV==5)
+BA_TMT1_STND5<-BA_BA_T1S5[,c("Stand_ID_TR","REP","YEAR_dbl","TRT","count","Live_BA_mpha", "Live_BA_fpa","SEV")]
+write_csv(BA_TMT1_STND5, here("FVS_inputs_update","BA_TMT1_STND5.csv"))
+#T2S1
+BA_T2S1<- filter(output_prep, TRT=="B" & SEV==1)
+BA_TMT2_STND1<-BA_T2S1[,c("Stand_ID_TR","REP","YEAR_dbl","TRT","count","Live_BA_mpha", "Live_BA_fpa","SEV")]
+write_csv(BA_TMT2_STND1, here("FVS_inputs_update","BA_TMT2_STND1.csv"))
+#T2S2
+BA_T2S2<- filter(output_prep, TRT=="B" & SEV==2)
+BA_TMT2_STND2<-BA_T2S2[,c("Stand_ID_TR","REP","YEAR_dbl","TRT","count","Live_BA_mpha", "Live_BA_fpa","SEV")]
+write_csv(BA_TMT2_STND2, here("FVS_inputs_update","BA_TMT2_STND2.csv"))
+#T2S3
+BA_T2S3<- filter(output_prep, TRT=="B" & SEV==3)
+BA_TMT2_STND3<-BA_T2S3[,c("Stand_ID_TR","REP","YEAR_dbl","TRT","count","Live_BA_mpha", "Live_BA_fpa","SEV")]
+write_csv(BA_TMT2_STND3, here("FVS_inputs_update","BA_TMT2_STND3.csv"))
+#T2S4
+BA_T2S4<- filter(output_prep, TRT=="B" & SEV==4)
+BA_TMT2_STND4<-BA_T2S4[,c("Stand_ID_TR","REP","YEAR_dbl","TRT","count","Live_BA_mpha", "Live_BA_fpa","SEV")]
+write_csv(BA_TMT2_STND4, here("FVS_inputs_update","BA_TMT2_STND4.csv"))
+#T2S5
+BA_T2S5<- filter(output_prep, TRT=="B" & SEV==5)
+BA_TMT2_STND5<-BA_T2S5[,c("Stand_ID_TR","REP","YEAR_dbl","TRT","count","Live_BA_mpha", "Live_BA_fpa","SEV")]
+write_csv(BA_TMT2_STND5, here("FVS_inputs_update","BA_TMT2_STND5.csv"))
+#T3S1
+BA_T3S1<- filter(output_prep, TRT=="C" & SEV==1)
+BA_TMT3_STND1<-BA_T3S1[,c("Stand_ID_TR","REP","YEAR_dbl","TRT","count","Live_BA_mpha", "Live_BA_fpa","SEV")]
+write_csv(BA_TMT3_STND1, here("FVS_inputs_update","BA_TMT3_STND1.csv"))
+#T3S2
+BA_T3S2<- filter(output_prep, TRT=="C" & SEV==2)
+BA_TMT3_STND2<-BA_T3S2[,c("Stand_ID_TR","REP","YEAR_dbl","TRT","count","Live_BA_mpha", "Live_BA_fpa","SEV")]
+write_csv(BA_TMT3_STND2, here("FVS_inputs_update","BA_TMT3_STND2.csv"))
+#T3S3
+BA_T3S3<- filter(output_prep, TRT=="C" & SEV==3)
+BA_TMT3_STND3<-BA_T3S3[,c("Stand_ID_TR","REP","YEAR_dbl","TRT","count","Live_BA_mpha", "Live_BA_fpa","SEV")]
+write_csv(BA_TMT3_STND3, here("FVS_inputs_update","BA_TMT3_STND3.csv"))
+#T3S4
+BA_T3S4<- filter(output_prep, TRT=="C" & SEV==4)
+BA_TMT3_STND4<-BA_T3S4[,c("Stand_ID_TR","REP","YEAR_dbl","TRT","count","Live_BA_mpha", "Live_BA_fpa","SEV")]
+write_csv(BA_TMT3_STND4, here("FVS_inputs_update","BA_TMT3_STND4.csv"))
+#T3S5
+BA_T3S5<- filter(output_prep, TRT=="C" & SEV==5)
+BA_TMT3_STND5<-BA_T3S5[,c("Stand_ID_TR","REP","YEAR_dbl","TRT","count","Live_BA_mpha", "Live_BA_fpa","SEV")]
+write_csv(BA_TMT3_STND5, here("FVS_inputs_update","BA_TMT3_STND5.csv"))
+#T4S1
+BA_T4S1<- filter(output_prep, TRT=="D" & SEV==1)
+BA_TMT4_STND1<-BA_T4S1[,c("Stand_ID_TR","REP","YEAR_dbl","TRT","count","Live_BA_mpha", "Live_BA_fpa","SEV")]
+write_csv(BA_TMT4_STND1, here("FVS_inputs_update","BA_TMT4_STND1.csv"))
+#T4S2
+BA_T4S2<- filter(output_prep, TRT=="D" & SEV==2)
+BA_TMT4_STND2<-BA_T4S2[,c("Stand_ID_TR","REP","YEAR_dbl","TRT","count","Live_BA_mpha", "Live_BA_fpa","SEV")]
+write_csv(BA_TMT4_STND2, here("FVS_inputs_update","BA_TMT4_STND2.csv"))
+#T4S3
+BA_T4S3<- filter(output_prep, TRT=="D" & SEV==3)
+BA_TMT4_STND3<-BA_T4S3[,c("Stand_ID_TR","REP","YEAR_dbl","TRT","count","Live_BA_mpha", "Live_BA_fpa","SEV")]
+write_csv(BA_TMT4_STND3, here("FVS_inputs_update","BA_TMT4_STND3.csv"))
+#T4S4
+BA_T4S4<- filter(output_prep, TRT=="D" & SEV==4)
+BA_TMT4_STND4<-BA_T4S4[,c("Stand_ID_TR","REP","YEAR_dbl","TRT","count","Live_BA_mpha", "Live_BA_fpa","SEV")]
+write_csv(BA_TMT4_STND4, here("FVS_inputs_update","BA_TMT4_STND4.csv"))
+#T4S5
+BA_T4S5<- filter(output_prep, TRT=="D" & SEV==5)
+BA_TMT4_STND5<-BA_T4S5[,c("Stand_ID_TR","REP","YEAR_dbl","TRT","count","Live_BA_mpha", "Live_BA_fpa","SEV")]
+write_csv(BA_TMT4_STND5, here("FVS_inputs_update","BA_TMT4_STND5.csv"))
+#T5S1
+BA_T5S1<- filter(output_prep, TRT=="E" & SEV==1)
+BA_TMT5_STND1<-BA_T5S1[,c("Stand_ID_TR","REP","YEAR_dbl","TRT","count","Live_BA_mpha", "Live_BA_fpa","SEV")]
+write_csv(BA_TMT5_STND1, here("FVS_inputs_update","BA_TMT5_STND1.csv"))
+#T5S2
+BA_T5S2<- filter(output_prep, TRT=="E" & SEV==2)
+BA_TMT5_STND2<-BA_T5S2[,c("Stand_ID_TR","REP","YEAR_dbl","TRT","count","Live_BA_mpha", "Live_BA_fpa","SEV")]
+write_csv(BA_TMT5_STND2, here("FVS_inputs_update","BA_TMT5_STND2.csv"))
+#T5S3
+BA_T5S3<- filter(output_prep, TRT=="E" & SEV==3)
+BA_TMT5_STND3<-BA_T5S3[,c("Stand_ID_TR","REP","YEAR_dbl","TRT","count","Live_BA_mpha", "Live_BA_fpa","SEV")]
+write_csv(BA_TMT5_STND3, here("FVS_inputs_update","BA_TMT5_STND3.csv"))
+#T5S4
+BA_T5S4<- filter(output_prep, TRT=="E" & SEV==4)
+BA_TMT5_STND4<-BA_T5S4[,c("Stand_ID_TR","REP","YEAR_dbl","TRT","count","Live_BA_mpha", "Live_BA_fpa","SEV")]
+write_csv(BA_TMT5_STND4, here("FVS_inputs_update","BA_TMT5_STND4.csv"))
+#T5S5
+BA_T5S5<- filter(output_prep, TRT=="E" & SEV==5)
+BA_TMT5_STND5<-BA_T5S5[,c("Stand_ID_TR","REP","YEAR_dbl","TRT","count","Live_BA_mpha", "Live_BA_fpa","SEV")]
+write_csv(BA_TMT5_STND5, here("FVS_inputs_update","BA_TMT5_STND5.csv"))
+```
+
+## subplot BA and mortality stacked barplots by rep faceted by age
+
+```{r}
+#stand_df_age<-readRDS(here("stand_level_df_age.Rds"))
+#subplot_df_age<-readRDS(here("subplot_df_age.Rds"))
+
+sub_mort<- subplot_df_age %>% 
+  ggplot(aes(x=SEV, fill=STATUS)) + 
+  geom_bar(aes(weight=count), position = "fill")+
+  ylab("Proportion of Total Trees")+
+  xlab("Rep/Block/Incidence")+
+  ggtitle("Mortality Proportion")+
+  facet_grid(rows=vars(DF_age),vars(Treatment), labeller = label_both)+
+  scale_fill_viridis_d(begin=0.3) +
+  theme_bw()
+sub_mort
+
+sub_mort_c<- subplot_df_age %>% 
+  ggplot(aes(x=SEV, fill=STATUS)) +
+  geom_bar(aes(weight=count), position = "stack")+
+  ylab("Trees")+
+  xlab("Rep/Block/Incidence")+
+  ggtitle("Mortality Counts")+
+  facet_grid(rows=vars(DF_age),vars(Treatment), labeller = label_both)+
+  scale_fill_viridis_d(begin=0.3) +
+  geom_hline(yintercept = 170)+
+  theme_bw()
+sub_mort_c
+
+sub_RA_mort<- subset(subplot_df_age, TRT=="A")%>% 
+  ggplot(aes(x=SUBPLOT, fill=STATUS)) + 
+  geom_bar(aes(weight=count), position = "fill")+
+  ylab("Proportion of Total Trees")+
+  xlab("Subplot")+
+  ggtitle("Mortality Proportion in RA10")+
+  facet_grid(rows=vars(DF_age),vars(SEV), labeller = label_both)+
+  scale_fill_viridis_d(begin=0.3) +
+  theme_bw()
+sub_RA_mort
+
+sub_RA_mort_c<- subset(subplot_df_age, TRT=="A")%>% 
+  ggplot(aes(x=SUBPLOT, fill=STATUS)) + 
+  geom_bar(aes(weight=count), position = "stack")+
+  ylab("Trees")+
+  xlab("Subplot")+
+  ggtitle("Mortality Counts in RA10")+
+  facet_grid(rows=vars(DF_age),vars(SEV), labeller = label_both)+
+  scale_fill_viridis_d(begin=0.3) +
+  geom_hline(yintercept = 34) +
+  theme_bw()
+sub_RA_mort_c
+
+sub_CW_mort<- subset(subplot_df_age, TRT=="B")%>% 
+  ggplot(aes(x=SUBPLOT, fill=STATUS)) + 
+  geom_bar(aes(weight=count), position = "fill")+
+  ylab("Proportion of Total Trees")+
+  xlab("Subplot")+
+  ggtitle("Mortality Proportion in CW10")+
+  facet_grid(rows=vars(DF_age),vars(SEV), labeller = label_both)+
+  scale_fill_viridis_d(begin=0.3) +
+  theme_bw()
+sub_CW_mort
+
+sub_CW_mort_c<- subset(subplot_df_age, TRT=="B")%>% 
+  ggplot(aes(x=SUBPLOT, fill=STATUS)) + 
+  geom_bar(aes(weight=count), position = "stack")+
+  ylab("Trees")+
+  xlab("Subplot")+
+  ggtitle("Mortality Counts in CW10")+
+  facet_grid(rows=vars(DF_age),vars(SEV), labeller = label_both)+
+  scale_fill_viridis_d(begin=0.3) +
+  geom_hline(yintercept = 34) +
+  theme_bw()
+sub_CW_mort_c
+
+sub_DF_mort<- subset(subplot_df_age, TRT=="C")%>% 
+  ggplot(aes(x=SUBPLOT, fill=STATUS)) + 
+  geom_bar(aes(weight=count), position = "fill")+
+  ylab("Proportion of Total Trees")+
+  xlab("Subplot")+
+  ggtitle("Mortality Proportion in DF0")+
+  facet_grid(rows=vars(DF_age),vars(SEV), labeller = label_both)+
+  scale_fill_viridis_d(begin=0.3) +
+  theme_bw()
+sub_DF_mort
+
+sub_DF_mort_c<- subset(subplot_df_age, TRT=="C")%>% 
+  ggplot(aes(x=SUBPLOT, fill=STATUS)) + 
+  geom_bar(aes(weight=count), position = "stack")+
+  ylab("Trees")+
+  xlab("Subplot")+
+  ggtitle("Mortality Counts in DF0")+
+  facet_grid(rows=vars(DF_age),vars(SEV), labeller = label_both)+
+  scale_fill_viridis_d(begin=0.3) +
+  geom_hline(yintercept = 34) +
+  theme_bw()
+sub_DF_mort_c
+
+mort_plots<-list(sub_mort,sub_mort_c,sub_RA_mort,sub_RA_mort_c,sub_CW_mort,sub_CW_mort_c,sub_DF_mort,sub_DF_mort_c)
+
+#pdf(here("Summary_Graphs_update","Tree_status_Rep_and_subplot_summaries_ABC.pdf"), height= 10, width = 12)
+#mort_plots
+#dev.off()
+
+```
+
+
+##Try linear regression with live BA or prop mortality by DF year. Multiplot and compare slope
+
+BASED ON WOODS CREEK STATISTICAL ANALYSIS
+
+```{r}
+
+#stand_df_age <- readRDS(here("stand_level_df.Rds"))
+#subplot_df_age<-readRDS(here("subplot_df_age.Rds"))
+#defining similar sampling timepoints; 1-4
+#25y rotation treatments have data for timepoints 1 and 2
+#12y rotation treatments have data for timepoints 1-3
+#Continuous DF treatment has data for timpoints 1,3& 4
+#will calculate slopes for 1-2 (12 and 24 rotations), 1-3 (12 and DF), and 3-4 (DF only).
+
+model_in<-stand_df_age %>% group_by(TRT, SEV, STATUS, DF_age)%>%summarise(YEAR_dbl=median(YEAR_dbl, na.rm = TRUE), Live_BA_mpha = if(all(is.na(Live_BA_mpha))) NA_real_ else sum(Live_BA_mpha, na.rm=TRUE),total=sum(count, na.rm=TRUE),LRR=sum(LRR, na.rm=TRUE),LRRNO=sum(LRRNO, na.rm=TRUE),SUP=sum(SUP, na.rm=TRUE),No_dam=sum(No_dam, na.rm=TRUE), Stand_ID_TR=Stand_ID_TR )
+colnames(model_in)[colnames(model_in) == "SEV"] <- "Block"
+model_in$timepoint<-
+  ifelse(model_in$TRT=="A"|model_in$TRT=="B", #test 10y trt
+        ifelse(model_in$DF_age==8, #test age=8
+              1, #then timepoint 1
+              ifelse(model_in$DF_age==24, # if not 8, test age==24
+                    2, #then timepoint 2
+                    3)) #if not 24, then timepoint 3, close test 24, close test 8  
+        ,ifelse(model_in$TRT=="C",     #if not 10y, test DF
+                ifelse(model_in$DF_age==12, #test age=12
+                       1, #then timepoint 1
+                       ifelse(model_in$DF_age==36, # if not 12, test age==36
+                              3, #then timepoint 3 (not timepoint 2 as originally specified since it is a more dissimilar range)
+                              4)) #if not 36, then timepoint 4, close test 36 close test 12. (not timepoint 3 as originally)
+        ,ifelse(model_in$DF_age==11,  #test age==11
+                1, #then timepoint 1
+                2  #if not, then timepoint 2
+) #close test 11
+) #close test DF           
+) #close test 10y  
+model_in_test<-model_in[,c(13,1,2,3,6,12)]
+
+#DOUBLE CHECK THAT THIS WORKS WITH THE UPDATED TIMEPOINTS
+
+#pivoting to wide format using timepoint column
+#for BA variable
+wide_BA_in<-model_in_test
+wide_BA<-pivot_wider(wide_BA_in, names_from = "timepoint",id_cols = c("Stand_ID_TR","STATUS"),values_from = "Live_BA_mpha",names_prefix = "Live_BA_mpha_T")
+wide_BA$TRT<-as.factor(c("A","A","A","A","A","A","B","B","B","B","B","B","B","B","B","B","C","C","C","C","C","C","C","C","C","C","D","D","D","D","D","D","D","D","D","D","E","E","E","E","E","E","E","E","E","E"))
+wide_BA$Block<-c(2,2,4,4,5,5,1,1,2,2,3,3,4,4,5,5,1,1,2,2,3,3,4,4,5,5,1,1,2,2,3,3,4,4,5,5,1,1,2,2,3,3,4,4,5,5)
+#for age variable
+wide_age_in<-model_in[,c(3,4,12,13)]
+wide_age<-pivot_wider(wide_age_in, names_from = "timepoint",id_cols = c("Stand_ID_TR","STATUS"),values_from = "DF_age",names_prefix = "DF_age_T")
+#adding age for stands with no dead trees at first measurement
+wide_age$DF_age_T1[is.na(wide_age$DF_age_T1)]<-8
+#combining BA and age wide tables into summary
+wide_stand_stats<-merge(wide_BA,wide_age, by=c("Stand_ID_TR","STATUS"))
+#selecing ID variables and total count of trees by status
+wide_total_in<-model_in[,c(3,7,12,13)]
+wide_total<-pivot_wider(wide_total_in, names_from = "timepoint",id_cols = c("Stand_ID_TR","STATUS"),values_from = "total",names_prefix = "Trees_T")
+#adding 0 for stands with no dead trees at first timepoint
+wide_total$Trees_T1[is.na(wide_total$Trees_T1)]<-0
+#combining summary and total count tables
+wide_stand_stats<-merge(wide_stand_stats,wide_total, by=c("Stand_ID_TR","STATUS"))
+#selecing ID variables and count of LRR trees by status
+wide_lrr_in<-model_in[,c(3,8,12,13)]
+wide_lrr<-pivot_wider(wide_lrr_in, names_from = "timepoint",id_cols = c("Stand_ID_TR","STATUS"),values_from = "LRR",names_prefix = "LRR_T")
+#adding 0 for stands with no LRR trees at first timepoint
+wide_lrr$LRR_T1[is.na(wide_lrr$LRR_T1)]<-0
+#combining summary and LRR count tables
+wide_stand_stats<-merge(wide_stand_stats,wide_lrr, by=c("Stand_ID_TR","STATUS"))
+#selecing ID variables and count of LRR or no damage trees by status
+wide_lrrno_in<-model_in[,c(3,9,12,13)]
+wide_lrrno<-pivot_wider(wide_lrrno_in, names_from = "timepoint",id_cols = c("Stand_ID_TR","STATUS"),values_from = "LRRNO",names_prefix = "LRRNO_T")
+#adding 0 for stands with no LRR or no damage trees at first timepoint
+wide_lrrno$LRRNO_T1[is.na(wide_lrrno$LRRNO_T1)]<-0
+#combining summary and LLRNO count tables
+wide_stand_stats<-merge(wide_stand_stats,wide_lrrno, by=c("Stand_ID_TR","STATUS"))
+#selecing ID variables and count of SUP trees by status
+wide_sup_in<-model_in[,c(3,10,12,13)]
+wide_sup<-pivot_wider(wide_sup_in, names_from = "timepoint",id_cols = c("Stand_ID_TR","STATUS"),values_from = "SUP",names_prefix = "SUP_T")
+#adding 0 for stands with no SUPP at first timepoint
+wide_sup$SUP_T1[is.na(wide_sup$SUP_T1)]<-0
+#combining summary and total count tables
+wide_stand_stats<-merge(wide_stand_stats,wide_sup, by=c("Stand_ID_TR","STATUS"))
+#selecing ID variables and count of No_damage trees by status
+wide_nod_in<-model_in[,c(3,11,12,13)]
+wide_nod<-pivot_wider(wide_nod_in, names_from = "timepoint",id_cols = c("Stand_ID_TR","STATUS"),values_from = "No_dam",names_prefix = "No_damage_T")
+#adding 0 for stands with no no_damage at first timepoint
+wide_nod$No_damage_T1[is.na(wide_nod$No_damage_T1)]<-0
+#combining summary and no damage count tables
+wide_stand_stats<-merge(wide_stand_stats,wide_nod, by=c("Stand_ID_TR","STATUS"))
+
+#trim BA variables leaving only ID and response variables
+wide2b<-wide_stand_stats
+#sum total tree counts for different statuses together for each stand
+wide2b_tsum<-wide2b %>% group_by(Stand_ID_TR) %>% summarise(Live_BA_mpha_T1=first(Live_BA_mpha_T1),Live_BA_mpha_T2=first(Live_BA_mpha_T2),Live_BA_mpha_T3=first(Live_BA_mpha_T3),Live_BA_mpha_T4=first(Live_BA_mpha_T4), Total_Trees_T1=sum(Trees_T1), Total_Trees_T2=sum(Trees_T2), Total_Trees_T3=sum(Trees_T3), Total_Trees_T4=sum(Trees_T4), TRT=first(TRT), Block=first(Block), DF_age_T1=first(DF_age_T1), DF_age_T2=first(DF_age_T2), DF_age_T3=first(DF_age_T3), DF_age_T4=first(DF_age_T4))
+#select the summary stats just for dead trees
+wide2_dead<-wide2b[which(wide2b$STATUS==3),-c(2:12)]
+#add total trees column to dead trees stats
+wide_for_dam<-merge(wide2_dead, wide2b_tsum, by="Stand_ID_TR")
+
+#calculate proportions for each mortality response variable and time point
+#mortality
+wide_for_dam$prop_dead_T1<-wide_for_dam$Trees_T1/wide_for_dam$Total_Trees_T1
+wide_for_dam$prop_dead_T2<-wide_for_dam$Trees_T2/wide_for_dam$Total_Trees_T2
+wide_for_dam$prop_dead_T3<-wide_for_dam$Trees_T3/wide_for_dam$Total_Trees_T3
+wide_for_dam$prop_dead_T4<-wide_for_dam$Trees_T4/wide_for_dam$Total_Trees_T4
+
+#LRR mortality
+wide_for_dam$prop_LRR_dead_T1<-wide_for_dam$LRR_T1/wide_for_dam$Total_Trees_T1
+wide_for_dam$prop_LRR_dead_T2<-wide_for_dam$LRR_T2/wide_for_dam$Total_Trees_T2
+wide_for_dam$prop_LRR_dead_T3<-wide_for_dam$LRR_T3/wide_for_dam$Total_Trees_T3
+wide_for_dam$prop_LRR_dead_T4<-wide_for_dam$LRR_T4/wide_for_dam$Total_Trees_T4
+#LRR+NO mortality
+wide_for_dam$prop_LRRNO_dead_T1<-wide_for_dam$LRRNO_T1/wide_for_dam$Total_Trees_T1
+wide_for_dam$prop_LRRNO_dead_T2<-wide_for_dam$LRRNO_T2/wide_for_dam$Total_Trees_T2
+wide_for_dam$prop_LRRNO_dead_T3<-wide_for_dam$LRRNO_T3/wide_for_dam$Total_Trees_T3
+wide_for_dam$prop_LRRNO_dead_T4<-wide_for_dam$LRRNO_T4/wide_for_dam$Total_Trees_T4
+#SUP mortality
+wide_for_dam$prop_SUP_dead_T1<-wide_for_dam$SUP_T1/wide_for_dam$Total_Trees_T1
+wide_for_dam$prop_SUP_dead_T2<-wide_for_dam$SUP_T2/wide_for_dam$Total_Trees_T2
+wide_for_dam$prop_SUP_dead_T3<-wide_for_dam$SUP_T3/wide_for_dam$Total_Trees_T3
+wide_for_dam$prop_SUP_dead_T4<-wide_for_dam$SUP_T4/wide_for_dam$Total_Trees_T4
+#No_damage mortality
+wide_for_dam$prop_No_damage_dead_T1<-wide_for_dam$No_damage_T1/wide_for_dam$Total_Trees_T1
+wide_for_dam$prop_No_damage_dead_T2<-wide_for_dam$No_damage_T2/wide_for_dam$Total_Trees_T2
+wide_for_dam$prop_No_damage_dead_T3<-wide_for_dam$No_damage_T3/wide_for_dam$Total_Trees_T3
+wide_for_dam$prop_No_damage_dead_T4<-wide_for_dam$No_damage_T4/wide_for_dam$Total_Trees_T4
+#arcsin transform prop moralities
+wide_for_dam$asn_prop_dead_T1<-asin(sqrt(wide_for_dam$prop_dead_T1))
+wide_for_dam$asn_prop_dead_T2<-asin(sqrt(wide_for_dam$prop_dead_T2))
+wide_for_dam$asn_prop_dead_T3<-asin(sqrt(wide_for_dam$prop_dead_T3))
+wide_for_dam$asn_prop_dead_T4<-asin(sqrt(wide_for_dam$prop_dead_T4))
+
+wide_for_dam$asn_prop_LRR_dead_T1<-asin(sqrt(wide_for_dam$prop_LRR_dead_T1))
+wide_for_dam$asn_prop_LRR_dead_T2<-asin(sqrt(wide_for_dam$prop_LRR_dead_T2))
+wide_for_dam$asn_prop_LRR_dead_T3<-asin(sqrt(wide_for_dam$prop_LRR_dead_T3))
+wide_for_dam$asn_prop_LRR_dead_T4<-asin(sqrt(wide_for_dam$prop_LRR_dead_T4))
+
+wide_for_dam$asn_prop_LRRNO_dead_T1<-asin(sqrt(wide_for_dam$prop_LRRNO_dead_T1))
+wide_for_dam$asn_prop_LRRNO_dead_T2<-asin(sqrt(wide_for_dam$prop_LRRNO_dead_T2))
+wide_for_dam$asn_prop_LRRNO_dead_T3<-asin(sqrt(wide_for_dam$prop_LRRNO_dead_T3))
+wide_for_dam$asn_prop_LRRNO_dead_T4<-asin(sqrt(wide_for_dam$prop_LRRNO_dead_T4))
+
+wide_for_dam$asn_prop_SUP_dead_T1<-asin(sqrt(wide_for_dam$prop_SUP_dead_T1))
+wide_for_dam$asn_prop_SUP_dead_T2<-asin(sqrt(wide_for_dam$prop_SUP_dead_T2))
+wide_for_dam$asn_prop_SUP_dead_T3<-asin(sqrt(wide_for_dam$prop_SUP_dead_T3))
+wide_for_dam$asn_prop_SUP_dead_T4<-asin(sqrt(wide_for_dam$prop_SUP_dead_T4))
+
+
+wide_for_dam$asn_prop_No_damage_dead_T1<-asin(sqrt(wide_for_dam$prop_No_damage_dead_T1))
+wide_for_dam$asn_prop_No_damage_dead_T2<-asin(sqrt(wide_for_dam$prop_No_damage_dead_T2))
+wide_for_dam$asn_prop_No_damage_dead_T3<-asin(sqrt(wide_for_dam$prop_No_damage_dead_T3))
+wide_for_dam$asn_prop_No_damage_dead_T4<-asin(sqrt(wide_for_dam$prop_No_damage_dead_T4))
+
+#calculate slopes (update with new timepoints.)
+#will calculate slopes for "early" 1-2 (12 and 24 rotations), "mid" 1-3 (12 and DF), and "late" 3-4 (DF only).
+wide_for_dam$early_BA_slope<-(wide_for_dam$Live_BA_mpha_T2-wide_for_dam$Live_BA_mpha_T1)/(wide_for_dam$DF_age_T2-wide_for_dam$DF_age_T1)
+wide_for_dam$mid_BA_slope<-(wide_for_dam$Live_BA_mpha_T3-wide_for_dam$Live_BA_mpha_T1)/(wide_for_dam$DF_age_T3-wide_for_dam$DF_age_T1)
+wide_for_dam$late_BA_slope<-(wide_for_dam$Live_BA_mpha_T4-wide_for_dam$Live_BA_mpha_T3)/(wide_for_dam$DF_age_T4-wide_for_dam$DF_age_T3)
+
+wide_for_dam$early_prop_dead_slope<-(wide_for_dam$prop_dead_T2-wide_for_dam$prop_dead_T1)/(wide_for_dam$DF_age_T2-wide_for_dam$DF_age_T1)
+wide_for_dam$mid_prop_dead_slope<-(wide_for_dam$prop_dead_T3-wide_for_dam$prop_dead_T1)/(wide_for_dam$DF_age_T3-wide_for_dam$DF_age_T1)
+wide_for_dam$late_prop_dead_slope<-(wide_for_dam$prop_dead_T4-wide_for_dam$prop_dead_T3)/(wide_for_dam$DF_age_T4-wide_for_dam$DF_age_T3)
+
+wide_for_dam$early_asn_prop_dead_slope<-(wide_for_dam$asn_prop_dead_T2-wide_for_dam$asn_prop_dead_T1)/(wide_for_dam$DF_age_T2-wide_for_dam$DF_age_T1)
+wide_for_dam$mid_asn_prop_dead_slope<-(wide_for_dam$asn_prop_dead_T3-wide_for_dam$asn_prop_dead_T1)/(wide_for_dam$DF_age_T3-wide_for_dam$DF_age_T1)
+wide_for_dam$late_asn_prop_dead_slope<-(wide_for_dam$asn_prop_dead_T4-wide_for_dam$asn_prop_dead_T3)/(wide_for_dam$DF_age_T4-wide_for_dam$DF_age_T3)
+
+wide_for_dam$early_prop_LRR_dead_slope<-(wide_for_dam$prop_LRR_dead_T2-wide_for_dam$prop_LRR_dead_T1)/(wide_for_dam$DF_age_T2-wide_for_dam$DF_age_T1)
+wide_for_dam$mid_prop_LRR_dead_slope<-(wide_for_dam$prop_LRR_dead_T3-wide_for_dam$prop_LRR_dead_T1)/(wide_for_dam$DF_age_T3-wide_for_dam$DF_age_T1)
+wide_for_dam$late_prop_LRR_dead_slope<-(wide_for_dam$prop_LRR_dead_T4-wide_for_dam$prop_LRR_dead_T3)/(wide_for_dam$DF_age_T4-wide_for_dam$DF_age_T3)
+
+wide_for_dam$early_asn_prop_LRR_dead_slope<-(wide_for_dam$asn_prop_LRR_dead_T2-wide_for_dam$asn_prop_LRR_dead_T1)/(wide_for_dam$DF_age_T2-wide_for_dam$DF_age_T1)
+wide_for_dam$mid_asn_prop_LRR_dead_slope<-(wide_for_dam$asn_prop_LRR_dead_T3-wide_for_dam$asn_prop_LRR_dead_T1)/(wide_for_dam$DF_age_T3-wide_for_dam$DF_age_T1)
+wide_for_dam$late_asn_prop_LRR_dead_slope<-(wide_for_dam$asn_prop_LRR_dead_T4-wide_for_dam$asn_prop_LRR_dead_T3)/(wide_for_dam$DF_age_T4-wide_for_dam$DF_age_T3)
+
+wide_for_dam$early_prop_LRRNO_dead_slope<-(wide_for_dam$prop_LRRNO_dead_T2-wide_for_dam$prop_LRRNO_dead_T1)/(wide_for_dam$DF_age_T2-wide_for_dam$DF_age_T1)
+wide_for_dam$mid_prop_LRRNO_dead_slope<-(wide_for_dam$prop_LRRNO_dead_T3-wide_for_dam$prop_LRRNO_dead_T1)/(wide_for_dam$DF_age_T3-wide_for_dam$DF_age_T1)
+wide_for_dam$late_prop_LRRNO_dead_slope<-(wide_for_dam$prop_LRRNO_dead_T4-wide_for_dam$prop_LRRNO_dead_T3)/(wide_for_dam$DF_age_T4-wide_for_dam$DF_age_T3)
+
+wide_for_dam$early_asn_prop_LRRNO_dead_slope<-(wide_for_dam$asn_prop_LRRNO_dead_T2-wide_for_dam$asn_prop_LRRNO_dead_T1)/(wide_for_dam$DF_age_T2-wide_for_dam$DF_age_T1)
+wide_for_dam$mid_asn_prop_LRRNO_dead_slope<-(wide_for_dam$asn_prop_LRRNO_dead_T3-wide_for_dam$asn_prop_LRRNO_dead_T1)/(wide_for_dam$DF_age_T3-wide_for_dam$DF_age_T1)
+wide_for_dam$late_asn_prop_LRRNO_dead_slope<-(wide_for_dam$asn_prop_LRRNO_dead_T4-wide_for_dam$asn_prop_LRRNO_dead_T3)/(wide_for_dam$DF_age_T4-wide_for_dam$DF_age_T3)
+
+wide_for_dam$early_prop_SUP_dead_slope<-(wide_for_dam$prop_SUP_dead_T2-wide_for_dam$prop_SUP_dead_T1)/(wide_for_dam$DF_age_T2-wide_for_dam$DF_age_T1)
+wide_for_dam$mid_prop_SUP_dead_slope<-(wide_for_dam$prop_SUP_dead_T3-wide_for_dam$prop_SUP_dead_T1)/(wide_for_dam$DF_age_T3-wide_for_dam$DF_age_T1)
+wide_for_dam$late_prop_SUP_dead_slope<-(wide_for_dam$prop_SUP_dead_T4-wide_for_dam$prop_SUP_dead_T3)/(wide_for_dam$DF_age_T4-wide_for_dam$DF_age_T3)
+
+wide_for_dam$early_asn_prop_SUP_dead_slope<-(wide_for_dam$asn_prop_SUP_dead_T2-wide_for_dam$asn_prop_SUP_dead_T1)/(wide_for_dam$DF_age_T2-wide_for_dam$DF_age_T1)
+wide_for_dam$mid_asn_prop_SUP_dead_slope<-(wide_for_dam$asn_prop_SUP_dead_T3-wide_for_dam$asn_prop_SUP_dead_T1)/(wide_for_dam$DF_age_T3-wide_for_dam$DF_age_T1)
+wide_for_dam$late_asn_prop_SUP_dead_slope<-(wide_for_dam$asn_prop_SUP_dead_T4-wide_for_dam$asn_prop_SUP_dead_T3)/(wide_for_dam$DF_age_T4-wide_for_dam$DF_age_T3)
+
+wide_for_dam$early_prop_No_damage_dead_slope<-(wide_for_dam$prop_No_damage_dead_T2-wide_for_dam$prop_No_damage_dead_T1)/(wide_for_dam$DF_age_T2-wide_for_dam$DF_age_T1)
+wide_for_dam$mid_prop_No_damage_dead_slope<-(wide_for_dam$prop_No_damage_dead_T3-wide_for_dam$prop_No_damage_dead_T1)/(wide_for_dam$DF_age_T3-wide_for_dam$DF_age_T1)
+wide_for_dam$late_prop_No_damage_dead_slope<-(wide_for_dam$prop_No_damage_dead_T4-wide_for_dam$prop_No_damage_dead_T3)/(wide_for_dam$DF_age_T4-wide_for_dam$DF_age_T3)
+
+wide_for_dam$early_asn_prop_No_damage_dead_slope<-(wide_for_dam$asn_prop_No_damage_dead_T2-wide_for_dam$asn_prop_No_damage_dead_T1)/(wide_for_dam$DF_age_T2-wide_for_dam$DF_age_T1)
+wide_for_dam$mid_asn_prop_No_damage_dead_slope<-(wide_for_dam$asn_prop_No_damage_dead_T3-wide_for_dam$asn_prop_No_damage_dead_T1)/(wide_for_dam$DF_age_T3-wide_for_dam$DF_age_T1)
+wide_for_dam$late_asn_prop_No_damage_dead_slope<-(wide_for_dam$asn_prop_No_damage_dead_T4-wide_for_dam$asn_prop_No_damage_dead_T3)/(wide_for_dam$DF_age_T4-wide_for_dam$DF_age_T3)
+
+
+#Descriptive treatments
+wide_for_dam$Treatment<-ifelse(wide_for_dam$TRT=="A",
+                            "Red Alder\n12 years",
+                            ifelse(wide_for_dam$TRT=="B",
+                               "Cottonwood\n12 years", 
+                               ifelse(wide_for_dam$TRT=="C",
+                               "Douglas fir\nImmediately",
+                               ifelse(wide_for_dam$TRT=="D",
+                                   "Red Alder\n25 years","Cottonwood\n25 years" ))))
+wide_for_dam$TMT<-ifelse(wide_for_dam$TRT=="A",
+                            "RA 12",
+                            ifelse(wide_for_dam$TRT=="B",
+                               "CW 12", 
+                               ifelse(wide_for_dam$TRT=="C",
+                               "DF",
+                               ifelse(wide_for_dam$TRT=="D",
+                                   "RA 25","CW 25"))))
+
+wide_for_dam$Treatment<-factor(wide_for_dam$Treatment, levels= c("Douglas fir\nImmediately","Red Alder\n12 years","Cottonwood\n12 years","Red Alder\n25 years","Cottonwood\n25 years"))
+wide_for_dam$TMT<-factor(wide_for_dam$TMT, levels= c("DF","RA 12","CW 12","RA 25","CW 25"))
+#saveRDS(wide_for_dam, file= here("wide_stand_summaries_including_damage_codes_timepoint_update.Rds"))  
+```
+
+```{r}
+#generate data subset for ANOVA
+AOV_in<-stand_df_age
+AOV_Alive<-subset(AOV_in, AOV_in$STATUS==1)
+AOV_Alive_count<- AOV_Alive %>% group_by(Stand_ID_TR, DF_age)%>%summarise(Alive=sum(count, na.rm=TRUE), Live_BA_mpha = if(all(is.na(Live_BA_mpha))) NA_real_ else sum(Live_BA_mpha, na.rm=TRUE), YEAR_dbl=median(YEAR_dbl, na.rm = TRUE))
+AOV_Dead<-subset(AOV_in, AOV_in$STATUS==3)
+AOV_Dead_count<- AOV_Dead %>% group_by(Stand_ID_TR, DF_age)%>%summarise(Dead=sum(count, na.rm=TRUE), Live_BA_mpha = if(all(is.na(Live_BA_mpha))) NA_real_ else sum(Live_BA_mpha, na.rm=TRUE), YEAR_dbl=median(YEAR_dbl, na.rm = TRUE)) 
+
+#attempt to merge datasets but there are not "Dead" entries for all of the stand/year combinations
+#need to add rows for stand years with zero Dead trees https://www.statology.org/r-append-to-data-frame/
+Dead_add<-data.frame("Stand_ID_TR"=c("B_2", "B_3", "B_4"),
+                     "DF_age"=c(8, 8, 8),
+                     "Dead"=c(0, 0, 0),
+                     "Live_BA_mpha"=c(NA,NA, NA))
+
+Dead_add$Stand_ID_TR<-Dead_add$Stand_ID_TR
+Dead_add$DF_age<-as.double(Dead_add$DF_age)
+Dead_add$Dead<-as.integer(Dead_add$Dead)
+Dead_add$Live_BA_mpha<-as.double(Dead_add$Live_BA_mpha)
+AOV_Dead_count_add<-rbind(AOV_Dead_count, Dead_add)
+#need to have rows in same order to cbind
+AOV_Dead_count_add_sort<-AOV_Dead_count_add[c(1:15,57,16,17,58,18,19,59,20:56),]
+AOV_prop_Dead<-cbind(AOV_Alive_count, AOV_Dead_count_add_sort[,"Dead"])
+
+#AOV_prop_Dead<-cbind(AOV_Alive_count, AOV_Dead_count_add_sort[,"SUPP"])
+#AOV_prop_Dead<-cbind(AOV_Alive_count, AOV_Dead_count_add_sort[,"LRR"])
+#AOV_prop_Dead<-cbind(AOV_Alive_count, AOV_Dead_count_add_sort[,"N_O"])
+#AOV_prop_Dead<-cbind(AOV_Alive_count, AOV_Dead_count_add_sort[,"LRRNO"])
+
+
+AOV_prop_Dead$total<-(AOV_prop_Dead$Alive+AOV_prop_Dead$Dead)
+AOV_prop_Dead$prop_Dead<-(AOV_prop_Dead$Dead/AOV_prop_Dead$total)
+#AOV_prop_Dead$prop_D_miss<-((pmax(AOV_prop_Dead$total,170)-AOV_prop_Dead$Alive)/pmax(AOV_prop_Dead$total,170))
+AOV_prop_Dead$prop_Alive<-1-AOV_prop_Dead$prop_Dead
+#AOV_prop_Dead$prop_A_miss<-1-AOV_prop_Dead$prop_D_miss
+
+#add unique block and tmt designations and make them factors
+AOV_prop_Dead<-AOV_prop_Dead %>% separate(Stand_ID_TR, c("TRT","REP"),"_",remove = FALSE)
+#AOV_prop_Dead$TRT<-as.factor(AOV_prop_Dead$TRT)
+#AOV_prop_Dead$REP<-as.factor(AOV_prop_Dead$REP)
+#arcsine transforrmation of proportion Dead
+AOV_prop_Dead$asn_mort<-asin(sqrt(AOV_prop_Dead$prop_Dead))
+#adding descriptive treatment name
+AOV_prop_Dead$Treatment<-ifelse(AOV_prop_Dead$TRT=="A",
+                            "Red Alder 12 years",
+                            ifelse(AOV_prop_Dead$TRT=="B",
+                               "Cottonwood 12 years", 
+                               ifelse(AOV_prop_Dead$TRT=="C",
+                               "Immediate Douglas fir",
+                               ifelse(AOV_prop_Dead$TRT=="D",
+                                   "Red Alder 25 years", "Cottonwood 25 years"   
+                               ))))
+#creating stand means and SE for BA and asin prop mort, and prop mort, prop Inferred mort
+AOV_BA_stand_mean<- stand_df_age %>% group_by(TRT, DF_age)%>%summarise( Stand_N_BA = sum(!is.na(Live_BA_mpha)),mean_BA=mean(Live_BA_mpha, na.rm=TRUE), sd_BA = sd(Live_BA_mpha, na.rm=TRUE),se_BA = sd_BA / sqrt(Stand_N_BA), YEAR_dbl=median(YEAR_dbl, na.rm = TRUE))
+#AOV_BA_stand_mean$age<-as.numeric(AOV_BA_stand_mean$DF_age)
+#adding descriptive treatment name
+AOV_BA_stand_mean$Treatment<-ifelse(AOV_BA_stand_mean$TRT=="A",
+                            "Red Alder 12 years",
+                            ifelse(AOV_BA_stand_mean$TRT=="B",
+                               "Cottonwood 12 years", 
+                               ifelse(AOV_BA_stand_mean$TRT=="C",
+                               "Immediate Douglas fir",
+                               ifelse(AOV_BA_stand_mean$TRT=="D",
+                                   "Red Alder 25 years", "Cottonwood 25 years"   
+                               ))))
+AOV_BA_stand_mean$lower_BA<-AOV_BA_stand_mean$mean_BA-AOV_BA_stand_mean$se_BA
+AOV_BA_stand_mean$upper_BA<-AOV_BA_stand_mean$mean_BA+AOV_BA_stand_mean$se_BA
+
+AOV_BA_minmax<- stand_df_age %>% group_by(TRT, DF_age)%>%summarise( BA_minmax_N = sum(!is.na(Live_BA_mpha)),med_BA=median(Live_BA_mpha, na.rm=TRUE), min_BA = min(Live_BA_mpha, na.rm=TRUE),max_BA = max(Live_BA_mpha, na.rm=TRUE), YEAR_dbl=median(YEAR_dbl, na.rm = TRUE))
+#AOV_BA_minmax$age<-as.numeric(AOV_BA_minmax$DF_age)
+#adding descriptive treatment name
+AOV_BA_minmax$Treatment<-ifelse(AOV_BA_minmax$TRT=="A",
+                            "Red Alder 12 years",
+                            ifelse(AOV_BA_minmax$TRT=="B",
+                               "Cottonwood 12 years", 
+                               ifelse(AOV_BA_minmax$TRT=="C",
+                               "Immediate Douglas fir",
+                               ifelse(AOV_BA_minmax$TRT=="D",
+                                   "Red Alder 25 years", "Cottonwood 25 years"   
+                               ))))
+
+
+AOV_asnmort_stand_mean<- AOV_prop_Dead %>% group_by(TRT, DF_age)%>%summarise( asnmort_N = sum(!is.na(asn_mort)),asn_mort_mean=mean(asn_mort, na.rm=TRUE), asn_mort_sd = sd(asn_mort, na.rm=TRUE),asn_mort_se = sd(asn_mort, na.rm=TRUE) / sqrt(asnmort_N), YEAR_dbl=median(YEAR_dbl, na.rm = TRUE))
+#AOV_asnmort_stand_mean$age<-as.numeric(AOV_asnmort_stand_mean$DF_age)
+#adding descriptive treatment name
+AOV_asnmort_stand_mean$asn_mort_lower<-AOV_asnmort_stand_mean$asn_mort_mean-AOV_asnmort_stand_mean$asn_mort_se
+AOV_asnmort_stand_mean$asn_mort_upper<-AOV_asnmort_stand_mean$asn_mort_mean+AOV_asnmort_stand_mean$asn_mort_se
+
+AOV_mort_stand_mean<- AOV_prop_Dead %>% group_by(TRT, DF_age)%>%summarise( mort_N = sum(!is.na(prop_Dead)),mort_mean=mean(prop_Dead, na.rm=TRUE), mort_sd = sd(prop_Dead, na.rm=TRUE),mort_se = sd(prop_Dead, na.rm=TRUE)/ sqrt(mort_N), YEAR_dbl=median(YEAR_dbl, na.rm = TRUE))
+#AOV_mort_stand_mean$age<-as.numeric(AOV_mort_stand_mean$DF_age)
+#adding descriptive treatment name
+AOV_mort_stand_mean$Treatment<-ifelse(AOV_mort_stand_mean$TRT=="A",
+                            "Red Alder 12 years",
+                            ifelse(AOV_mort_stand_mean$TRT=="B",
+                               "Cottonwood 12 years", 
+                               ifelse(AOV_mort_stand_mean$TRT=="C",
+                               "Immediate Douglas fir",
+                               ifelse(AOV_mort_stand_mean$TRT=="D",
+                                   "Red Alder 25 years", "Cottonwood 25 years"   
+                               ))))
+AOV_mort_stand_mean$mort_lower<-AOV_mort_stand_mean$mort_mean-AOV_mort_stand_mean$mort_se
+AOV_mort_stand_mean$mort_upper<-AOV_mort_stand_mean$mort_mean+AOV_mort_stand_mean$mort_se
+
+AOV_mort_minmax<- AOV_prop_Dead %>% group_by(TRT, DF_age)%>%summarise( mort_minmax_N = sum(!is.na(prop_Dead)),med_mort=median(prop_Dead, na.rm=TRUE), min_mort= min(prop_Dead, na.rm=TRUE),max_mort = max(prop_Dead, na.rm=TRUE), YEAR_dbl=median(YEAR_dbl, na.rm = TRUE))
+#AOV_mort_minmax$age<-as.numeric(AOV_mort_minmax$DF_age)
+#adding descriptive treatment name
+AOV_mort_minmax$Treatment<-ifelse(AOV_mort_minmax$TRT=="A",
+                            "Red Alder 12 years",
+                            ifelse(AOV_mort_minmax$TRT=="B",
+                               "Cottonwood 12 years", 
+                               ifelse(AOV_mort_minmax$TRT=="C",
+                               "Immediate Douglas fir",
+                               ifelse(AOV_mort_minmax$TRT=="D",
+                                   "Red Alder 25 years", "Cottonwood 25 years"   
+                               ))))
+#combining summary statistics into single dataframe
+stand_summary_stats<-AOV_prop_Dead
+stand_summary_stats$Block<-ifelse(stand_summary_stats$REP==0,5,stand_summary_stats$REP)
+#saveRDS(stand_summary_stats, here("stand_summary_stats.Rds"))
+
+treatment_summary_stats<-merge(AOV_BA_stand_mean,AOV_BA_minmax, by=c("TRT","DF_age"))
+treatment_summary_stats[ ,c('YEAR_dbl.y', 'Treatment.y')] <- list(NULL)
+treatment_summary_stats<-merge(treatment_summary_stats,AOV_mort_stand_mean, by=c("TRT","DF_age"))
+treatment_summary_stats[ ,c('YEAR_dbl.x', 'Treatment.x')] <- list(NULL)
+treatment_summary_stats<-merge(treatment_summary_stats,AOV_mort_minmax, by=c("TRT","DF_age"))
+treatment_summary_stats[ ,c('YEAR_dbl.y', 'Treatment.y')] <- list(NULL)
+treatment_summary_stats<-merge(treatment_summary_stats,AOV_asnmort_stand_mean, by=c("TRT","DF_age"))
+treatment_summary_stats$Treatment<-treatment_summary_stats$Treatment.x
+treatment_summary_stats[ ,c('YEAR_dbl.x', 'Treatment.x')] <- list(NULL)
+
+#saveRDS(treatment_summary_stats, here("treatment_summary_stats.Rds"))
+
+treatment_summary_stats$Treatment<-factor(treatment_summary_stats$Treatment,levels = c("Red Alder 12 years","Cottonwood 12 years","Immediate Douglas fir","Red Alder 25 years","Cottonwood 25 years"))
+stand_summary_stats$Treatment<-factor(stand_summary_stats$Treatment,levels = c("Red Alder 12 years","Cottonwood 12 years","Immediate Douglas fir","Red Alder 25 years","Cottonwood 25 years"))
+stand_summary_stats$Block<-factor(stand_summary_stats$Block,levels = c(1,2,3,4,5), ordered = TRUE)
+
+##assuming even stocking and unobserved mortality prior to first measurement (probably not justified)
+#AOV_mort_miss_stand_mean<- AOV_prop_Dead %>% group_by(TRT, DF_age)%>%summarise( N = #sum(!is.na(prop_D_miss)),mort_miss_mean=mean(prop_D_miss, na.rm=TRUE), sd = sd(prop_D_miss, na.rm=TRUE),se = sd / sqrt(N))
+#AOV_mort_miss_stand_mean$age<-as.numeric(AOV_mort_miss_stand_mean$DF_age)
+##adding descriptive treatment name
+#AOV_mort_miss_stand_mean$Treatment<-ifelse(AOV_mort_miss_stand_mean$TRT=="A",
+#                            "Red Alder 12 years",
+#                            ifelse(AOV_mort_miss_stand_mean$TRT=="B",
+#                               "Cottonwood 12 years", 
+#                               ifelse(AOV_mort_miss_stand_mean$TRT=="C",
+#                               "Immediate Douglas fir",
+#                               ifelse(AOV_mort_miss_stand_mean$TRT=="D",
+#                                   "Red Alder 25 years", "Cottonwood 25 years"   
+#                               ))))
+#AOV_mort_miss_stand_mean$lower<-AOV_mort_miss_stand_mean$mort_miss_mean-AOV_mort_miss_stand_mean$se
+#AOV_mort_miss_stand_mean$upper<-AOV_mort_miss_stand_mean$mort_miss_mean+AOV_mort_miss_stand_mean$se
+
+#RUN ANOVA
+```
+
+## Plotting
+
+```{r}
+#plot prop mort x DF age
+#subsetting for the purposes of labeling
+stand_summary_stats$DF_REP<-NA
+stand_summary_stats$RA12_REP<-NA
+stand_summary_stats$CW12_REP<-NA
+stand_summary_stats$RA25_REP<-NA
+stand_summary_stats$CW25_REP<-NA
+stand_summary_stats$DF_REP<-ifelse(stand_summary_stats$TRT=="C",stand_summary_stats$REP,NA)
+stand_summary_stats$RA12_REP<-ifelse(stand_summary_stats$TRT=="A",stand_summary_stats$REP,NA)
+stand_summary_stats$CW12_REP<-ifelse(stand_summary_stats$TRT=="B",stand_summary_stats$REP,NA)
+stand_summary_stats$RA25_REP<-ifelse(stand_summary_stats$TRT=="D",stand_summary_stats$REP,NA)
+stand_summary_stats$CW25_REP<-ifelse(stand_summary_stats$TRT=="E",stand_summary_stats$REP,NA)
+#adding "severity" factor that ranks the reps by inititial incidence of PW
+stand_summary_stats$Block<-NA
+stand_summary_stats$Block<-ifelse(stand_summary_stats$REP=="0","5",stand_summary_stats$REP)
+stand_summary_stats$Block_beg_end<-ifelse((stand_summary_stats$DF_age==24|stand_summary_stats$DF_age==36),NA,stand_summary_stats$Block)
+stand_summary_stats$Block_beg<-ifelse((stand_summary_stats$DF_age==33|stand_summary_stats$DF_age==45|stand_summary_stats$DF_age==20),NA,stand_summary_stats$Block_beg_end)
+stand_summary_stats$Block_end<-ifelse((stand_summary_stats$DF_age==8|stand_summary_stats$DF_age==11|stand_summary_stats$DF_age==12),NA,stand_summary_stats$Block_beg_end)
+stand_summary_stats$DF_Block<-NA
+stand_summary_stats$RA_Block<-NA
+stand_summary_stats$CW_Block<-NA
+stand_summary_stats$DF_Block<-ifelse(stand_summary_stats$DF_REP=="0","5",stand_summary_stats$DF_REP)
+stand_summary_stats$RA12_Block<-ifelse(stand_summary_stats$RA12_REP=="0","5",stand_summary_stats$RA12_REP)
+stand_summary_stats$CW12_Block<-ifelse(stand_summary_stats$CW12_REP=="0","5",stand_summary_stats$CW12_REP)
+stand_summary_stats$RA25_Block<-ifelse(stand_summary_stats$RA25_REP=="0","5",stand_summary_stats$RA25_REP)
+stand_summary_stats$CW25_Block<-ifelse(stand_summary_stats$CW25_REP=="0","5",stand_summary_stats$CW25_REP)
+stand_summary_stats$age<-as.numeric(stand_summary_stats$DF_age)
+#saveRDS(stand_summary_stats, file= here("stand_summary_stats.Rds"))  
+```
+
+
+```{r}
+#graphing
+
+#BA
+BA_box_sev<-stand_summary_stats %>% 
+  mutate(Treatment= factor(Treatment, levels = c("Red Alder 12 years","Cottonwood 12 years","Immediate Douglas fir","Red Alder 25 years","Cottonwood 25 years")))%>%
+  ggplot(aes(x=factor(DF_age),y=Live_BA_mpha, fill=Treatment)) + 
+  geom_boxplot(position = position_dodge(preserve = "single"),alpha=0.7)+
+   ylab("Stand Live BA (sq m/ha)")+
+   scale_x_discrete("Douglas Fir Age (years)", drop=FALSE, limits= c("1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31","32","33","34","35","36","37","38","39","40","41","42","43","44","45","46"), breaks=c("0","8", "11","12", "20", "24", "33","36","45")) +scale_fill_viridis_d() +
+ xlab("Douglas Fir Age (years)")+
+geom_text(label=stand_summary_stats$DF_Block, alpha=0.5, nudge_x= 0.5)+
+geom_text(label=stand_summary_stats$CW12_Block, alpha=0.5, nudge_x = 0.5)+
+geom_text(label=stand_summary_stats$RA12_Block, alpha=0.5, nudge_x = -0.5)+
+geom_text(label=stand_summary_stats$CW25_Block, alpha=0.5, nudge_x = 0.5)+
+geom_text(label=stand_summary_stats$RA25_Block, alpha=0.5, nudge_x = -0.5)+
+theme_bw()
+BA_box_sev
+#ggsave(here("Summary_Graphs_update","Box_Live_BA_mpha_by_TRT_REPS_labeled.pdf"))
+
+BA_line_sev<-stand_summary_stats %>% 
+  mutate(Treatment= factor(Treatment, levels = c("Red Alder 12 years","Cottonwood 12 years","Immediate Douglas fir","Red Alder 25 years","Cottonwood 25 years")))%>%
+  ggplot(aes(DF_age,Live_BA_mpha, color=Treatment)) + 
+  ylab("Stand Live BA (sq m/ha)")+
+   scale_x_discrete("Douglas Fir Age (years)", drop=FALSE, limits= c("1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31","32","33","34","35","36","37","38","39","40","41","42","43","44","45","46"), breaks=c("0","10", "20","30", "40", "50")) +scale_color_viridis_d() +
+ xlab("Douglas Fir Age (years)")+
+  geom_line(aes(linetype=stand_summary_stats$Block), size=1)+
+#geom_text(label=stand_summary_stats$Block, alpha=0.5, color="black")+
+geom_text_repel(aes(DF_age,Live_BA_mpha,label=stand_summary_stats$Block_end), alpha=0.8, color="black",nudge_x = 2)+
+theme_bw()+
+facet_grid(rows=vars(Treatment))
+BA_line_sev
+#ggsave(here("Summary_Graphs_update","Line_Live_BA_mpha_by_TRT_Block.pdf"))
+
+BA_point<-treatment_summary_stats %>% 
+  mutate(Treatment= factor(Treatment, levels = c("Red Alder 12 years","Cottonwood 12 years","Immediate Douglas fir","Red Alder 25 years","Cottonwood 25 years")))%>%
+  ggplot(aes(DF_age,mean_BA, color=Treatment)) + 
+  geom_point()+
+  geom_errorbar(aes(ymin=lower_BA, ymax=upper_BA))+
+  geom_line()+
+  ylab("Stand Mean (+/-SE) Live BA (sq m/ha)")+
+  xlab("Douglas Fir Age (years)")+
+  scale_color_viridis_d() +
+theme_bw()
+BA_point
+#ggsave(here("Summary_Graphs_update","Mean_SE_Live_BA_mpha_by_TRT_REPS_labeled.pdf"))
+
+BA_ribbon<-treatment_summary_stats %>% 
+  mutate(Treatment= factor(Treatment, levels = c("Red Alder 12 years","Cottonwood 12 years","Immediate Douglas fir","Red Alder 25 years","Cottonwood 25 years")))%>%
+  ggplot(aes(DF_age,mean_BA, fill=Treatment)) + 
+  geom_ribbon(aes(ymin=lower_BA, ymax=upper_BA),alpha=0.5)+
+  ylab("Stand Mean (+/-SE) Live BA (sq m/ha)")+
+  xlab("Douglas Fir Age (years)")+
+  scale_fill_viridis_d() +
+theme_bw()
+BA_ribbon
+#ggsave(here("Summary_Graphs_update","Ribbon_Live_BA_mpha_by_TRT_REPS_labeled.pdf"))
+
+BA_ribbon_year<-treatment_summary_stats %>% 
+  mutate(Treatment= factor(Treatment, levels = c("Red Alder 12 years","Cottonwood 12 years","Immediate Douglas fir","Red Alder 25 years","Cottonwood 25 years")))%>%
+  ggplot(aes(YEAR_dbl,mean_BA, fill=Treatment)) + 
+  geom_ribbon(aes(ymin=lower_BA, ymax=upper_BA),alpha=0.5)+
+  ylab("Stand Mean (+/-SE) Live BA (sq m/ha)")+
+  xlab("Year")+
+  scale_fill_viridis_d() +
+theme_bw()
+BA_ribbon_year
+#ggsave(here("Summary_Graphs_update","Ribbon_Live_BA_mpha_by_year_TRT_REPS_labeled.pdf"))
+
+pd_box_sev<-stand_summary_stats %>% 
+  mutate(Treatment= factor(Treatment, levels = c("Red Alder 12 years","Cottonwood 12 years","Immediate Douglas fir","Red Alder 25 years","Cottonwood 25 years"))) %>%
+  ggplot(aes(x=factor(DF_age),y=prop_Dead, fill=Treatment))+ 
+  geom_boxplot(position = position_dodge(preserve = "single"), alpha=0.7)+
+   ylab("Stand Mortality")+
+  xlab("Douglas Fir Age (years)")+
+  scale_x_discrete("Douglas Fir Age (years)", drop=FALSE, limits= c("1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31","32","33","34","35","36","37","38","39","40","41","42","43","44","45","46"), breaks=c("0","8", "11","12", "20", "24", "33","36","45"))+ scale_fill_viridis_d()+
+geom_text(label=stand_summary_stats$DF_Block, alpha=0.5, nudge_x= 0.5)+
+geom_text(label=stand_summary_stats$CW12_Block, alpha=0.5, nudge_x = 0.5)+
+geom_text(label=stand_summary_stats$RA12_Block, alpha=0.5, nudge_x = -0.5)+
+geom_text(label=stand_summary_stats$CW25_Block, alpha=0.5, nudge_x = 0.5)+
+geom_text(label=stand_summary_stats$RA25_Block, alpha=0.5, nudge_x = -0.5)+
+ylim(0,1)+
+theme_bw()
+pd_box_sev
+#(here("Summary_Graphs_update","Box_prop_dead_by_TRT_REPS_labeled.pdf"))
+
+pd_line_sev<-stand_summary_stats %>% 
+  mutate(Treatment= factor(Treatment, levels = c("Red Alder 12 years","Cottonwood 12 years","Immediate Douglas fir","Red Alder 25 years","Cottonwood 25 years")))%>%
+  ggplot(aes(DF_age,prop_Dead, color=Treatment)) + 
+  ylab("Stand Mortality")+
+   scale_x_discrete("Douglas Fir Age (years)", drop=FALSE, limits= c("1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31","32","33","34","35","36","37","38","39","40","41","42","43","44","45","46","47","48","49"), breaks=c("10", "20","30", "40", "50")) +scale_color_viridis_d() + scale_fill_viridis_d()+
+ xlab("Douglas Fir Age (years)")+
+  geom_line(aes(linetype=stand_summary_stats$Block), size=1)+
+  geom_text_repel(aes(DF_age,prop_Dead,label=stand_summary_stats$Block_end), alpha=0.8, color="black",nudge_x = 2)+
+  #geom_text(label=stand_summary_stats$Block_beg, alpha=0.8, color="black", nudge_x = -0.5)+
+  #geom_text(label=stand_summary_stats$Block_end, alpha=0.8, color="black", nudge_x = 0.5)+
+theme_bw()
+pd_line_sev
+pd_line_sev+geom_ribbon(data= treatment_summary_stats, aes(DF_age,med_mort,ymin=min_mort, ymax=max_mort, fill=factor(Treatment, levels = c("Red Alder 12 years","Cottonwood 12 years","Immediate Douglas fir","Red Alder 25 years","Cottonwood 25 years"))), show.legend=FALSE,alpha=0.1, color = NA)
+pd_line_facet<-pd_line_sev+facet_grid(rows=vars(factor(Treatment, levels = c("Red Alder 12 years","Cottonwood 12 years","Immediate Douglas fir","Red Alder 25 years","Cottonwood 25 years"))))
+pd_line_facet
+#ggsave(here("Summary_Graphs_update","Line_prop_dead_by_TRT_Block_facet.pdf"))
+pd_line_sev+geom_ribbon(data= treatment_summary_stats, aes(DF_age,med_mort,ymin=min_mort, ymax=max_mort, fill=factor(Treatment, levels = c("Red Alder 12 years","Cottonwood 12 years","Immediate Douglas fir","Red Alder 25 years","Cottonwood 25 years"))), show.legend=FALSE,alpha=0.1, color = NA)+facet_grid(rows=vars(factor(Treatment, levels = c("Red Alder 12 years","Cottonwood 12 years","Immediate Douglas fir","Red Alder 25 years","Cottonwood 25 years"))))
+#ggsave(here("Summary_Graphs_update","Line_ribon_prop_dead_by_TRT_Block_facet.pdf"))
+
+pd_point<-treatment_summary_stats %>% 
+  mutate(Treatment= factor(Treatment, levels = c("Red Alder 12 years","Cottonwood 12 years","Immediate Douglas fir","Red Alder 25 years","Cottonwood 25 years")))%>%
+  ggplot(aes(DF_age,mort_mean, color=Treatment)) + 
+  geom_point()+
+  geom_errorbar(aes(ymin=mort_lower, ymax=mort_upper))+
+  geom_line()+
+  ylab("Stand Mean (+/-SE) Mortality")+
+  xlab("Douglas Fir Age (years)")+
+  scale_color_viridis_d() +
+  ylim(0,1)+
+theme_bw()
+pd_point
+#ggsave(here("Summary_Graphs_update","Mean_SE_prop_dead_by_TRT_REPS_labeled.pdf"))
+
+pd_ribbon<-treatment_summary_stats %>% 
+  mutate(Treatment= factor(Treatment, levels = c("Red Alder 12 years","Cottonwood 12 years","Immediate Douglas fir","Red Alder 25 years","Cottonwood 25 years")))%>%
+  ggplot(aes(DF_age,mort_mean, fill=Treatment)) + 
+  geom_ribbon(aes(ymin=mort_lower, ymax=mort_upper),alpha=0.5)+
+  ylab("Stand Mean (+/-SE) Mortality")+
+  xlab("Douglas Fir Age (years)")+
+  scale_fill_viridis_d() +
+  ylim(0,1)+
+theme_bw()
+pd_ribbon
+#ggsave(here("Summary_Graphs_update","Ribbon_prop_dead_by_TRT_REPS_labeled.pdf"))
+
+pd_ribbon_year<-treatment_summary_stats %>% 
+  mutate(Treatment= factor(Treatment, levels = c("Red Alder 12 years","Cottonwood 12 years","Immediate Douglas fir","Red Alder 25 years","Cottonwood 25 years")))%>%
+  ggplot(aes(YEAR_dbl,mort_mean, fill=Treatment)) + 
+  geom_ribbon(aes(ymin=mort_lower, ymax=mort_upper),alpha=0.5)+
+  ylab("Stand Mean (+/-SE) Mortality")+
+  xlab("Year")+
+  scale_fill_viridis_d() +
+  ylim(0,1)+
+theme_bw()
+pd_ribbon_year
+#ggsave(here("Summary_Graphs_update","Ribbon_prop_dead_by_year_TRT_REPS_labeled.pdf"))
+
+#printing all plots in one file
+MyPlots2<-list(BA_box_sev,BA_line_sev,BA_point,BA_ribbon,pd_box_sev,pd_line_facet,pd_point,pd_ribbon)
+
+
+pdf(here("Summary_Graphs_update","BA_and_Mortality_summaries_by_treatment.pdf"), height= 10, width = 12)
+MyPlots2
+dev.off()
+
+```
+
+## Converting data back to wide format for calculating slopes as response variables for anova/glm
+Use above version wide_for_dam which includes mortality broken down by damage codes
+```{r}
+##selecting relevant columns from stand summary data
+#colnames(stand_summary_stats)
+#wide_in<-stand_summary_stats[,c(1,2,4,6,9,10,14,15,16)]
+##assigning timpoints to calculate early and late slopes based on trt x age combinations
+#wide_in$timepoint<-
+#  ifelse(wide_in$TRT=="A"|wide_in$TRT=="B", #test 10y trt
+#        ifelse(wide_in$DF_age==8, #test age=8
+#              1, #then timpoint 1
+#              ifelse(wide_in$DF_age==24, # if not 8, test age=24
+#                    2, #then timpoint 2
+#                    3)) #if not 24, then timpoint 3m close test 24, close test 8  
+#        ,ifelse(wide_in$TRT=="C",     #if not 10y, test DF
+#                ifelse(wide_in$DF_age==12, #test age=12
+#                       1, #then timpoint 1
+#                       ifelse(wide_in$DF_age==36, # if not 12, test age=36
+#                              2, #then timpoint 2
+#                              3)) #if not 36, then timpoint 3, close test 36 close test 12
+#        ,ifelse(wide_in$DF_age==11,  #test age=11
+#                1, #then timepoint 1
+#                2  #if not, then timepoint 2
+#) #close test 11
+#) #close test DF           
+#) #close test 10y
+#
+##coverting to wide format using timepoint column
+#wide_BA_in<-wide_in[,c(1,4,10)]
+#wide_BA<-pivot_wider(wide_BA_in, names_from = "timepoint",id_cols = "Stand_ID_TR",values_from = "Live_BA_mpha",names_prefix = "Live_BA_mpha_T")
+#wide_BA$TRT<-as.factor(c("A","A","A","B","B","B","B","B","C","C","C","C","C","D","D","D","D","D","E","E","E","E","E"))
+#wide_BA$Block<-c(5,2,4,5,1,2,3,4,5,1,2,3,4,5,1,2,3,4,5,1,2,3,4)
+#wide_age_in<-wide_in[,c(1,3,10)]
+#wide_age<-pivot_wider(wide_age_in, names_from = "timepoint",id_cols = "Stand_ID_TR",values_from = "DF_age",names_prefix = "DF_age_T")
+#wide_stand_stats<-merge(wide_BA,wide_age, by="Stand_ID_TR")
+#wide_total_in<-wide_in[,c(1,5,10)]
+#wide_total<-pivot_wider(wide_total_in, names_from = "timepoint",id_cols = "Stand_ID_TR",values_from = "total",names_prefix = "Trees_T")
+#wide_stand_stats<-merge(wide_stand_stats,wide_total, by="Stand_ID_TR")
+#wide_pd_in<-wide_in[,c(1,6,10)]
+#wide_pd<-pivot_wider(wide_pd_in, names_from = "timepoint",id_cols = "Stand_ID_TR",values_from = "prop_Dead",names_prefix = "prop_dead_T")
+#wide_stand_stats<-merge(wide_stand_stats,wide_pd, by="Stand_ID_TR")
+#wide_asn_in<-wide_in[,c(1,7,10)]
+#wide_asn<-pivot_wider(wide_asn_in, names_from = "timepoint",id_cols = "Stand_ID_TR",values_from = "asn_mort",names_prefix = "asn_mort_T")
+#wide_stand_stats<-merge(wide_stand_stats,wide_asn, by="Stand_ID_TR")
+#wide_stand_stats$Treatment<-ifelse(wide_stand_stats$TRT=="A",
+#                            "Red Alder\n12 years",
+#                            ifelse(wide_stand_stats$TRT=="B",
+#                               "Cottonwood\n12 years", 
+#                               ifelse(wide_stand_stats$TRT=="C",
+#                               "Douglas fir\nImmediately",
+#                               ifelse(wide_stand_stats$TRT=="D",
+#                                   "Red Alder\n25 years","Cottonwood\n25 years" ))))
+#wide_stand_stats$TMT<-ifelse(wide_stand_stats$TRT=="A",
+#                            "RA 12",
+#                            ifelse(wide_stand_stats$TRT=="B",
+#                               "CW 12", 
+#                               ifelse(wide_stand_stats$TRT=="C",
+#                               "DF",
+#                               ifelse(wide_stand_stats$TRT=="D",
+#                                   "RA 25","CW 25"))))
+#
+#wide_stand_stats$early_BA_slope<-(wide_stand_stats$Live_BA_mpha_T2-wide_stand_stats$Live_BA_mpha_T1)/(wide_stand_stats$DF_age_T2-wide_stand_stats$DF_a#ge_T1)
+#wide_stand_stats$late_BA_slope<-(wide_stand_stats$Live_BA_mpha_T3-wide_stand_stats$Live_BA_mpha_T2)/(wide_stand_stats$DF_age_T3-wide_stand_stats$DF_ag#e_T2)
+#wide_stand_stats$early_mort_slope<-(wide_stand_stats$prop_dead_T2-wide_stand_stats$prop_dead_T1)/(wide_stand_stats$DF_age_T2-wide_stand_stats$DF_age_T#1)
+#wide_stand_stats$late_mort_slope<-(wide_stand_stats$prop_dead_T3-wide_stand_stats$prop_dead_T2)/(wide_stand_stats$DF_age_T3-wide_stand_stats$DF_age_T2#)
+#wide_stand_stats$early_asnmort_slope<-(wide_stand_stats$asn_mort_T2-wide_stand_stats$asn_mort_T1)/(wide_stand_stats$DF_age_T2-wide_stand_stats$DF_age_#T1)
+#wide_stand_stats$late_asnmort_slope<-(wide_stand_stats$asn_mort_T3-wide_stand_stats$asn_mort_T2)/(wide_stand_stats$DF_age_T3-wide_stand_stats$DF_age_T#2)
+#wide_stand_stats$Treatment<-factor(wide_stand_stats$Treatment, levels= c("Douglas fir\nImmediately","Red Alder\n12 years","Cottonwood\n12 years","Red #Alder\n25 years","Cottonwood\n25 years"))
+#wide_stand_stats$TMT<-factor(wide_stand_stats$TMT, levels= c("DF","RA 12","CW 12","RA 25","CW 25"))
+##saveRDS(wide_stand_stats, file=here("wide_stand_stats.Rds"))
+
+```
+
+#Plotting
+```{r}
+
+##UPDATE WITH NEW TIMEPOINTS
+
+#boxplots
+#library(patchwork)
+#basal area
+early_BA<-ggplot(data = wide_for_dam, aes(x=TMT,y=early_BA_slope))+
+  geom_hline(linetype=3,yintercept = 0)+
+  geom_boxplot()+
+  labs(x="Treatment",y="Early (10-25y)\nAnnual DF Basal Area Increment\n(m^2*ha^-1*year^-1)")+
+  geom_text_repel(aes(label=Block),nudge_x = 0.5,segment.alpha=0.5)+
+  ylim(-1,3)+
+  theme_bw()
+early_BA
+early_BA2<-early_BA+labs(x=NULL,y="Annual DF Basal Area Increment\n(m^2*ha^-1*year^-1)\n\nEarly (10-25y)")
+
+early_BA_block_facet<-ggplot(data = wide_for_dam, aes(x=TMT,y=early_BA_slope))+
+                    geom_hline(linetype=3,yintercept = 0)+
+                    geom_point()+
+  labs(x="Treatment",y="Early (10-25y)\nAnnual DF Basal Area Increment\n(m^2*ha^-1*year^-1)")+
+   ylim(-1,3)+
+  theme_bw()+
+  facet_grid(rows = vars(Block))
+early_BA_block_facet
+
+mid_BA<-ggplot(data = wide_for_dam, aes(x=TMT,y=mid_BA_slope))+
+  geom_hline(linetype=3,yintercept = 0)+
+  geom_boxplot()+
+  labs(x="Treatment",y="Mid (10-35y)\nAnnual DF Basal Area Increment\n(m^2*ha^-1*year^-1)")+
+  geom_text_repel(aes(label=Block),nudge_x = 0.5,segment.alpha=0.5)+
+  ylim(-1,3)+
+  theme_bw()
+mid_BA
+mid_BA2<-mid_BA+labs(x=NULL,y="Annual DF Basal Area Increment\n(m^2*ha^-1*year^-1)\n\nMid (10-35y)")
+
+mid_BA_block_facet<-ggplot(data = wide_for_dam, aes(x=TMT,y=mid_BA_slope))+
+                    geom_hline(linetype=3,yintercept = 0)+
+                    geom_point()+
+  labs(x="Treatment",y="Early (10-25y)\nAnnual DF Basal Area Increment\n(m^2*ha^-1*year^-1)")+
+   ylim(-1,3)+
+  theme_bw()+
+  facet_grid(rows = vars(Block))
+mid_BA_block_facet
+
+late_BA<-ggplot(data = wide_for_dam, aes(x=TMT,y=late_BA_slope))+
+  geom_hline(linetype=3,yintercept = 0)+
+  geom_boxplot()+
+  labs(x="Treatment",y="Late (35-45y)\nAnnual DF Basal Area Increment\n(m^2*ha^-1*year^-1)")+
+  geom_text_repel(aes(label=Block),nudge_x = 0.5,segment.alpha=0.5)+
+  ylim(-1,3)+
+  theme_bw()
+late_BA
+late_BA2<-late_BA+labs(x=NULL,y="Late (35-45y)")
+
+late_BA_block_facet<-ggplot(data = wide_for_dam, aes(x=TMT,y=late_BA_slope))+
+                    geom_hline(linetype=3,yintercept = 0)+
+                    geom_point()+
+  labs(x="Treatment",y="Late (35-45y)\nAnnual DF Basal Area Increment\n(m^2*ha^-1*year^-1)")+
+   ylim(-1,3)+
+  theme_bw()+
+  facet_grid(rows = vars(Block))
+late_BA_block_facet
+
+#mortality
+early_mort<-ggplot(data = wide_for_dam, aes(x=TMT,y=early_prop_dead_slope))+
+  geom_boxplot()+
+  labs(x="Treatment", y="Early (10-25y)\nAnnual DF Mortality\n(proportion/year)")+
+  geom_text_repel(aes(label=Block),nudge_x = 0.5,segment.alpha=0.5)+
+   ylim(-0.005,0.045)+
+  theme_bw()
+early_mort
+early_mort_block_facet<-ggplot(data = wide_for_dam, aes(x=TMT,y=early_prop_dead_slope))+
+  geom_point()+
+  labs(x="Treatment", y="Early (10-25y)\nAnnual DF Mortality\n(proportion/year)")+
+   ylim(-0.005,0.05)+
+  theme_bw()+
+  facet_grid(rows = vars(Block))
+early_mort_block_facet
+
+early_mort2<-early_mort+labs(x="Treatment",y="Annual DF Mortality\n(proportion/year)\n\nEarly (10-25y)")
+#mid
+mid_mort<-ggplot(data = wide_for_dam, aes(x=TMT,y=mid_prop_dead_slope))+
+  geom_boxplot()+
+  labs(x="Treatment", y="Mid (10-35y)\nAnnual DF Mortality\n(proportion/year)")+
+  geom_text_repel(aes(label=Block),nudge_x = 0.5,segment.alpha=0.5)+
+   ylim(-0.005,0.045)+
+  theme_bw()
+mid_mort
+mid_mort_block_facet<-ggplot(data = wide_for_dam, aes(x=TMT,y=early_prop_dead_slope))+
+  geom_point()+
+  labs(x="Treatment", y="Mid (10-35y)\nAnnual DF Mortality\n(proportion/year)")+
+   ylim(-0.005,0.045)+
+  theme_bw()+
+  facet_grid(rows = vars(Block))
+mid_mort_block_facet
+
+mid_mort2<-mid_mort+labs(x="Treatment",y="Mid (10-35y)")
+
+
+late_mort<-ggplot(data = wide_for_dam, aes(x=TMT,y=late_prop_dead_slope))+
+  geom_boxplot()+
+  labs(x="Treatment",y="Late (35-45y)\nAnnual DF Mortality\n(proportion/year)")+
+  geom_text_repel(aes(label=Block),nudge_x = 0.5,segment.alpha=0.5)+
+  ylim(-0.005,0.045)+
+  theme_bw()
+late_mort
+late_mort2<-late_mort+labs(x="Treatment",y="Late (35-45y)")
+late_mort_block_facet<-ggplot(data = wide_for_dam, aes(x=TMT,y=early_prop_dead_slope))+
+  geom_point()+
+  labs(x="Treatment", y="Late (34-45y)\nAnnual DF Mortality\n(proportion/year)")+
+   ylim(-0.005,0.045)+
+  theme_bw()+
+  facet_grid(rows = vars(Block))
+late_mort_block_facet
+(early_BA2 | mid_BA2| late_BA2) / (early_mort2 | mid_mort2 | late_mort2)
+(early_BA_block_facet | mid_BA_block_facet | late_BA_block_facet) / (early_mort_block_facet | mid_mort_block_facet | late_mort_block_facet)
+#pdf(here("Summary_Graphs_update","Early_mid_late_BA_prop_dead_slope_boxplots.pdf"), height= 10, width = 12)
+#(early_BA2 | mid_BA2| late_BA2) / (early_mort2 | mid_mort2 | late_mort2)
+#dev.off()
+#pdf(here("Summary_Graphs_update","Early_mid_late_BA_mort_Block_facet.pdf"), height= 10, width = 5)
+#(early_BA_block_facet | mid_BA_block_facet | late_BA_block_facet) / (early_mort_block_facet | mid_mort_block_facet | late_mort_block_facet)
+#dev.off()
+```
+
+parsing out damage codes
+```{r}
+##UPDATE WITH NEW TIMPOINTS
+
+#LRR
+early_LRR_mort<-ggplot(data = wide_for_dam, aes(x=TMT,y=early_prop_LRR_dead_slope))+
+  geom_boxplot()+
+  labs(x="Treatment", y="Early (10-25y)\nAnnual DF\nLRR Mortality\n(proportion/year)")+
+  geom_text_repel(aes(label=Block),nudge_x = 0.5,segment.alpha=0.5)+
+  ylim(-0.005,0.045)+
+  theme_bw()
+early_LRR_mort
+
+early_LRR_mort2<-early_LRR_mort+labs(x="Treatment",y="Annual DF\nLRR Mortality\n(proportion/year)\n\nEarly (10-25y)")
+
+mid_LRR_mort<-ggplot(data = wide_for_dam, aes(x=TMT,y=mid_prop_LRR_dead_slope))+
+  geom_boxplot()+
+  labs(x="Treatment", y="Mid (10-35y)\nAnnual DF\nLRR Mortality\n(proportion/year)")+
+  geom_text_repel(aes(label=Block),nudge_x = 0.5,segment.alpha=0.5)+
+  ylim(-0.005,0.045)+
+  theme_bw()
+mid_LRR_mort
+
+mid_LRR_mort2<-mid_LRR_mort+labs(x="Treatment",y="Mid (10-35y)")
+
+late_LRR_mort<-ggplot(data = wide_for_dam, aes(x=TMT,y=late_prop_LRR_dead_slope))+
+  geom_boxplot()+
+  labs(x="Treatment",y="Late (35-45y)\nAnnual DF\nLRR Mortality\n(proportion/year)")+
+  geom_text_repel(aes(label=Block),nudge_x = 0.5,segment.alpha=0.5)+
+  #geom_text(aes(label=Block),nudge_x = 0.5)+
+  ylim(-0.005,0.045)+
+  theme_bw()
+late_LRR_mort
+late_LRR_mort2<-late_LRR_mort+labs(x="Treatment",y="Late (35-45y)")
+(early_LRR_mort2 | mid_LRR_mort2 | late_LRR_mort2)
+#pdf(here("Summary_Graphs_update","Early_mid_late_prop_LRR_dead_slope_boxplots.pdf"), height= 6, width = 12)
+#(early_LRR_mort2 | mid_LRR_mort2 | late_LRR_mort2)
+#dev.off()
+
+#SUP
+early_SUP_mort<-ggplot(data = wide_for_dam, aes(x=TMT,y=early_prop_SUP_dead_slope))+
+  geom_boxplot()+
+  labs(x="Treatment", y="Early (10-25y)\nAnnual DF\nSuppression Mortality\n(proportion/year)")+
+  geom_text_repel(aes(label=Block),nudge_x = 0.5,segment.alpha=0.5)+
+  ylim(-0.005,0.045)+
+  theme_bw()
+early_SUP_mort
+
+early_SUP_mort2<-early_SUP_mort+labs(x="Treatment",y="Annual DF\nSuppression Mortality\n(proportion/year)\n\nEarly (10-25y)")
+
+mid_SUP_mort<-ggplot(data = wide_for_dam, aes(x=TMT,y=mid_prop_SUP_dead_slope))+
+  geom_boxplot()+
+  labs(x="Treatment",y="Mid (10-35y)\nAnnual DF\nSuppression Mortality\n(proportion/year)")+
+  geom_text_repel(aes(label=Block),nudge_x = 0.5,segment.alpha=0.5)+
+  #geom_text(aes(label=Block),nudge_x = 0.5)+
+  ylim(-0.005,0.045)+
+  theme_bw()
+mid_SUP_mort
+mid_SUP_mort2<-mid_SUP_mort+labs(x="Treatment",y="Mid (10-35y)")
+
+late_SUP_mort<-ggplot(data = wide_for_dam, aes(x=TMT,y=late_prop_SUP_dead_slope))+
+  geom_boxplot()+
+  labs(x="Treatment",y="Late (35-45y)\nAnnual DF\nSuppression Mortality\n(proportion/year)")+
+  geom_text_repel(aes(label=Block),nudge_x = 0.5,segment.alpha=0.5)+
+  #geom_text(aes(label=Block),nudge_x = 0.5)+
+  ylim(-0.005,0.045)+
+  theme_bw()
+late_SUP_mort
+late_SUP_mort2<-late_SUP_mort+labs(x="Treatment",y="Late (35-45y)")
+(early_SUP_mort2 | mid_SUP_mort2 | late_SUP_mort2)
+(early_LRR_mort2 |mid_LRR_mort2| late_LRR_mort2)/ (early_SUP_mort2 |mid_SUP_mort2| late_SUP_mort2)
+#pdf(here("Summary_Graphs_update","Early_mid_late_prop_SUP_dead_slope_boxplots.pdf"), height= 6, width = 12)
+#(early_SUP_mort2 | mid_SUP_mort2 | late_SUP_mort2)
+#dev.off()
+#
+#pdf(here("Summary_Graphs_update","Early_mid_late_prop_SUP_and_prop_LRR_dead_slope_boxplots.pdf"), height= 10, width = 12)
+#(early_LRR_mort2 |mid_LRR_mort2| late_LRR_mort2)/ (early_SUP_mort2 |mid_SUP_mort2| late_SUP_mort2)
+#dev.off()
+
+```
+# plotting tree diameters over time and coloring by LRR status
+
+```{r}
+#make test data set to confirm the appropriate data structure
+#with only live time points
+TreeID<-c(101,101,101,102,102,103,103,103,104,104,104)
+Age<-c(8,22,34,10,26,12,24,36,8,34,45)
+DBH<-c(5,8,15,4,7,9,15,25,6,12,19)
+LRR<-c("N","N","N","Y","Y","N","N","N","Y","Y","Y")
+df<-data.frame(TreeID,Age,DBH,LRR)
+df
+d<-ggplot()+geom_path(data=df, group=TreeID, aes(x=Age, y=DBH,colour=LRR))+theme_bw()
+d
+#with NA DBH for dead tree at a given age, also attempting to add trend line and 95%CI
+TreeID2<-c(101,101,101,102,102,102,103,103,103,104,104,104)
+Age2<-c(8,22,34,10,26,36,12,24,36,8,34,45)
+DBH2<-c(5,8,15,4,7,NA,9,15,25,6,12,19)
+LRR2<-c("N","N","N","Y","Y","Y","N","N","N","Y","Y","Y")
+df2<-data.frame(TreeID2,Age2,DBH2,LRR2)
+df2
+d2<-ggplot(df2,aes(x=Age2, y=DBH2,colour=LRR2))+geom_path(group=TreeID2)+theme_bw()+geom_smooth(method = lm)
+d2
+#either structure seems to work, so I will likely use the DBH=NA to preserve data.
+#this would also allow for adding a custom timepoint/age at year of death when this was recorded/estimated along with diameter of dead tree. 
+
+#the dataset "lessA1A3" seems to be the best starting point to generate the input for this analysis
+#seeing which columns to keep
+head(lessA1A3)
+# 1,4:7,11:13,21
+growth_test<-lessA1A3[,c(1,4:7,10:13,28,30)]
+#calculate a live DBH in cm
+growth_test$live_DBH_cm<-ifelse(growth_test$Tree_status=="Alive", #test if alive
+                                growth_test$DBH_mm /10, #if yes, then divide mm DBH by 10
+                                NA) #otherwise (Dead or NA), make NA
+#need to propagate LRR flag to all time points for the same tree. Could maybe use YEAR_dbl.
+#may be a good idea to first generate a vector that contains the Tree_IDs for which LRR==1 in any year
+LRR_trees<-growth_test[which(growth_test$LRR==1),1]
+LRR_list<-c(unique(LRR_trees$Tree_ID))
+SUP_trees<-growth_test[which(growth_test$SUP==1),1]
+SUP_list<-c(unique(SUP_trees$Tree_ID))
+
+growth_test$Cond_flag<-ifelse(!is.na(growth_test$Tree_status), #test not NA
+                             ifelse(growth_test$Tree_ID %in% LRR_list, #if so, test LRR
+                             "LRR", #if so, print LRR
+                             ifelse(growth_test$Tree_ID %in% SUP_list,#if not test SUPP
+                              "SUP", #if so, print SUP
+                             "NONE")), #if not, print NONE
+                             NA) #if not not NA, print NA
+growth_test2<-growth_test %>% filter(!is.na(growth_test$DF_age))
+dbh_plot<-ggplot(growth_test2,aes(DF_age,live_DBH_cm,colour=Cond_flag))+geom_path(group=growth_test2$Tree_ID, alpha=0.1, na.rm = TRUE)+theme_bw()+geom_smooth(method = lm)+facet_row(growth_test2$TRT)+scale_color_viridis_d()
+dbh_plot
+
+#the plot produced from the above code works but the trendlines may not be representative because they calculate the slope across three measurements (two slopes). Since the LRR trees are more likely not to have a third measurement, this may bias the overall slope. Could perhaps limit the datasets to two measurements, and thus one slope per tree per interval. 25y treatments only have one interval. DF and 12y have two intervals that don't necessarily overlap. Could just use same windows for comparison as slope boxplots (12 and 25 with Early, 12 and DF with mid, and DF with Late)
+
+#could use just DF trees and just 1st and 2nd measurements. This would  This still wouldn't account for trees that died of LRR, unless we were able to do the age at death corrections from the datasheet notes.
+#keep ages 8,12,33,36 i.e. "Mid"
+growth_test_mid<-growth_test2 %>% filter(growth_test2$DF_age==8|growth_test2$DF_age==12|growth_test2$DF_age==33|growth_test2$DF_age==36)
+
+dbh_plot_mid<-ggplot(growth_test_mid,aes(DF_age,live_DBH_cm)) +geom_path(group=growth_test_mid$Tree_ID, alpha=0.15, aes(colour=Cond_flag)) +theme_bw() +geom_smooth(method = lm, aes( linetype=Cond_flag,fill=Cond_flag,colour=Cond_flag)) +facet_row(growth_test_mid$TRT) +scale_color_viridis_d() +labs(title="Midle Phase Growth", x="Douglas Fir Age",y="DBH (mm)") +scale_fill_viridis_d()
+dbh_plot_mid
+
+##keep ages 8,11,20,24 i.e. "Early"
+growth_test_early<-growth_test2 %>% filter(growth_test2$DF_age==8|growth_test2$DF_age==11|growth_test2$DF_age==20|growth_test2$DF_age==24)
+
+dbh_plot_early<-ggplot(growth_test_early,aes(DF_age,live_DBH_cm)) +geom_path(group=growth_test_early$Tree_ID, alpha=0.15, aes(colour=Cond_flag)) +theme_bw() +geom_smooth(method = lm, aes( linetype=Cond_flag,fill=Cond_flag,colour=Cond_flag)) +facet_row(growth_test_early$TRT) +scale_color_viridis_d() +labs(title="Early Phase Growth", x="Douglas Fir Age",y="DBH (mm)") +scale_fill_viridis_d()
+dbh_plot_early
+
+##keep ages 36,45 i.e. "Late"
+growth_test_late<-growth_test2 %>% filter(growth_test2$DF_age==36|growth_test2$DF_age==45)
+
+dbh_plot_late<-ggplot(growth_test_late,aes(DF_age,live_DBH_cm)) +geom_path(group=growth_test_late$Tree_ID, alpha=0.15, aes(colour=Cond_flag)) +theme_bw() +geom_smooth(method = lm, aes( linetype=Cond_flag,fill=Cond_flag,colour=Cond_flag)) +facet_row(growth_test_late$TRT) +scale_color_viridis_d() +labs(title="Late Phase Growth", x="Douglas Fir Age",y="DBH (mm)") +scale_fill_viridis_d()
+dbh_plot_late
+#print PDF
+
+#pdf(here("Summary_Graphs_update","Early_mid_late_growth_by_LRR_SUPP_NOT.pdf"), height= 20, width = 24)
+#layout<-"
+#BBBB#
+#BBBBC
+#AAAAC
+#AAAA#
+#"
+#dbh_plot_mid+dbh_plot_early+dbh_plot_late+plot_layout(design=layout)
+#dev.off()
+
+#there may be a couple of reasons the two lines don't differ in the rotation treatments
+#1) suppression in the non-LRR trees also reduced growth (could add suppression flag too, would need to recode)
+    #Did this and it seemed to help
+#2) for the 25y treatments there were so few (if any) trees that had LRR and were alive that they don't mean much (see divergence of CI)
+
+#These charts include only trees that were alive at the time of diameter measurement.  In the "early" phase of the 12y rotations and the "mid" phase of DF, the could have died at a later measurement date (most) or they could have been alive at harvest.
+#See if it is possible to add custom ages and diameters at mortality for dead trees? Or is it obvious that trees and died within the measurement window would have reduced growth even if they are alive?
+
+#does it make sense for the 95% CI to be so small given the range of the measured data? Am I generating them incorrectly and/or misunderstanding what they mean?
+
+#run a true anova / linear model to test the slopes, not just geom_smooth()
+
+#out of curiosity, group by REP
+growth_test_rep<-growth_test %>% filter(!is.na(growth_test$DF_age))
+dbh_plot_rep<-ggplot(growth_test_rep,aes(DF_age,live_DBH_cm,colour=factor(REP)))+geom_path(group=growth_test_rep$Tree_ID, alpha=0.1, na.rm = TRUE)+theme_bw()+geom_smooth(method = lm)+scale_color_viridis_d()
+dbh_plot_rep
+
+growth_test_mid<-growth_test2 %>% filter(growth_test2$DF_age==8|growth_test2$DF_age==12|growth_test2$DF_age==33|growth_test2$DF_age==36)
+dbh_plot_mid_rep<-ggplot(growth_test_mid,aes(DF_age,live_DBH_cm,colour=Cond_flag,fill=Cond_flag,linetype=Cond_flag))+geom_path(group=growth_test_mid$Tree_ID, alpha=0.3, show.legend = FALSE)+theme_bw()+geom_smooth(method = lm) +facet_grid(rows=vars(growth_test_mid$REP),cols=vars(growth_test_mid$TRT)) +scale_color_viridis_d()+scale_fill_viridis_d()
+dbh_plot_mid_rep
+```
+
+
+# ANOVAs and ordinal logistic regression for rates of mortality and BA increment
+example provided by stats consult https://rpubs.com/tmcurley/twowayanova
+len.aov <- aov(len ~ supp + dose + supp:dose, data = ToothGrowth)
+summary(len.aov)
+
+find a way to accomodate an unbalanced model (i.e. proc mixed or proc glimmix in SAS)
+perhaps lmer can.
+Run block as a random effect and double check coding (1|Block)?
+If not possible to use unbalanced, then run full model (with interaction) on blocks 2,4,5 and run additive model on full dataset.
+use "wide_for_dam" dataset
+
+## BA and rate of mortality
+```{r}
+#http://animsci.agrenv.mcgill.ca/StatisticalMethodsII/R/RCBD/index.html
+#https://cran.r-project.org/web/packages/lme4/vignettes/lmer.pdf
+#https://benwhalley.github.io/just-enough-r/contrasts-lmer.html
+
+#wide_for_dam<-readRDS(file= here("wide_stand_summaries_including_damage_codes.Rds"))
+
+#early BA slope
+#wide_for_dam$TMT<-relevel(wide_for_dam$TMT, ref = "DF")
+wide_for_dam$Block<-factor(wide_for_dam$Block)
+#generating a balanced dataset which removes RA12 treatment
+no_RA12<-wide_for_dam[-which(wide_for_dam$TMT=="RA 12"),]
+no_RA12$TMT<-factor(no_RA12$TMT, levels= c("DF","CW 12","RA 25","CW 25"))
+no_RA12$TMT<-relevel(no_RA12$TMT, ref = "DF")
+#running on balanced dataset
+BAmodel<-lmer(early_BA_slope ~ TMT + (1|Block), data = no_RA12, REML=FALSE, verbose = 2)
+plot(BAmodel, type = c("p", "smooth"))
+plot(BAmodel, sqrt(abs(resid(.))) ~ fitted(.),type = c("p", "smooth"))
+lattice::qqmath(BAmodel, id = 0.05)
+ranef(BAmodel)
+rand(BAmodel)
+
+#running on full dataset
+BAFmodel<-lmer(early_BA_slope ~ TMT + (1|Block), data = wide_for_dam, REML=FALSE, verbose = 2)
+plot(BAFmodel, type = c("p", "smooth"))
+plot(BAFmodel, sqrt(abs(resid(.))) ~ fitted(.),type = c("p", "smooth"))
+lattice::qqmath(BAFmodel, id = 0.05)
+summary(BAFmodel)
+anova(BAFmodel)
+rand(BAFmodel)
+VarCorr(BAFmodel)
+ls_means(BAFmodel)
+#comparing with just a simple fixed effect model
+BATmodel<-lm(early_BA_slope ~ TMT, data = wide_for_dam)
+summary(BATmodel)
+#comparing the two models
+anova(BAFmodel, BATmodel)
+#fixed only model has slightly lower BIC and AIC and doesn't return the singular error.
+
+#late BA slope
+lBAFmodel<-lmer(late_BA_slope ~ TMT + (1|Block), data = wide_for_dam, REML=FALSE, verbose = 2)
+plot(lBAFmodel, type = c("p", "smooth"))
+plot(lBAFmodel, sqrt(abs(resid(.))) ~ fitted(.),type = c("p", "smooth"))
+lattice::qqmath(lBAFmodel, id = 0.05)
+summary(lBAFmodel)
+anova(lBAFmodel)
+rand(lBAFmodel)
+VarCorr(lBAFmodel)
+ls_means(lBAFmodel)
+
+#early total mortality
+EMTFmodel<-lmer(early_prop_dead_slope ~ TMT + (1|Block), data = wide_for_dam, REML=FALSE, verbose = 2)
+plot(EMTFmodel, type = c("p", "smooth"))
+plot(EMTFmodel, sqrt(abs(resid(.))) ~ fitted(.),type = c("p", "smooth"))
+lattice::qqmath(EMTFmodel, id = 0.05)
+summary(EMTFmodel)
+anova(EMTFmodel)
+rand(EMTFmodel)
+VarCorr(EMTFmodel)
+ls_means(EMTFmodel)
+
+#arcsin early total mortality
+EMaTFmodel<-lmer(early_asn_prop_dead_slope ~ TMT + (1|Block), data = wide_for_dam, REML=FALSE, verbose = 2)
+plot(EMaTFmodel, type = c("p", "smooth"))
+plot(EMaTFmodel, sqrt(abs(resid(.))) ~ fitted(.),type = c("p", "smooth"))
+lattice::qqmath(EMaTFmodel, id = 0.05)
+summary(EMaTFmodel)
+anova(EMaTFmodel)
+rand(EMaTFmodel)
+VarCorr(EMaTFmodel)
+ls_means(EMaTFmodel)
+#comparing asn transformed and raw shows transformed is better fit (and slightly better diagnostic plots)
+anova(EMTFmodel, EMaTFmodel)
+
+#Trimming CW25 Block 1
+trimE1<-wide_for_dam[-20,]
+EMatrimmodel<-lmer(early_asn_prop_dead_slope ~ TMT + (1|Block), data = trimE1, REML=FALSE, verbose = 2)
+plot(EMatrimmodel, type = c("p", "smooth"))
+plot(EMatrimmodel, sqrt(abs(resid(.))) ~ fitted(.),type = c("p", "smooth"))
+lattice::qqmath(EMatrimmodel, id = 0.05)
+summary(EMatrimmodel)
+anova(EMatrimmodel)
+rand(EMatrimmodel)
+VarCorr(EMatrimmodel)
+ls_means(EMatrimmodel)
+
+#capturing marginal means for levels of treatment as a dataframe
+m.emm<-emmeans(EMatrimmodel, "TMT")
+m.emm.df <-
+  m.emm %>%
+  broom::tidy()
+#plotting treatment estimated marginal means +/- SE
+m.emm.df %>%
+  ggplot(aes(TMT, estimate, ymin=(estimate - std.error), ymax=(estimate + std.error))) +
+  geom_pointrange() +
+  ylab("asn early prop dead")
+#all pairwise contrasts
+contrast(m.emm, 'tukey') %>%
+  broom::tidy()
+#each vs DF control
+contrast(m.emm, 'trt.vs.ctrl') %>%
+  broom::tidy()
+
+
+#alternative would be to create a combined TMTxBlock variable and run a Kruskal Wallis test
+wide_for_dam$TxB<-paste(wide_for_dam$TRT, wide_for_dam$Block, Sep="")
+kwem<-kruskal.test(early_prop_dead_slope ~ TxB, data = wide_for_dam)
+kwem
+pwem<-pairwise.wilcox.test(wide_for_dam$early_prop_dead_slope, wide_for_dam$TxB,
+                 p.adjust.method = "BH")
+pwem
+#OR just test block or tmt alone
+kwblock<-kruskal.test(early_prop_dead_slope~Block, data = wide_for_dam)
+kwblock
+pwblock<-pairwise.wilcox.test(wide_for_dam$early_prop_dead_slope, wide_for_dam$Block,
+                 p.adjust.method = "BH")
+pwblock
+
+kwtrt<-kruskal.test(early_prop_dead_slope~TMT, data = wide_for_dam)
+kwtrt
+pwtrt<-pairwise.wilcox.test(wide_for_dam$early_prop_dead_slope, wide_for_dam$TMT,
+                 p.adjust.method = "BH")
+pwtrt
+
+#late rate of mortality
+#asn transformed
+LMaTFmodel<-lmer(late_asn_prop_dead_slope ~ TMT + (1|Block), data = wide_for_dam, REML=FALSE, verbose = 2)
+plot(LMaTFmodel, type = c("p", "smooth"))
+plot(LMaTFmodel, sqrt(abs(resid(.))) ~ fitted(.),type = c("p", "smooth"))
+lattice::qqmath(LMaTFmodel, id = 0.05)
+summary(LMaTFmodel)
+anova(LMaTFmodel)
+rand(LMaTFmodel)
+VarCorr(LMaTFmodel)
+ls_means(LMaTFmodel)
+
+#capturing marginal means for levels of treatment as a dataframe
+lm.emm<-emmeans(LMaTFmodel, "TMT")
+lm.emm.df <-
+  lm.emm %>%
+  broom::tidy()
+#plotting treatment estimated marginal means +/- SE
+lm.emm.df %>%
+  ggplot(aes(TMT, estimate, ymin=(estimate - std.error), ymax=(estimate + std.error))) +
+  geom_pointrange() +
+  ylab("asn late prop dead")
+#all pairwise contrasts
+contrast(lm.emm, 'tukey') %>%
+  broom::tidy()
+#each vs DF control
+contrast(lm.emm, 'trt.vs.ctrl') %>%
+  broom::tidy()
+
+```
+
+
+## LRR-specific mortality
+```{r}
+#early LRR mort slope
+#asn
+EaLRRmodel<-lmer(early_asn_prop_LRR_dead_slope ~ TMT + (1|Block), data = wide_for_dam, REML=FALSE, verbose = 2)
+plot(EaLRRmodel, type = c("p", "smooth"))
+plot(EaLRRmodel, sqrt(abs(resid(.))) ~ fitted(.),type = c("p", "smooth"))
+lattice::qqmath(EaLRRmodel, id = 0.05)
+summary(EaLRRmodel)
+anova(EaLRRmodel)
+rand(EaLRRmodel)
+VarCorr(EaLRRmodel)
+ls_means(EaLRRmodel)
+
+#capturing marginal means for levels of treatment as a dataframe
+elrrm.emm<-emmeans(EaLRRmodel, "TMT")
+elrrm.emm.df <-
+  elrrm.emm %>%
+  broom::tidy()
+#plotting treatment estimated marginal means +/- SE
+elrrm.emm.df %>%
+  ggplot(aes(TMT, estimate, ymin=(estimate - std.error), ymax=(estimate + std.error))) +
+  geom_pointrange() +
+  ylab("asn early prop dead")
+#all pairwise contrasts
+contrast(elrrm.emm, 'tukey') %>%
+  broom::tidy()
+#each vs DF control
+contrast(elrrm.emm, 'trt.vs.ctrl') %>%
+  broom::tidy()
+
+#alternative would be to create a combined TMTxBlock variable and run a Kruskal Wallis test and use raw proportion, not asn
+kwelrrm<-kruskal.test(early_prop_LRR_dead_slope ~ TxB, data = wide_for_dam)
+kwelrrm
+pwelrrm<-pairwise.wilcox.test(wide_for_dam$early_prop_LRR_dead_slope, wide_for_dam$TxB,
+                 p.adjust.method = "BH")
+pwelrrm
+#OR just test block or tmt alone
+kwelrrblock<-kruskal.test(early_prop_LRR_dead_slope~Block, data = wide_for_dam)
+kwelrrblock
+pwelrrblock<-pairwise.wilcox.test(wide_for_dam$early_prop_LRR_dead_slope, wide_for_dam$Block,
+                 p.adjust.method = "BH")
+pwelrrblock
+
+kwelrrtrt<-kruskal.test(early_prop_LRR_dead_slope~TMT, data = wide_for_dam)
+kwelrrtrt
+pwelrrtrt<-pairwise.wilcox.test(wide_for_dam$early_prop_LRR_dead_slope, wide_for_dam$TMT,
+                 p.adjust.method = "BH")
+pwelrrtrt
+
+#note significant block effect when modeled alone with KW showing block 5> than all others except maybe 4
+#also significant Wald test when modeled as random factor in linear model 
+
+
+#late LRR mort slope
+#asn
+LaLRRmodel<-lmer(late_asn_prop_LRR_dead_slope ~ TMT + (1|Block), data = wide_for_dam, REML=FALSE, verbose = 2)
+plot(LaLRRmodel, type = c("p", "smooth"))
+plot(LaLRRmodel, sqrt(abs(resid(.))) ~ fitted(.),type = c("p", "smooth"))
+lattice::qqmath(LaLRRmodel, id = 0.05)
+summary(LaLRRmodel)
+anova(LaLRRmodel)
+rand(LaLRRmodel)
+VarCorr(LaLRRmodel)
+ls_means(LaLRRmodel)
+
+#capturing marginal means for levels of treatment as a dataframe
+llrrm.emm<-emmeans(LaLRRmodel, "TMT")
+llrrm.emm.df <-
+  llrrm.emm %>%
+  broom::tidy()
+#plotting treatment estimated marginal means +/- SE
+llrrm.emm.df %>%
+  ggplot(aes(TMT, estimate, ymin=(estimate - std.error), ymax=(estimate + std.error))) +
+  geom_pointrange() +
+  ylab("asn late prop dead")
+#all pairwise contrasts
+contrast(llrrm.emm, 'tukey') %>%
+  broom::tidy()
+#each vs DF control
+contrast(llrrm.emm, 'trt.vs.ctrl') %>%
+  broom::tidy()
+
+#alternative would be to create a combined TMTxBlock variable and run a Kruskal Wallis test and use raw proportion, not asn
+kwllrrm<-kruskal.test(late_prop_LRR_dead_slope ~ TxB, data = wide_for_dam)
+kwllrrm
+#pwllrrm<-pairwise.wilcox.test(wide_for_dam$late_prop_LRR_dead_slope, wide_for_dam$TxB,
+#                 p.adjust.method = "BH")
+#pwllrrm
+#OR just test block or tmt alone
+kwllrrblock<-kruskal.test(late_prop_LRR_dead_slope~Block, data = wide_for_dam)
+kwllrrblock
+pwllrrblock<-pairwise.wilcox.test(wide_for_dam$late_prop_LRR_dead_slope, wide_for_dam$Block,
+                 p.adjust.method = "BH")
+pwllrrblock
+
+kwllrrtrt<-kruskal.test(late_prop_LRR_dead_slope~TMT, data = wide_for_dam)
+kwllrrtrt
+#pwllrrtrt<-pairwise.wilcox.test(wide_for_dam$late_prop_LRR_dead_slope, wide_for_dam$TMT,
+#                 p.adjust.method = "BH")
+#pwllrrtrt
+
+#note nearly significant block effect when modeled alone with KW showing block 5> than all others
+#also significant Wald test when modeled as random factor in linear model 
+```
+
+
+## suppressions-specific mortality
+```{r}
+
+#early SUP mort slope
+#asn with E1 outlier trimmed
+EaSUPmodel<-lmer(early_asn_prop_SUP_dead_slope ~ TMT + (1|Block), data = trimE1, REML=FALSE, verbose = 2)
+plot(EaSUPmodel, type = c("p", "smooth"))
+plot(EaSUPmodel, sqrt(abs(resid(.))) ~ fitted(.),type = c("p", "smooth"))
+lattice::qqmath(EaSUPmodel, id = 0.05)
+summary(EaSUPmodel)
+anova(EaSUPmodel)
+rand(EaSUPmodel)
+VarCorr(EaSUPmodel)
+ls_means(EaSUPmodel)
+
+#capturing marginal means for levels of treatment as a dataframe
+eSUPm.emm<-emmeans(EaSUPmodel, "TMT")
+eSUPm.emm.df <-
+  eSUPm.emm %>%
+  broom::tidy()
+#plotting treatment estimated marginal means +/- SE
+eSUPm.emm.df %>%
+  ggplot(aes(TMT, estimate, ymin=(estimate - std.error), ymax=(estimate + std.error))) +
+  geom_pointrange() +
+  ylab("asn early prop dead")
+#all pairwise contrasts
+contrast(eSUPm.emm, 'tukey') %>%
+  broom::tidy()
+#each vs DF control
+contrast(eSUPm.emm, 'trt.vs.ctrl') %>%
+  broom::tidy()
+
+#alternative would be to create a combined TMTxBlock variable and run a Kruskal Wallis test and use raw proportion, not asn
+kweSUPm<-kruskal.test(early_prop_SUP_dead_slope ~ TxB, data = wide_for_dam)
+kweSUPm
+pweSUPm<-pairwise.wilcox.test(wide_for_dam$early_prop_SUP_dead_slope, wide_for_dam$TxB,
+                 p.adjust.method = "BH")
+pweSUPm
+#OR just test block or tmt alone
+kweSUPblock<-kruskal.test(early_prop_SUP_dead_slope~Block, data = wide_for_dam)
+kweSUPblock
+pweSUPblock<-pairwise.wilcox.test(wide_for_dam$early_prop_SUP_dead_slope, wide_for_dam$Block,
+                 p.adjust.method = "BH")
+pweSUPblock
+
+kweSUPtrt<-kruskal.test(early_prop_SUP_dead_slope~TMT, data = wide_for_dam)
+kweSUPtrt
+pweSUPtrt<-pairwise.wilcox.test(wide_for_dam$early_prop_SUP_dead_slope, wide_for_dam$TMT,
+                 p.adjust.method = "BH")
+pweSUPtrt
+
+#note significant treatment effect in lmm and when modeled alone with KW 
+
+
+#late SUP mort slope
+#asn
+LaSUPmodel<-lmer(late_asn_prop_SUP_dead_slope ~ TMT + (1|Block), data = wide_for_dam, REML=FALSE, verbose = 2)
+plot(LaSUPmodel, type = c("p", "smooth"))
+plot(LaSUPmodel, sqrt(abs(resid(.))) ~ fitted(.),type = c("p", "smooth"))
+lattice::qqmath(LaSUPmodel, id = 0.05)
+summary(LaSUPmodel)
+anova(LaSUPmodel)
+rand(LaSUPmodel)
+VarCorr(LaSUPmodel)
+ls_means(LaSUPmodel)
+
+#capturing marginal means for levels of treatment as a dataframe
+lSUPm.emm<-emmeans(LaSUPmodel, "TMT")
+lSUPm.emm.df <-
+  lSUPm.emm %>%
+  broom::tidy()
+#plotting treatment estimated marginal means +/- SE
+lSUPm.emm.df %>%
+  ggplot(aes(TMT, estimate, ymin=(estimate - std.error), ymax=(estimate + std.error))) +
+  geom_pointrange() +
+  ylab("asn late prop dead")
+#all pairwise contrasts
+contrast(lSUPm.emm, 'tukey') %>%
+  broom::tidy()
+#each vs DF control
+contrast(lSUPm.emm, 'trt.vs.ctrl') %>%
+  broom::tidy()
+
+#alternative would be to create a combined TMTxBlock variable and run a Kruskal Wallis test and use raw proportion, not asn
+kwlSUPm<-kruskal.test(late_prop_SUP_dead_slope ~ TxB, data = wide_for_dam)
+kwlSUPm
+#pwlSUPm<-pairwise.wilcox.test(wide_for_dam$late_prop_SUP_dead_slope, wide_for_dam$TxB,
+#                 p.adjust.method = "BH")
+#pwlSUPm
+#OR just test block or tmt alone
+kwlSUPblock<-kruskal.test(late_prop_SUP_dead_slope~Block, data = wide_for_dam)
+kwlSUPblock
+pwlSUPblock<-pairwise.wilcox.test(wide_for_dam$late_prop_SUP_dead_slope, wide_for_dam$Block,
+                 p.adjust.method = "BH")
+pwlSUPblock
+
+kwlSUPtrt<-kruskal.test(late_prop_SUP_dead_slope~TMT, data = wide_for_dam)
+kwlSUPtrt
+#pwlSUPtrt<-pairwise.wilcox.test(wide_for_dam$late_prop_SUP_dead_slope, wide_for_dam$TMT,
+#                 p.adjust.method = "BH")
+#pwlSUPtrt
+
+#note significant treatment effect in lmm and when modeled alone with KW 
+```
+
+## Survival analysis
+based off of example here https://rviews.rstudio.com/2017/09/25/survival-analysis-with-r/ , with an explanation of "censoring" provided here https://shariq-mohammed.github.io/files/cbsa2019/1-intro-to-survival.html indicating that trees alive in 2020 would be censored at that age (death was not observed).
+Will be using "DEAD_YEAR" variable from the 2011 measurements to assign time to death. Trees dying after 2011 will be assigned 2020 as time of death, since we don't have a more precise measurement.
+
+Could try running with only the condition codes SUPP and not supp to just remove the effects of suppression. Then compare the DF and AB plots with Supp/not as the strata.
+
+```{r}
+library(survival)
+library(ranger)
+library(ggfortify)
+#select relevant columns from tree-level wide data set
+survival_keep<-c("Tree_ID","REP","TRT_code","DEAD_YEAR","STS_2011","NSTS")
+survival_data<-as.data.frame(full_data[,(colnames(full_data) %in% survival_keep)])
+#remove reps 1 and 3 from RA12
+survival_data<-survival_data[-(which(survival_data$TRT_code=="A"& survival_data$REP=="1")),]
+survival_data<-survival_data[-(which(survival_data$TRT_code=="A"& survival_data$REP=="3")),]
+#assign status=0 for trees that were alive in 2020 and status=1 to trees that died during the study
+survival_data$status<-ifelse(survival_data$NSTS=="1",0,1)
+#use combination of TRT_code, NSTS, and DEAD_year to calculate "survival time" for each tree.
+#to simplify calculating survival time, start with assigning a start year for each treatment
+survival_data$begin<-ifelse(survival_data$TRT_code=="A"|survival_data$TRT_code=="B",
+                            1987,
+                            ifelse(survival_data$TRT_code=="C",
+                            1975, 2000))
+survival_data$time<-ifelse(survival_data$status==0, #if tree is alive in 2020
+                              (2020-survival_data$begin), #subtract begin from 2020
+                              ifelse(survival_data$STS_2011=="1", # if tree is alive in 2011
+                                      (2020-survival_data$begin), #then subtract begin from 2020
+                                     (survival_data$DEAD_YEAR- survival_data$begin) #if not, then subtract begin from DEAD_YEAR
+                           )
+                           )
+
+#use "LRR_list" and "SUP_list" to add grouping flags to trees. From lines 2808 and 2810
+survival_data$Cond_flag<-    ifelse(survival_data$Tree_ID %in% LRR_list, # test LRR
+                             "LRR", #if so, print LRR
+                             ifelse(survival_data$Tree_ID %in% SUP_list,#if not, test SUPP
+                              "SUP", #if so, print SUP
+                             "NONE")) #if not, print NONE
+#now try making survival object and Kaplan-Meier estimates
+km<-Surv(survival_data$time, survival_data$status)
+km_fit <- survfit(Surv(survival_data$time, survival_data$status) ~ 1)
+summary(km_fit, times = c(5*(1:9)))
+pkm<-autoplot(km_fit, xlim=c(0,50))
+pkm
+#split by condition flag
+km_cond_fit <- survfit(Surv(time, status) ~ Cond_flag, data = survival_data)
+summary(km_cond_fit, times = c(5*(1:9)))
+pkmc<-autoplot(km_cond_fit, xlim=c(0,50),xlab = "Years")
+pkmc
+#rerunning with just DF treatment
+dfsurv<-survival_data[which(survival_data$TRT_code=="C"),]
+#split by condition flag
+df_fit <- survfit(Surv(time, status) ~ 1, data = dfsurv)
+p0<-autoplot(df_fit, xlim=c(0,50),xlab = "Years",ylab = "Survival of Douglas Fir in Continuous Rotation")
+df_cond_fit <- survfit(Surv(time, status) ~ Cond_flag, data = dfsurv)
+p0
+summary(df_cond_fit, times = c(5*(1:9)))
+p0c<-autoplot(df_cond_fit, xlim=c(0,50),xlab = "Years",ylab = "Survival of Douglas Fir in Continuous Rotation")
+p0c
+#could run for TRTs A and B together as well
+ABsurv<-survival_data[which(survival_data$TRT_code=="A"|survival_data$TRT_code=="B"),]
+#split by condition flag
+ABsurv_fit <- survfit(Surv(time, status) ~ 1, data = ABsurv)
+p12<-autoplot(ABsurv_fit, xlim=c(0,50),xlab = "Years",ylab = "Survival of Douglas Fir in 12y Rotation", ylim = c(0,1))
+ABsurv_cond_fit <- survfit(Surv(time, status) ~ Cond_flag, data = ABsurv)
+p12
+summary(ABsurv_cond_fit, times = c(5*(1:9)))
+p12c<-autoplot(ABsurv_cond_fit, xlim=c(0,50),xlab = "Years",ylab = "Survival of Douglas Fir in 12y Rotation")
+p12c
+p0+p12
+p0c+p12c
+#pdf(here("Summary_Graphs_update","Surv_curve_12y_vs_DF.pdf"), height= 6, width = 12)
+#p0+p12
+#dev.off()
+#pdf(here("Summary_Graphs_update","Surv_curve_by_condition_12y_vs_DF.pdf"), height= 6, width = 12)
+#p0c+p12c
+#dev.off()
+
+#split by rep
+df_rep_fit <- survfit(Surv(time, status) ~ REP, data = dfsurv)
+summary(df_rep_fit, times = c(5*(1:9)))
+p0r<-autoplot(df_rep_fit, xlim=c(0,50),xlab = "Years",ylab = "Survival of Douglas Fir in Continuous Rotation")+scale_fill_viridis_d()+scale_color_viridis_d()
+p0r
+ABsurv_rep_fit <- survfit(Surv(time, status) ~ REP, data = ABsurv)
+summary(ABsurv_rep_fit, times = c(5*(1:9)))
+p12r<-autoplot(ABsurv_rep_fit, xlim=c(0,50),xlab = "Years",ylab = "Survival of Douglas Fir in 12y Rotation")+scale_fill_viridis_d()+scale_color_viridis_d()
+p12r
+
+#trying a cox proportional hazard model to include covariates
+#this probably shouldn't be done on the full dataset since it seems to think that ABDE treatments die after there are no more measurements
+cox<- coxph(Surv(time,status) ~ TRT_code + REP + Cond_flag, data = survival_data)
+summary(cox)
+cox_fit <- survfit(cox)
+pc<-autoplot(cox_fit, xlim=c(0,50))
+pc
+pkm|pc
+#may need to specify reference levels for all of the variables (TRT_code C, Cond_flag= NONE, REP=1)
+```
