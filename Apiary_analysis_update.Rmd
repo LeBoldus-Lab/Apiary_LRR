@@ -1458,7 +1458,7 @@ names(sp_trees_less_10)[names(sp_trees_less_10) == 'Diameter'] <- 'DIAMETER'
 names(sp_trees_less_10)[names(sp_trees_less_10) == 'Species'] <- 'SPECIES'
 #can then subset sp_trees_less_10 based on subplots to generate outputs
 #Calculate necessary ID variables
-FVS_Stump_Prep<-subset(sp_trees_less_10, sp_trees_less_10$sub_p!="A11"&sp_trees_less_10$sub_p!="A12"&sp_trees_less_10$sub_p!="A13"&sp_trees_less_10$sub_p!="A14"&sp_trees_less_10$sub_p!="A15"&sp_trees_less_10$sub_p!="A31"&sp_trees_less_10$sub_p!="A32"&sp_trees_less_10$sub_p!="A33"&sp_trees_less_10$sub_p!="A34"&sp_trees_less_10$sub_p!="A35")
+FVS_Stump_Prep<-subset(sp_trees_less_10, sp_trees_less_10$sub_p=="C01"|sp_trees_less_10$sub_p=="C02"|sp_trees_less_10$sub_p=="C03"|sp_trees_less_10$sub_p=="C04"|sp_trees_less_10$sub_p=="C05"|sp_trees_less_10$sub_p=="C11"|sp_trees_less_10$sub_p=="C12"|sp_trees_less_10$sub_p=="C13"|sp_trees_less_10$sub_p=="C14"|sp_trees_less_10$sub_p=="C15"|sp_trees_less_10$sub_p=="C21"|sp_trees_less_10$sub_p=="C22"|sp_trees_less_10$sub_p=="C23"|sp_trees_less_10$sub_p=="C24"|sp_trees_less_10$sub_p=="C25"|sp_trees_less_10$sub_p=="C31"|sp_trees_less_10$sub_p=="C32"|sp_trees_less_10$sub_p=="C33"|sp_trees_less_10$sub_p=="C34"|sp_trees_less_10$sub_p=="C35"|sp_trees_less_10$sub_p=="C41"|sp_trees_less_10$sub_p=="C42"|sp_trees_less_10$sub_p=="C43"|sp_trees_less_10$sub_p=="C44"|sp_trees_less_10$sub_p=="C45")
 #split subplot ID to get TRT BLOCK and SUBPLOP IDS
 df<-data.frame(str_split_fixed(FVS_Stump_Prep$sub_p, "", 3))
 colnames(df)<- c("TRT_code","BLOCK","SUBPLOT")
@@ -1473,31 +1473,35 @@ FVS_Stump_Prep$Tnum<-as.numeric(ifelse(FVS_Stump_Prep$TRT_code=="A",1,
                                         5)))))
 FVS_Stump_Prep$StandNum<-as.numeric(((FVS_Stump_Prep$Tnum -1)*5)+FVS_Stump_Prep$BLOCK)
 FVS_Stump_Prep$PlotNum<-as.numeric(((FVS_Stump_Prep$StandNum -1)*5)+as.numeric(FVS_Stump_Prep$SUBPLOT))
+
+#write stump file and sort and edit FVS inputs using excell.
+write.csv(FVS_Stump_Prep,here("FVS_inputs_update","FVS_stumps_trtC.csv"))
+
 #create an input file based on template and input data
-FVS_TreeInit_Test2 = data.frame(matrix(nrow = nrow(FVS_Stump_Prep), ncol = ncol(FVS_TreeInit))) 
+#FVS_TreeInit_Test2 = data.frame(matrix(nrow = nrow(FVS_Stump_Prep), ncol = ncol(FVS_TreeInit))) 
 # assign column names
-colnames(FVS_TreeInit_Test2) = colnames(FVS_TreeInit)
+#colnames(FVS_TreeInit_Test2) = colnames(FVS_TreeInit)
 #populate
-FVS_TreeInit_Test2$STAND_CN<-FVS_Stump_Prep$StandNum
-FVS_TreeInit_Test2$STAND_CN <- sprintf("%02d",FVS_TreeInit_Test2$STAND_CN) # fix to 2 characters
-FVS_TreeInit_Test2$STAND_ID<-FVS_Stump_Prep$StandNum
-FVS_TreeInit_Test2$STAND_ID <- sprintf("%02d",FVS_TreeInit_Test2$STAND_ID) # fix to 2 characters
-FVS_TreeInit_Test2$PLOT_ID<-FVS_Stump_Prep$PlotNum
-FVS_TreeInit_Test2$PLOT_ID <- sprintf("%03d",FVS_TreeInit_Test2$PLOT_ID) # fix to 3 characters
-FVS_TreeInit_Test2$PLOT_CN<-FVS_Stump_Prep$PlotNum
-FVS_TreeInit_Test2$PLOT_CN <- sprintf("%03d",FVS_TreeInit_Test2$PLOT_CN) # fix to 3 characters
-FVS_TreeInit_Test2$STANDPLOT_CN<-paste0(FVS_TreeInit_Test2$STAND_CN,FVS_TreeInit_Test2$PLOT_CN)
-FVS_TreeInit_Test2$STANDPLOT_CN <- sprintf("%05s",FVS_TreeInit_Test2$STANDPLOT_CN) # fix to 5 characters
-FVS_TreeInit_Test2$STANDPLOT_ID<-paste0(FVS_TreeInit_Test2$STAND_ID,FVS_TreeInit_Test2$PLOT_ID)
-FVS_TreeInit_Test2$STANDPLOT_ID <- sprintf("%05s",FVS_TreeInit_Test2$STANDPLOT_ID) # fix to 5 characters
-FVS_TreeInit_Test2$TREE_ID<-FVS_Stump_Prep$entry
-FVS_TreeInit_Test2$HISTORY<-7
-FVS_TreeInit_Test2$DIAMETER<-(FVS_Stump_Prep$DIAMETER)
-FVS_TreeInit_Test2$SPECIES<-FVS_Stump_Prep$SPECIES
-FVS_TreeInit_Test2$VARIANT<-"pn"
+#FVS_TreeInit_Test2$STAND_CN<-FVS_Stump_Prep$StandNum
+#FVS_TreeInit_Test2$STAND_CN <- sprintf("%02d",FVS_TreeInit_Test2$STAND_CN) # fix to 2 characters
+#FVS_TreeInit_Test2$STAND_ID<-FVS_Stump_Prep$StandNum
+#FVS_TreeInit_Test2$STAND_ID <- sprintf("%02d",FVS_TreeInit_Test2$STAND_ID) # fix to 2 characters
+#FVS_TreeInit_Test2$PLOT_ID<-FVS_Stump_Prep$PlotNum
+#FVS_TreeInit_Test2$PLOT_ID <- sprintf("%03d",FVS_TreeInit_Test2$PLOT_ID) # fix to 3 characters
+#FVS_TreeInit_Test2$PLOT_CN<-FVS_Stump_Prep$PlotNum
+#FVS_TreeInit_Test2$PLOT_CN <- sprintf("%03d",FVS_TreeInit_Test2$PLOT_CN) # fix to 3 characters
+#FVS_TreeInit_Test2$STANDPLOT_CN<-paste0(FVS_TreeInit_Test2$STAND_CN,FVS_TreeInit_Test2$PLOT_CN)
+#FVS_TreeInit_Test2$STANDPLOT_CN <- sprintf("%05s",FVS_TreeInit_Test2$STANDPLOT_CN) # fix to 5 characters
+#FVS_TreeInit_Test2$STANDPLOT_ID<-paste0(FVS_TreeInit_Test2$STAND_ID,FVS_TreeInit_Test2$PLOT_ID)
+#FVS_TreeInit_Test2$STANDPLOT_ID <- sprintf("%05s",FVS_TreeInit_Test2$STANDPLOT_ID) # fix to 5 characters
+#FVS_TreeInit_Test2$TREE_ID<-FVS_Stump_Prep$entry
+#FVS_TreeInit_Test2$HISTORY<-7
+#FVS_TreeInit_Test2$DIAMETER<-(FVS_Stump_Prep$DIAMETER)
+#FVS_TreeInit_Test2$SPECIES<-FVS_Stump_Prep$SPECIES
+#FVS_TreeInit_Test2$VARIANT<-"pn"
 #add stumps to seedlings input
-FVS_TreeInit_Input<-rbind(FVS_TreeInit_Test,FVS_TreeInit_Test2)
-FVS_TreeInit_Input$SITE_TREE_FLAG<-0
+#FVS_TreeInit_Input<-rbind(FVS_TreeInit_Test,FVS_TreeInit_Test2)
+#FVS_TreeInit_Input$SITE_TREE_FLAG<-0
 ```
 
 #generate plot and stand FVS inputs
