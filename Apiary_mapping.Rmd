@@ -395,6 +395,9 @@ subplot_df$loc_Y_New <- subplot_df$ft_Y_New+subplot_df$nft*cos(subplot_df$Azimut
 subplot_df$loc_X_final<-ifelse(!is.na(subplot_df$loc_X_New),subplot_df$loc_X_New, subplot_df$loc_X_1)
 subplot_df$loc_Y_final<-ifelse(!is.na(subplot_df$loc_Y_New),subplot_df$loc_Y_New, subplot_df$loc_Y_1)
 
+#update names of subplots to use Reps 1-5 instead of 0-4
+subplot_df$subplot_name<-subplot_df$subplot
+subplot_df$subplot_name<-gsub('0','5',subplot_df$subplot_name)
 
 plot(por_compass_df$ft_X_1,por_compass_df$ft_Y_1,xlim=c(000,1716),ylim=c(0,1440))
 points(por_compass_df$ft_X_2,por_compass_df$ft_Y_2)
@@ -732,26 +735,33 @@ map_block_num
   block_polys<-ggplot()+geom_polygon(aes(x = datapoly$x, y = datapoly$y, fill= datapoly$TRT, group= datapoly$id), colour="black", size= 1.25)+
     scale_fill_viridis_d(alpha=0.5)+ labs(fill = "Rotation\nTreatment")
   #add subplots and grid
-  subplots_and_grid <- block_polys +
-    geom_label(data=subplot_df, x=subplot_df$loc_X_final, y= subplot_df$loc_Y_final,label= subplot_df$subplot, label.size = NA, size=3, alpha=0.0)+
-    scale_x_continuous("Grid ft NW",breaks = seq(0,1716,132))+
-    scale_y_continuous("Grid ft SW",breaks = seq(0,1452,132))+
-    theme_bw()+
-    theme(panel.grid.major = element_line(colour="black", size=0.5),panel.grid.minor = element_blank())+
-    #theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank())+
-    geom_circle(data=subplot_df,aes(x0 = subplot_df$loc_X_final, y0 = subplot_df$loc_Y_final, r = 26.3))
+subplots_and_grid <- block_polys +
+  geom_label(data=subplot_df, x=subplot_df$loc_X_final, y= subplot_df$loc_Y_final,label= subplot_df$subplot, label.size = NA, size=3, alpha=0.0)+
+  #scale_x_continuous("Grid ft NW",breaks = seq(0,1716,132))+
+  #scale_y_continuous("Grid ft SW",breaks = seq(0,1452,132))+
+  #theme_bw()+
+  #theme(panel.grid.major = element_line(colour="black", size=0.5),panel.grid.minor = element_blank())+
+  #theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank())+
+  theme(panel.grid = element_blank(),
+        axis.title = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        panel.background = element_blank())+
+  geom_circle(data=subplot_df,aes(x0 = subplot_df$loc_X_final, y0 = subplot_df$loc_Y_final, r = 26.3))
   #add initial incidence
   incidence<-subplots_and_grid+ geom_point(aes(x=por_and_cut_IJ$loc_X,y=por_and_cut_IJ$loc_Y, shape=por_and_cut_IJ$Age_class, ), alpha=0.6)+ labs(shape = "Pre-establisment\nLRR Incidence")+
   scale_shape_discrete(na.translate = F, labels=c("Live tree, cut\nstump detection","Live tree with\nsymptoms","Dead <10 years","Dead >10 years")) +
     # Add arrow
-  geom_segment(aes(x = 10, y = 1310, xend = 100, yend = 1220),
+  geom_segment(aes(x = 100, y = 1310, xend = 190, yend = 1220),
                     arrow = arrow(length = unit(0.3, "cm"), type="closed"))+
-  geom_text(aes(x=112,y=1212,label="N", fontface = "bold"))
+  geom_text(aes(x=200,y=1200,label="N", fontface = "bold"))+
+  geom_segment(aes(x = 10, y = 1100, xend = 330, yend = 1100))+
+  geom_text(aes(x=170,y=1075,label="100 meters"))
   incidence
   
-#pdf("C:/Users/showa/Documents/GitHub/Apiary_LRR/Summary_Graphs_update/Map_with_full_incidence.pdf", height= 39, width = 57)
-#incidence
-#dev.off()
+pdf(here("Summary_Graphs_update","Map_with_full_incidence.pdf"), height= 13, width = 19)
+incidence
+dev.off()
   
 ```
 
