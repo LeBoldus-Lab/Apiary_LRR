@@ -721,7 +721,7 @@ incidence
 #dev.off()
 
 #adding block numbers to map for reference
-block_num<-read_excel("C:/Users/showa/Documents/GitHub/Apiary_LRR/Poria_survey_70s.xlsx", sheet = "Block_numbers", range = "A1:C99", col_names = TRUE)
+block_num<-read_excel(here("Poria_survey_70s.xlsx"), sheet = "Block_numbers", range = "A1:C99", col_names = TRUE)
 block_num$X<-(block_num$LLX+0.5)*132
 block_num$Y<-(block_num$LLY+0.5)*132
 map_block_num<-incidence + geom_text(data=block_num, x=block_num$X, y=block_num$Y,label=block_num$Block, size=10, alpha=0.2, fontface="bold")
@@ -749,7 +749,7 @@ subplots_and_grid <- block_polys +
         panel.background = element_blank())+
   geom_circle(data=subplot_df,aes(x0 = subplot_df$loc_X_final, y0 = subplot_df$loc_Y_final, r = 26.3))
   #add initial incidence
-  incidence<-subplots_and_grid+ geom_point(aes(x=por_and_cut_IJ$loc_X,y=por_and_cut_IJ$loc_Y, shape=por_and_cut_IJ$Age_class, ), alpha=0.6)+ labs(shape = "Pre-establisment\nLRR Incidence")+
+  incidence<-subplots_and_grid+ geom_point(aes(x=por_and_cut_IJ$loc_X,y=por_and_cut_IJ$loc_Y, shape=por_and_cut_IJ$Age_class, ), alpha=0.3)+ labs(shape = "Pre-establisment\nLRR Incidence")+
   scale_shape_discrete(na.translate = F, labels=c("Live tree, cut\nstump detection","Live tree with\nsymptoms","Dead <10 years","Dead >10 years")) +
     # Add arrow
   geom_segment(aes(x = 100, y = 1310, xend = 190, yend = 1220),
@@ -760,6 +760,10 @@ subplots_and_grid <- block_polys +
   incidence
   
 pdf(here("Summary_Graphs_update","Map_with_full_incidence.pdf"), height= 13, width = 19)
+incidence
+dev.off()
+
+svg(here("Summary_Graphs_update","Map_with_full_incidence.svg"), height= 6.5, width = 9.5)
 incidence
 dev.off()
   
