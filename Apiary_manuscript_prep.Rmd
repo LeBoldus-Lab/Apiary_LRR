@@ -1766,23 +1766,47 @@ use "wide_for_dam" dataset
 
 #wide_for_dam<-readRDS(file= here("wide_stand_summaries_including_damage_codes.Rds"))
 
+#creating unique data subsets for the treatments included for each measurement period (early, mid, late)
+#early excludes DF
+ANOVA_early<-wide_for_dam[-which(wide_for_dam$TMT=="DF"),]
+#mid excludes CW25 and RA25
+ANOVA_mid<-wide_for_dam[-which(wide_for_dam$TMT=="RA 25"|wide_for_dam$TMT=="CW 25"),]
+#late is just DF
+ANOVA_late<-wide_for_dam[which(wide_for_dam$TMT=="DF"),]
+
 #early BA slope
-#wide_for_dam$TMT<-relevel(wide_for_dam$TMT, ref = "DF")
-wide_for_dam$Block<-factor(wide_for_dam$Block)
-#generating a balanced dataset which removes RA12 treatment
-no_RA12<-wide_for_dam[-which(wide_for_dam$TMT=="RA 12"),]
-no_RA12$TMT<-factor(no_RA12$TMT, levels= c("DF","CW 12","RA 25","CW 25"))
-no_RA12$TMT<-relevel(no_RA12$TMT, ref = "DF")
-#running on balanced dataset
-BAmodel<-lmer(early_BA_slope ~ TMT + (1|Block), data = no_RA12, REML=FALSE, verbose = 2)
-plot(BAmodel, type = c("p", "smooth"))
-plot(BAmodel, sqrt(abs(resid(.))) ~ fitted(.),type = c("p", "smooth"))
-lattice::qqmath(BAmodel, id = 0.05)
-ranef(BAmodel)
-rand(BAmodel)
+##wide_for_dam$TMT<-relevel(wide_for_dam$TMT, ref = "DF")
+#wide_for_dam$Block<-factor(wide_for_dam$Block)
+##generating a balanced data set which removes RA12 treatment or removes reps 1 and 3 in other treatments
+#no_RA12<-wide_for_dam[-which(wide_for_dam$TMT=="RA 12"),]
+#no_RA12$TMT<-factor(no_RA12$TMT, levels= c("DF","CW 12","RA 25","CW 25"))
+#no_RA12$TMT<-relevel(no_RA12$TMT, ref = "DF")
+#
+#no_Block13<-wide_for_dam[-which(wide_for_dam$Block==1|wide_for_dam$Block==3),]
+#no_Block13$TMT<-factor(no_Block13$TMT, levels= c("DF","RA 12","CW 12","RA 25","CW 25"))
+#no_Block13$TMT<-relevel(no_Block13$TMT, ref = "DF")
+#
+##running on balanced data sets
+#BAmodel<-lmer(early_BA_slope ~ TMT + (1|Block), data = no_RA12, REML=FALSE, verbose = 2)
+#plot(BAmodel, type = c("p", "smooth"))
+#plot(BAmodel, sqrt(abs(resid(.))) ~ fitted(.),type = c("p", "smooth"))
+#lattice::qqmath(BAmodel, id = 0.05)
+#ranef(BAmodel)
+#rand(BAmodel)
+#summary(BAmodel)
+#
+#BA13model<-lmer(early_BA_slope ~ TMT + (1|Block), data = no_Block13, REML=FALSE, verbose = 2)
+#plot(BA13model, type = c("p", "smooth"))
+#plot(BA13model, sqrt(abs(resid(.))) ~ fitted(.),type = c("p", "smooth"))
+#lattice::qqmath(BA13model, id = 0.05)
+#ranef(BA13model)
+#rand(BA13model)
+#summary(BA13model)
+
+#don't worry about balancing the datasets (above)
 
 #running on full dataset
-BAFmodel<-lmer(early_BA_slope ~ TMT + (1|Block), data = wide_for_dam, REML=FALSE, verbose = 2)
+BAFmodel<-lmer(early_BA_slope ~ TMT + (1|Block), data = ANOVA_early, REML=FALSE, verbose = 2)
 plot(BAFmodel, type = c("p", "smooth"))
 plot(BAFmodel, sqrt(abs(resid(.))) ~ fitted(.),type = c("p", "smooth"))
 lattice::qqmath(BAFmodel, id = 0.05)
@@ -1791,12 +1815,18 @@ anova(BAFmodel)
 rand(BAFmodel)
 VarCorr(BAFmodel)
 ls_means(BAFmodel)
+
+
 #comparing with just a simple fixed effect model
-BATmodel<-lm(early_BA_slope ~ TMT, data = wide_for_dam)
+BATmodel<-lm(early_BA_slope ~ TMT, data = ANOVA_early)
 summary(BATmodel)
 #comparing the two models
 anova(BAFmodel, BATmodel)
-#fixed only model has slightly lower BIC and AIC and doesn't return the singular error.
+
+#using the apropriate trimmed dataset (ANOVA_early) I don't get the convergence error for the random effects model and it has a lower AIC and BIC and makes more sense according to the design of the experiment, so I'll use that.
+
+#mid BA slope
+
 
 #late BA slope
 lBAFmodel<-lmer(late_BA_slope ~ TMT + (1|Block), data = wide_for_dam, REML=FALSE, verbose = 2)
