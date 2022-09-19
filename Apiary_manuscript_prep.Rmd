@@ -1813,6 +1813,7 @@ lattice::qqmath(BAFmodel, id = 0.05)
 summary(BAFmodel)
 anova(BAFmodel)
 rand(BAFmodel)
+ranef(BAFmodel)
 VarCorr(BAFmodel)
 ls_means(BAFmodel)
 
@@ -1826,29 +1827,22 @@ anova(BAFmodel, BATmodel)
 #using the apropriate trimmed dataset (ANOVA_early) I don't get the convergence error for the random effects model and it has a lower AIC and BIC and makes more sense according to the design of the experiment, so I'll use that.
 
 #mid BA slope
+mid_BA_model<-lmer(mid_BA_slope ~ TMT + (1|Block), data = ANOVA_mid, REML=FALSE, verbose = 2)
+plot(mid_BA_model, type = c("p", "smooth"))
+plot(mid_BA_model, sqrt(abs(resid(.))) ~ fitted(.),type = c("p", "smooth"))
+lattice::qqmath(mid_BA_model, id = 0.05)
+summary(mid_BA_model)
+anova(mid_BA_model)
+rand(mid_BA_model)
+ranef(mid_BA_model)
+VarCorr(mid_BA_model)
+ls_means(mid_BA_model)
+
+#cannot test effect of block on late measurement period because only one observation for each block (DF)
 
 
-#late BA slope
-lBAFmodel<-lmer(late_BA_slope ~ TMT + (1|Block), data = wide_for_dam, REML=FALSE, verbose = 2)
-plot(lBAFmodel, type = c("p", "smooth"))
-plot(lBAFmodel, sqrt(abs(resid(.))) ~ fitted(.),type = c("p", "smooth"))
-lattice::qqmath(lBAFmodel, id = 0.05)
-summary(lBAFmodel)
-anova(lBAFmodel)
-rand(lBAFmodel)
-VarCorr(lBAFmodel)
-ls_means(lBAFmodel)
 
-#early total mortality
-EMTFmodel<-lmer(early_prop_dead_slope ~ TMT + (1|Block), data = wide_for_dam, REML=FALSE, verbose = 2)
-plot(EMTFmodel, type = c("p", "smooth"))
-plot(EMTFmodel, sqrt(abs(resid(.))) ~ fitted(.),type = c("p", "smooth"))
-lattice::qqmath(EMTFmodel, id = 0.05)
-summary(EMTFmodel)
-anova(EMTFmodel)
-rand(EMTFmodel)
-VarCorr(EMTFmodel)
-ls_means(EMTFmodel)
+
 
 #arcsin early total mortality
 EMaTFmodel<-lmer(early_asn_prop_dead_slope ~ TMT + (1|Block), data = wide_for_dam, REML=FALSE, verbose = 2)
