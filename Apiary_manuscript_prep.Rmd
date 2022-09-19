@@ -1813,7 +1813,7 @@ VarCorr(mid_BA_model)
 ls_means(mid_BA_model)
 
 #cannot test effect of block on late measurement period because only one observation for each block (DF)
-
+#will just report measured means +/- SE for DF treatment
 
 #early total mortality
 EMTFmodel<-lmer(early_prop_dead_slope ~ TMT + (1|Block), data = ANOVA_early, REML=FALSE, verbose = 2)
@@ -1859,7 +1859,20 @@ elsm<-ls_means(EMatrimmodel)
 #backtransform mortality estimates for reporting
 elsm$backtran<-(sin(elsm$Estimate))^2
 elsm$backtran_se<-(sin(elsm$`Std. Error`))^2
+elsm
 
+#try simplified model without block, since the model with block won't converge and estimate is 0
+EMaF<-lm(early_asn_prop_dead_slope ~ TMT , data = trimE1)
+plot(EMaF)
+summary(EMaF)
+anova(EMaF)
+EMaF.rg1<-ref_grid(EMaF)
+summary(EMaF.rg1)
+elsm<-summary(EMaF.rg1)
+#backtransform mortality estimates for reporting
+elsm$backtran<-(sin(elsm$prediction))^2
+elsm$backtran_se<-(sin(elsm$SE))^2
+elsm
 
 #alternative would be to create a combined TMTxBlock variable and run a Kruskal Wallis test
 #wide_for_dam$TxB<-paste(wide_for_dam$TRT, wide_for_dam$Block, Sep="")
@@ -1898,142 +1911,65 @@ mlsm<-ls_means(MMaTFmodel)
 mlsm$backtran<-(sin(mlsm$Estimate))^2
 mlsm$backtran_se<-(sin(mlsm$`Std. Error`))^2
 
-#late rate of mortality
-#asn transformed
-LMaTFmodel<-lmer(late_asn_prop_dead_slope ~ TMT + (1|Block), data = wide_for_dam, REML=FALSE, verbose = 2)
-plot(LMaTFmodel, type = c("p", "smooth"))
-plot(LMaTFmodel, sqrt(abs(resid(.))) ~ fitted(.),type = c("p", "smooth"))
-lattice::qqmath(LMaTFmodel, id = 0.05)
-summary(LMaTFmodel)
-anova(LMaTFmodel)
-rand(LMaTFmodel)
-VarCorr(LMaTFmodel)
-ls_means(LMaTFmodel)
-
-#capturing marginal means for levels of treatment as a dataframe
-lm.emm<-emmeans(LMaTFmodel, "TMT")
-lm.emm.df <-
-  lm.emm %>%
-  broom::tidy()
-#plotting treatment estimated marginal means +/- SE
-lm.emm.df %>%
-  ggplot(aes(TMT, estimate, ymin=(estimate - std.error), ymax=(estimate + std.error))) +
-  geom_pointrange() +
-  ylab("asn late prop dead")
-#all pairwise contrasts
-contrast(lm.emm, 'tukey') %>%
-  broom::tidy()
-#each vs DF control
-contrast(lm.emm, 'trt.vs.ctrl') %>%
-  broom::tidy()
-
+#try simplified model without block, since the model with block won't converge and estimate is 0
+MMaF<-lm(mid_asn_prop_dead_slope ~ TMT , data = ANOVA_mid)
+plot(MMaF)
+summary(MMaF)
+anova(MMaF)
+MMaF.rg1<-ref_grid(MMaF)
+summary(MMaF.rg1)
+mlsm<-summary(MMaF.rg1)
+#backtransform mortality estimates for reporting
+mlsm$backtran<-(sin(mlsm$prediction))^2
+mlsm$backtran_se<-(sin(mlsm$SE))^2
+mlsm
 ```
 
 
 ## LRR-specific mortality
 ```{r}
 #early LRR mort slope
-#asn
-EaLRRmodel<-lmer(early_asn_prop_LRR_dead_slope ~ TMT + (1|Block), data = wide_for_dam, REML=FALSE, verbose = 2)
+EaLRRmodel<-lmer(early_asn_prop_LRR_dead_slope ~ TMT + (1|Block), data = ANOVA_early, REML=FALSE, verbose = 2)
 plot(EaLRRmodel, type = c("p", "smooth"))
 plot(EaLRRmodel, sqrt(abs(resid(.))) ~ fitted(.),type = c("p", "smooth"))
 lattice::qqmath(EaLRRmodel, id = 0.05)
 summary(EaLRRmodel)
 anova(EaLRRmodel)
 rand(EaLRRmodel)
+ranef(EaLRRmodel)
 VarCorr(EaLRRmodel)
 ls_means(EaLRRmodel)
+ellsm<-ls_means(EaLRRmodel)
+#backtransform mortality estimates for reporting
+ellsm$backtran<-(sin(ellsm$Estimate))^2
+ellsm$backtran_se<-(sin(ellsm$`Std. Error`))^2
+ellsm
+#ranef() produces a list of dataframes and we want to take the first (only) element and backtransform it
+#elint_backtran<-(sin(sapply(ranef(EaLRRmodel),"[[",1)))^2
+#elint_backtran
+##can't backtransform negative numbers (which some of the intercepts are, so just reporting transformed values to show trends)
 
-#capturing marginal means for levels of treatment as a dataframe
-elrrm.emm<-emmeans(EaLRRmodel, "TMT")
-elrrm.emm.df <-
-  elrrm.emm %>%
-  broom::tidy()
-#plotting treatment estimated marginal means +/- SE
-elrrm.emm.df %>%
-  ggplot(aes(TMT, estimate, ymin=(estimate - std.error), ymax=(estimate + std.error))) +
-  geom_pointrange() +
-  ylab("asn early prop dead")
-#all pairwise contrasts
-contrast(elrrm.emm, 'tukey') %>%
-  broom::tidy()
-#each vs DF control
-contrast(elrrm.emm, 'trt.vs.ctrl') %>%
-  broom::tidy()
+#mid LRR mort slope
+MaLRRmodel<-lmer(mid_asn_prop_LRR_dead_slope ~ TMT + (1|Block), data = ANOVA_mid, REML=FALSE, verbose = 2)
+plot(MaLRRmodel, type = c("p", "smooth"))
+plot(MaLRRmodel, sqrt(abs(resid(.))) ~ fitted(.),type = c("p", "smooth"))
+lattice::qqmath(MaLRRmodel, id = 0.05)
+summary(MaLRRmodel)
+anova(MaLRRmodel)
+rand(MaLRRmodel)
+ranef(MaLRRmodel)
+VarCorr(MaLRRmodel)
+ls_means(MaLRRmodel)
+mllsm<-ls_means(MaLRRmodel)
+#backtransform mortality estimates for reporting
+mllsm$backtran<-(sin(mllsm$Estimate))^2
+mllsm$backtran_se<-(sin(mllsm$`Std. Error`))^2
+mllsm
 
-#alternative would be to create a combined TMTxBlock variable and run a Kruskal Wallis test and use raw proportion, not asn
-kwelrrm<-kruskal.test(early_prop_LRR_dead_slope ~ TxB, data = wide_for_dam)
-kwelrrm
-pwelrrm<-pairwise.wilcox.test(wide_for_dam$early_prop_LRR_dead_slope, wide_for_dam$TxB,
-                 p.adjust.method = "BH")
-pwelrrm
-#OR just test block or tmt alone
-kwelrrblock<-kruskal.test(early_prop_LRR_dead_slope~Block, data = wide_for_dam)
-kwelrrblock
-pwelrrblock<-pairwise.wilcox.test(wide_for_dam$early_prop_LRR_dead_slope, wide_for_dam$Block,
-                 p.adjust.method = "BH")
-pwelrrblock
-
-kwelrrtrt<-kruskal.test(early_prop_LRR_dead_slope~TMT, data = wide_for_dam)
-kwelrrtrt
-pwelrrtrt<-pairwise.wilcox.test(wide_for_dam$early_prop_LRR_dead_slope, wide_for_dam$TMT,
-                 p.adjust.method = "BH")
-pwelrrtrt
-
-#note significant block effect when modeled alone with KW showing block 5> than all others except maybe 4
-#also significant Wald test when modeled as random factor in linear model 
-
-
-#late LRR mort slope
-#asn
-LaLRRmodel<-lmer(late_asn_prop_LRR_dead_slope ~ TMT + (1|Block), data = wide_for_dam, REML=FALSE, verbose = 2)
-plot(LaLRRmodel, type = c("p", "smooth"))
-plot(LaLRRmodel, sqrt(abs(resid(.))) ~ fitted(.),type = c("p", "smooth"))
-lattice::qqmath(LaLRRmodel, id = 0.05)
-summary(LaLRRmodel)
-anova(LaLRRmodel)
-rand(LaLRRmodel)
-VarCorr(LaLRRmodel)
-ls_means(LaLRRmodel)
-
-#capturing marginal means for levels of treatment as a dataframe
-llrrm.emm<-emmeans(LaLRRmodel, "TMT")
-llrrm.emm.df <-
-  llrrm.emm %>%
-  broom::tidy()
-#plotting treatment estimated marginal means +/- SE
-llrrm.emm.df %>%
-  ggplot(aes(TMT, estimate, ymin=(estimate - std.error), ymax=(estimate + std.error))) +
-  geom_pointrange() +
-  ylab("asn late prop dead")
-#all pairwise contrasts
-contrast(llrrm.emm, 'tukey') %>%
-  broom::tidy()
-#each vs DF control
-contrast(llrrm.emm, 'trt.vs.ctrl') %>%
-  broom::tidy()
-
-#alternative would be to create a combined TMTxBlock variable and run a Kruskal Wallis test and use raw proportion, not asn
-kwllrrm<-kruskal.test(late_prop_LRR_dead_slope ~ TxB, data = wide_for_dam)
-kwllrrm
-#pwllrrm<-pairwise.wilcox.test(wide_for_dam$late_prop_LRR_dead_slope, wide_for_dam$TxB,
-#                 p.adjust.method = "BH")
-#pwllrrm
-#OR just test block or tmt alone
-kwllrrblock<-kruskal.test(late_prop_LRR_dead_slope~Block, data = wide_for_dam)
-kwllrrblock
-pwllrrblock<-pairwise.wilcox.test(wide_for_dam$late_prop_LRR_dead_slope, wide_for_dam$Block,
-                 p.adjust.method = "BH")
-pwllrrblock
-
-kwllrrtrt<-kruskal.test(late_prop_LRR_dead_slope~TMT, data = wide_for_dam)
-kwllrrtrt
-#pwllrrtrt<-pairwise.wilcox.test(wide_for_dam$late_prop_LRR_dead_slope, wide_for_dam$TMT,
-#                 p.adjust.method = "BH")
-#pwllrrtrt
-
-#note nearly significant block effect when modeled alone with KW showing block 5> than all others
-#also significant Wald test when modeled as random factor in linear model 
+##ranef() produces a list of dataframes and we want to take the first (only) element and backtransform it
+#mlint_backtran<-(sin(sapply(ranef(MaLRRmodel),"[[",1)))^2
+#mlint_backtran
+##can't backtransform negative numbers (which some of the intercepts are, so just reporting transformed values to show trends)
 ```
 
 
@@ -2041,100 +1977,53 @@ kwllrrtrt
 ```{r}
 
 #early SUP mort slope
-#asn with E1 outlier trimmed
-EaSUPmodel<-lmer(early_asn_prop_SUP_dead_slope ~ TMT + (1|Block), data = trimE1, REML=FALSE, verbose = 2)
-plot(EaSUPmodel, type = c("p", "smooth"))
-plot(EaSUPmodel, sqrt(abs(resid(.))) ~ fitted(.),type = c("p", "smooth"))
-lattice::qqmath(EaSUPmodel, id = 0.05)
-summary(EaSUPmodel)
-anova(EaSUPmodel)
-rand(EaSUPmodel)
-VarCorr(EaSUPmodel)
-ls_means(EaSUPmodel)
-
-#capturing marginal means for levels of treatment as a dataframe
-eSUPm.emm<-emmeans(EaSUPmodel, "TMT")
-eSUPm.emm.df <-
-  eSUPm.emm %>%
-  broom::tidy()
-#plotting treatment estimated marginal means +/- SE
-eSUPm.emm.df %>%
-  ggplot(aes(TMT, estimate, ymin=(estimate - std.error), ymax=(estimate + std.error))) +
-  geom_pointrange() +
-  ylab("asn early prop dead")
-#all pairwise contrasts
-contrast(eSUPm.emm, 'tukey') %>%
-  broom::tidy()
-#each vs DF control
-contrast(eSUPm.emm, 'trt.vs.ctrl') %>%
-  broom::tidy()
-
-#alternative would be to create a combined TMTxBlock variable and run a Kruskal Wallis test and use raw proportion, not asn
-kweSUPm<-kruskal.test(early_prop_SUP_dead_slope ~ TxB, data = wide_for_dam)
-kweSUPm
-pweSUPm<-pairwise.wilcox.test(wide_for_dam$early_prop_SUP_dead_slope, wide_for_dam$TxB,
-                 p.adjust.method = "BH")
-pweSUPm
-#OR just test block or tmt alone
-kweSUPblock<-kruskal.test(early_prop_SUP_dead_slope~Block, data = wide_for_dam)
-kweSUPblock
-pweSUPblock<-pairwise.wilcox.test(wide_for_dam$early_prop_SUP_dead_slope, wide_for_dam$Block,
-                 p.adjust.method = "BH")
-pweSUPblock
-
-kweSUPtrt<-kruskal.test(early_prop_SUP_dead_slope~TMT, data = wide_for_dam)
-kweSUPtrt
-pweSUPtrt<-pairwise.wilcox.test(wide_for_dam$early_prop_SUP_dead_slope, wide_for_dam$TMT,
-                 p.adjust.method = "BH")
-pweSUPtrt
-
-#note significant treatment effect in lmm and when modeled alone with KW 
+EaSmodel<-lmer(early_asn_prop_SUP_dead_slope ~ TMT + (1|Block), data = ANOVA_early, REML=FALSE, verbose = 2)
+plot(EaSmodel, type = c("p", "smooth"))
+plot(EaSmodel, sqrt(abs(resid(.))) ~ fitted(.),type = c("p", "smooth"))
+lattice::qqmath(EaSmodel, id = 0.05)
+summary(EaSmodel)
+anova(EaSmodel)
+rand(EaSmodel)
+ranef(EaSmodel)
+VarCorr(EaSmodel)
+ls_means(EaSmodel)
+eslsm<-ls_means(EaSmodel)
+#backtransform mortality estimates for reporting
+eslsm$backtran<-(sin(eslsm$Estimate))^2
+eslsm$backtran_se<-(sin(eslsm$`Std. Error`))^2
+eslsm
 
 
-#late SUP mort slope
-#asn
-LaSUPmodel<-lmer(late_asn_prop_SUP_dead_slope ~ TMT + (1|Block), data = wide_for_dam, REML=FALSE, verbose = 2)
-plot(LaSUPmodel, type = c("p", "smooth"))
-plot(LaSUPmodel, sqrt(abs(resid(.))) ~ fitted(.),type = c("p", "smooth"))
-lattice::qqmath(LaSUPmodel, id = 0.05)
-summary(LaSUPmodel)
-anova(LaSUPmodel)
-rand(LaSUPmodel)
-VarCorr(LaSUPmodel)
-ls_means(LaSUPmodel)
+#mid SUP mort slope
+#try simplified model without block, since the model with block won't converge and estimate is 0
+MMSaF<-lm(mid_asn_prop_SUP_dead_slope ~ TMT , data = ANOVA_mid)
+plot(MMSaF)
+summary(MMSaF)
+anova(MMSaF)
+MMSaF.rg1<-ref_grid(MMSaF)
+summary(MMSaF.rg1)
+mslsm<-summary(MMSaF.rg1)
+#backtransform mortality estimates for reporting
+mslsm$backtran<-(sin(mslsm$prediction))^2
+mslsm$backtran_se<-(sin(mslsm$SE))^2
+mslsm
 
-#capturing marginal means for levels of treatment as a dataframe
-lSUPm.emm<-emmeans(LaSUPmodel, "TMT")
-lSUPm.emm.df <-
-  lSUPm.emm %>%
-  broom::tidy()
-#plotting treatment estimated marginal means +/- SE
-lSUPm.emm.df %>%
-  ggplot(aes(TMT, estimate, ymin=(estimate - std.error), ymax=(estimate + std.error))) +
-  geom_pointrange() +
-  ylab("asn late prop dead")
-#all pairwise contrasts
-contrast(lSUPm.emm, 'tukey') %>%
-  broom::tidy()
-#each vs DF control
-contrast(lSUPm.emm, 'trt.vs.ctrl') %>%
-  broom::tidy()
 
-#alternative would be to create a combined TMTxBlock variable and run a Kruskal Wallis test and use raw proportion, not asn
-kwlSUPm<-kruskal.test(late_prop_SUP_dead_slope ~ TxB, data = wide_for_dam)
-kwlSUPm
-#pwlSUPm<-pairwise.wilcox.test(wide_for_dam$late_prop_SUP_dead_slope, wide_for_dam$TxB,
+##alternative would be to create a combined TMTxBlock variable and run a Kruskal Wallis test and use raw proportion, not asn
+#kwlSUPm<-kruskal.test(late_prop_SUP_dead_slope ~ TxB, data = wide_for_dam)
+#kwlSUPm
+##pwlSUPm<-pairwise.wilcox.test(wide_for_dam$late_prop_SUP_dead_slope, wide_for_dam$TxB,
+##                 p.adjust.method = "BH")
+##pwlSUPm
+##OR just test block or tmt alone
+#kwlSUPblock<-kruskal.test(late_prop_SUP_dead_slope~Block, data = wide_for_dam)
+#kwlSUPblock
+#pwlSUPblock<-pairwise.wilcox.test(wide_for_dam$late_prop_SUP_dead_slope, wide_for_dam$Block,
 #                 p.adjust.method = "BH")
-#pwlSUPm
-#OR just test block or tmt alone
-kwlSUPblock<-kruskal.test(late_prop_SUP_dead_slope~Block, data = wide_for_dam)
-kwlSUPblock
-pwlSUPblock<-pairwise.wilcox.test(wide_for_dam$late_prop_SUP_dead_slope, wide_for_dam$Block,
-                 p.adjust.method = "BH")
-pwlSUPblock
-
-kwlSUPtrt<-kruskal.test(late_prop_SUP_dead_slope~TMT, data = wide_for_dam)
-kwlSUPtrt
+#pwlSUPblock
+#
+#kwlSUPtrt<-kruskal.test(late_prop_SUP_dead_slope~TMT, data = wide_for_dam)
+#kwlSUPtrt
 #pwlSUPtrt<-pairwise.wilcox.test(wide_for_dam$late_prop_SUP_dead_slope, wide_for_dam$TMT,
 #                 p.adjust.method = "BH")
 #pwlSUPtrt
