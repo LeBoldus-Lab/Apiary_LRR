@@ -1025,32 +1025,7 @@ wide_for_dam$prop_No_damage_dead_T1<-wide_for_dam$No_damage_T1/wide_for_dam$Tota
 wide_for_dam$prop_No_damage_dead_T2<-wide_for_dam$No_damage_T2/wide_for_dam$Total_Trees_T2
 wide_for_dam$prop_No_damage_dead_T3<-wide_for_dam$No_damage_T3/wide_for_dam$Total_Trees_T3
 wide_for_dam$prop_No_damage_dead_T4<-wide_for_dam$No_damage_T4/wide_for_dam$Total_Trees_T4
-#arcsin transform prop moralities
-wide_for_dam$asn_prop_dead_T1<-asin(sqrt(wide_for_dam$prop_dead_T1))
-wide_for_dam$asn_prop_dead_T2<-asin(sqrt(wide_for_dam$prop_dead_T2))
-wide_for_dam$asn_prop_dead_T3<-asin(sqrt(wide_for_dam$prop_dead_T3))
-wide_for_dam$asn_prop_dead_T4<-asin(sqrt(wide_for_dam$prop_dead_T4))
 
-wide_for_dam$asn_prop_LRR_dead_T1<-asin(sqrt(wide_for_dam$prop_LRR_dead_T1))
-wide_for_dam$asn_prop_LRR_dead_T2<-asin(sqrt(wide_for_dam$prop_LRR_dead_T2))
-wide_for_dam$asn_prop_LRR_dead_T3<-asin(sqrt(wide_for_dam$prop_LRR_dead_T3))
-wide_for_dam$asn_prop_LRR_dead_T4<-asin(sqrt(wide_for_dam$prop_LRR_dead_T4))
-
-wide_for_dam$asn_prop_LRRNO_dead_T1<-asin(sqrt(wide_for_dam$prop_LRRNO_dead_T1))
-wide_for_dam$asn_prop_LRRNO_dead_T2<-asin(sqrt(wide_for_dam$prop_LRRNO_dead_T2))
-wide_for_dam$asn_prop_LRRNO_dead_T3<-asin(sqrt(wide_for_dam$prop_LRRNO_dead_T3))
-wide_for_dam$asn_prop_LRRNO_dead_T4<-asin(sqrt(wide_for_dam$prop_LRRNO_dead_T4))
-
-wide_for_dam$asn_prop_SUP_dead_T1<-asin(sqrt(wide_for_dam$prop_SUP_dead_T1))
-wide_for_dam$asn_prop_SUP_dead_T2<-asin(sqrt(wide_for_dam$prop_SUP_dead_T2))
-wide_for_dam$asn_prop_SUP_dead_T3<-asin(sqrt(wide_for_dam$prop_SUP_dead_T3))
-wide_for_dam$asn_prop_SUP_dead_T4<-asin(sqrt(wide_for_dam$prop_SUP_dead_T4))
-
-
-wide_for_dam$asn_prop_No_damage_dead_T1<-asin(sqrt(wide_for_dam$prop_No_damage_dead_T1))
-wide_for_dam$asn_prop_No_damage_dead_T2<-asin(sqrt(wide_for_dam$prop_No_damage_dead_T2))
-wide_for_dam$asn_prop_No_damage_dead_T3<-asin(sqrt(wide_for_dam$prop_No_damage_dead_T3))
-wide_for_dam$asn_prop_No_damage_dead_T4<-asin(sqrt(wide_for_dam$prop_No_damage_dead_T4))
 
 #calculate slopes (update with new timepoints.)
 #will calculate slopes for "early" 1-2 (12 and 24 rotations), "mid" 1-3 (12 and DF), and "late" 3-4 (DF only).
@@ -1062,41 +1037,40 @@ wide_for_dam$early_prop_dead_slope<-(wide_for_dam$prop_dead_T2-wide_for_dam$prop
 wide_for_dam$mid_prop_dead_slope<-(wide_for_dam$prop_dead_T3-wide_for_dam$prop_dead_T1)/(wide_for_dam$DF_age_T3-wide_for_dam$DF_age_T1)
 wide_for_dam$late_prop_dead_slope<-(wide_for_dam$prop_dead_T4-wide_for_dam$prop_dead_T3)/(wide_for_dam$DF_age_T4-wide_for_dam$DF_age_T3)
 
-wide_for_dam$early_asn_prop_dead_slope<-(wide_for_dam$asn_prop_dead_T2-wide_for_dam$asn_prop_dead_T1)/(wide_for_dam$DF_age_T2-wide_for_dam$DF_age_T1)
-wide_for_dam$mid_asn_prop_dead_slope<-(wide_for_dam$asn_prop_dead_T3-wide_for_dam$asn_prop_dead_T1)/(wide_for_dam$DF_age_T3-wide_for_dam$DF_age_T1)
-wide_for_dam$late_asn_prop_dead_slope<-(wide_for_dam$asn_prop_dead_T4-wide_for_dam$asn_prop_dead_T3)/(wide_for_dam$DF_age_T4-wide_for_dam$DF_age_T3)
-
 wide_for_dam$early_prop_LRR_dead_slope<-(wide_for_dam$prop_LRR_dead_T2-wide_for_dam$prop_LRR_dead_T1)/(wide_for_dam$DF_age_T2-wide_for_dam$DF_age_T1)
 wide_for_dam$mid_prop_LRR_dead_slope<-(wide_for_dam$prop_LRR_dead_T3-wide_for_dam$prop_LRR_dead_T1)/(wide_for_dam$DF_age_T3-wide_for_dam$DF_age_T1)
 wide_for_dam$late_prop_LRR_dead_slope<-(wide_for_dam$prop_LRR_dead_T4-wide_for_dam$prop_LRR_dead_T3)/(wide_for_dam$DF_age_T4-wide_for_dam$DF_age_T3)
-
-wide_for_dam$early_asn_prop_LRR_dead_slope<-(wide_for_dam$asn_prop_LRR_dead_T2-wide_for_dam$asn_prop_LRR_dead_T1)/(wide_for_dam$DF_age_T2-wide_for_dam$DF_age_T1)
-wide_for_dam$mid_asn_prop_LRR_dead_slope<-(wide_for_dam$asn_prop_LRR_dead_T3-wide_for_dam$asn_prop_LRR_dead_T1)/(wide_for_dam$DF_age_T3-wide_for_dam$DF_age_T1)
-wide_for_dam$late_asn_prop_LRR_dead_slope<-(wide_for_dam$asn_prop_LRR_dead_T4-wide_for_dam$asn_prop_LRR_dead_T3)/(wide_for_dam$DF_age_T4-wide_for_dam$DF_age_T3)
 
 wide_for_dam$early_prop_LRRNO_dead_slope<-(wide_for_dam$prop_LRRNO_dead_T2-wide_for_dam$prop_LRRNO_dead_T1)/(wide_for_dam$DF_age_T2-wide_for_dam$DF_age_T1)
 wide_for_dam$mid_prop_LRRNO_dead_slope<-(wide_for_dam$prop_LRRNO_dead_T3-wide_for_dam$prop_LRRNO_dead_T1)/(wide_for_dam$DF_age_T3-wide_for_dam$DF_age_T1)
 wide_for_dam$late_prop_LRRNO_dead_slope<-(wide_for_dam$prop_LRRNO_dead_T4-wide_for_dam$prop_LRRNO_dead_T3)/(wide_for_dam$DF_age_T4-wide_for_dam$DF_age_T3)
 
-wide_for_dam$early_asn_prop_LRRNO_dead_slope<-(wide_for_dam$asn_prop_LRRNO_dead_T2-wide_for_dam$asn_prop_LRRNO_dead_T1)/(wide_for_dam$DF_age_T2-wide_for_dam$DF_age_T1)
-wide_for_dam$mid_asn_prop_LRRNO_dead_slope<-(wide_for_dam$asn_prop_LRRNO_dead_T3-wide_for_dam$asn_prop_LRRNO_dead_T1)/(wide_for_dam$DF_age_T3-wide_for_dam$DF_age_T1)
-wide_for_dam$late_asn_prop_LRRNO_dead_slope<-(wide_for_dam$asn_prop_LRRNO_dead_T4-wide_for_dam$asn_prop_LRRNO_dead_T3)/(wide_for_dam$DF_age_T4-wide_for_dam$DF_age_T3)
-
 wide_for_dam$early_prop_SUP_dead_slope<-(wide_for_dam$prop_SUP_dead_T2-wide_for_dam$prop_SUP_dead_T1)/(wide_for_dam$DF_age_T2-wide_for_dam$DF_age_T1)
 wide_for_dam$mid_prop_SUP_dead_slope<-(wide_for_dam$prop_SUP_dead_T3-wide_for_dam$prop_SUP_dead_T1)/(wide_for_dam$DF_age_T3-wide_for_dam$DF_age_T1)
 wide_for_dam$late_prop_SUP_dead_slope<-(wide_for_dam$prop_SUP_dead_T4-wide_for_dam$prop_SUP_dead_T3)/(wide_for_dam$DF_age_T4-wide_for_dam$DF_age_T3)
-
-wide_for_dam$early_asn_prop_SUP_dead_slope<-(wide_for_dam$asn_prop_SUP_dead_T2-wide_for_dam$asn_prop_SUP_dead_T1)/(wide_for_dam$DF_age_T2-wide_for_dam$DF_age_T1)
-wide_for_dam$mid_asn_prop_SUP_dead_slope<-(wide_for_dam$asn_prop_SUP_dead_T3-wide_for_dam$asn_prop_SUP_dead_T1)/(wide_for_dam$DF_age_T3-wide_for_dam$DF_age_T1)
-wide_for_dam$late_asn_prop_SUP_dead_slope<-(wide_for_dam$asn_prop_SUP_dead_T4-wide_for_dam$asn_prop_SUP_dead_T3)/(wide_for_dam$DF_age_T4-wide_for_dam$DF_age_T3)
 
 wide_for_dam$early_prop_No_damage_dead_slope<-(wide_for_dam$prop_No_damage_dead_T2-wide_for_dam$prop_No_damage_dead_T1)/(wide_for_dam$DF_age_T2-wide_for_dam$DF_age_T1)
 wide_for_dam$mid_prop_No_damage_dead_slope<-(wide_for_dam$prop_No_damage_dead_T3-wide_for_dam$prop_No_damage_dead_T1)/(wide_for_dam$DF_age_T3-wide_for_dam$DF_age_T1)
 wide_for_dam$late_prop_No_damage_dead_slope<-(wide_for_dam$prop_No_damage_dead_T4-wide_for_dam$prop_No_damage_dead_T3)/(wide_for_dam$DF_age_T4-wide_for_dam$DF_age_T3)
 
-wide_for_dam$early_asn_prop_No_damage_dead_slope<-(wide_for_dam$asn_prop_No_damage_dead_T2-wide_for_dam$asn_prop_No_damage_dead_T1)/(wide_for_dam$DF_age_T2-wide_for_dam$DF_age_T1)
-wide_for_dam$mid_asn_prop_No_damage_dead_slope<-(wide_for_dam$asn_prop_No_damage_dead_T3-wide_for_dam$asn_prop_No_damage_dead_T1)/(wide_for_dam$DF_age_T3-wide_for_dam$DF_age_T1)
-wide_for_dam$late_asn_prop_No_damage_dead_slope<-(wide_for_dam$asn_prop_No_damage_dead_T4-wide_for_dam$asn_prop_No_damage_dead_T3)/(wide_for_dam$DF_age_T4-wide_for_dam$DF_age_T3)
+#arcsine sqrt transform slopes for prop mortalities, not calculate based on asn of timpoints.
+wide_for_dam$early_asn_prop_dead_slope<-asin(sqrt(wide_for_dam$early_prop_dead_slope))
+wide_for_dam$mid_asn_prop_dead_slope<-asin(sqrt(wide_for_dam$mid_prop_dead_slope))
+wide_for_dam$late_asn_prop_dead_slope<-asin(sqrt(wide_for_dam$late_prop_dead_slope))
+wide_for_dam$early_asn_prop_LRR_dead_slope<-asin(sqrt(wide_for_dam$early_prop_LRR_dead_slope))
+wide_for_dam$mid_asn_prop_LRR_dead_slope<-asin(sqrt(wide_for_dam$mid_prop_LRR_dead_slope))
+wide_for_dam$late_asn_prop_LRR_dead_slope<-asin(sqrt(wide_for_dam$late_prop_LRR_dead_slope))
+wide_for_dam$early_asn_prop_LRRNO_dead_slope<-asin(sqrt(wide_for_dam$early_prop_LRRNO_dead_slope))
+wide_for_dam$mid_asn_prop_LRRNO_dead_slope<-asin(sqrt(wide_for_dam$mid_prop_LRRNO_dead_slope))
+wide_for_dam$late_asn_prop_LRRNO_dead_slope<-asin(sqrt(wide_for_dam$late_prop_LRRNO_dead_slope))
+wide_for_dam$early_asn_prop_SUP_dead_slope<-asin(sqrt(wide_for_dam$early_prop_SUP_dead_slope))
+wide_for_dam$mid_asn_prop_SUP_dead_slope<-asin(sqrt(wide_for_dam$mid_prop_SUP_dead_slope))
+wide_for_dam$late_asn_prop_SUP_dead_slope<-asin(sqrt(wide_for_dam$late_prop_SUP_dead_slope))
+wide_for_dam$early_asn_prop_No_damage_dead_slope<-asin(sqrt(wide_for_dam$early_prop_No_damage_dead_slope))
+wide_for_dam$mid_asn_prop_No_damage_dead_slope<-asin(sqrt(wide_for_dam$mid_prop_No_damage_dead_slope))
+wide_for_dam$late_asn_prop_No_damage_dead_slope<-asin(sqrt(wide_for_dam$late_prop_No_damage_dead_slope))
+
+
 
 
 #Descriptive treatments
@@ -1841,24 +1815,36 @@ ls_means(mid_BA_model)
 #cannot test effect of block on late measurement period because only one observation for each block (DF)
 
 
-
-
+#early total mortality
+EMTFmodel<-lmer(early_prop_dead_slope ~ TMT + (1|Block), data = ANOVA_early, REML=FALSE, verbose = 2)
+plot(EMTFmodel, type = c("p", "smooth"))
+plot(EMTFmodel, sqrt(abs(resid(.))) ~ fitted(.),type = c("p", "smooth"))
+lattice::qqmath(EMTFmodel, id = 0.05)
+summary(EMTFmodel)
+anova(EMTFmodel)
+rand(EMTFmodel)
+ranef(EMTFmodel)
+VarCorr(EMTFmodel)
+ls_means(EMTFmodel)
 
 #arcsin early total mortality
-EMaTFmodel<-lmer(early_asn_prop_dead_slope ~ TMT + (1|Block), data = wide_for_dam, REML=FALSE, verbose = 2)
+EMaTFmodel<-lmer(early_asn_prop_dead_slope ~ TMT + (1|Block), data = ANOVA_early, REML=FALSE, verbose = 2)
 plot(EMaTFmodel, type = c("p", "smooth"))
 plot(EMaTFmodel, sqrt(abs(resid(.))) ~ fitted(.),type = c("p", "smooth"))
 lattice::qqmath(EMaTFmodel, id = 0.05)
 summary(EMaTFmodel)
 anova(EMaTFmodel)
 rand(EMaTFmodel)
+ranef(EMaTFmodel)
 VarCorr(EMaTFmodel)
 ls_means(EMaTFmodel)
+
+
 #comparing asn transformed and raw shows transformed is better fit (and slightly better diagnostic plots)
 anova(EMTFmodel, EMaTFmodel)
 
 #Trimming CW25 Block 1
-trimE1<-wide_for_dam[-20,]
+trimE1<-ANOVA_early[-c(15),]
 EMatrimmodel<-lmer(early_asn_prop_dead_slope ~ TMT + (1|Block), data = trimE1, REML=FALSE, verbose = 2)
 plot(EMatrimmodel, type = c("p", "smooth"))
 plot(EMatrimmodel, sqrt(abs(resid(.))) ~ fitted(.),type = c("p", "smooth"))
@@ -1866,46 +1852,51 @@ lattice::qqmath(EMatrimmodel, id = 0.05)
 summary(EMatrimmodel)
 anova(EMatrimmodel)
 rand(EMatrimmodel)
+ranef(EMatrimmodel)
 VarCorr(EMatrimmodel)
 ls_means(EMatrimmodel)
-
-#capturing marginal means for levels of treatment as a dataframe
-m.emm<-emmeans(EMatrimmodel, "TMT")
-m.emm.df <-
-  m.emm %>%
-  broom::tidy()
-#plotting treatment estimated marginal means +/- SE
-m.emm.df %>%
-  ggplot(aes(TMT, estimate, ymin=(estimate - std.error), ymax=(estimate + std.error))) +
-  geom_pointrange() +
-  ylab("asn early prop dead")
-#all pairwise contrasts
-contrast(m.emm, 'tukey') %>%
-  broom::tidy()
-#each vs DF control
-contrast(m.emm, 'trt.vs.ctrl') %>%
-  broom::tidy()
+elsm<-ls_means(EMatrimmodel)
+#backtransform mortality estimates for reporting
+elsm$backtran<-(sin(elsm$Estimate))^2
+elsm$backtran_se<-(sin(elsm$`Std. Error`))^2
 
 
 #alternative would be to create a combined TMTxBlock variable and run a Kruskal Wallis test
-wide_for_dam$TxB<-paste(wide_for_dam$TRT, wide_for_dam$Block, Sep="")
-kwem<-kruskal.test(early_prop_dead_slope ~ TxB, data = wide_for_dam)
-kwem
-pwem<-pairwise.wilcox.test(wide_for_dam$early_prop_dead_slope, wide_for_dam$TxB,
-                 p.adjust.method = "BH")
-pwem
-#OR just test block or tmt alone
-kwblock<-kruskal.test(early_prop_dead_slope~Block, data = wide_for_dam)
-kwblock
-pwblock<-pairwise.wilcox.test(wide_for_dam$early_prop_dead_slope, wide_for_dam$Block,
-                 p.adjust.method = "BH")
-pwblock
+#wide_for_dam$TxB<-paste(wide_for_dam$TRT, wide_for_dam$Block, Sep="")
+#kwem<-kruskal.test(early_prop_dead_slope ~ TxB, data = wide_for_dam)
+#kwem
+#pwem<-pairwise.wilcox.test(wide_for_dam$early_prop_dead_slope, wide_for_dam$TxB,
+#                 p.adjust.method = "BH")
+#pwem
+##OR just test block or tmt alone
+#kwblock<-kruskal.test(early_prop_dead_slope~Block, data = wide_for_dam)
+#kwblock
+#pwblock<-pairwise.wilcox.test(wide_for_dam$early_prop_dead_slope, wide_for_dam$Block,
+#                 p.adjust.method = "BH")
+#pwblock
+#
+#kwtrt<-kruskal.test(early_prop_dead_slope~TMT, data = wide_for_dam)
+#kwtrt
+#pwtrt<-pairwise.wilcox.test(wide_for_dam$early_prop_dead_slope, wide_for_dam$TMT,
+#                 p.adjust.method = "BH")
+#pwtrt
 
-kwtrt<-kruskal.test(early_prop_dead_slope~TMT, data = wide_for_dam)
-kwtrt
-pwtrt<-pairwise.wilcox.test(wide_for_dam$early_prop_dead_slope, wide_for_dam$TMT,
-                 p.adjust.method = "BH")
-pwtrt
+
+#arcsin mid total mortality
+MMaTFmodel<-lmer(mid_asn_prop_dead_slope ~ TMT + (1|Block), data = ANOVA_mid, REML=FALSE, verbose = 2)
+plot(MMaTFmodel, type = c("p", "smooth"))
+plot(MMaTFmodel, sqrt(abs(resid(.))) ~ fitted(.),type = c("p", "smooth"))
+lattice::qqmath(MMaTFmodel, id = 0.05)
+summary(MMaTFmodel)
+anova(MMaTFmodel)
+rand(MMaTFmodel)
+ranef(MMaTFmodel)
+VarCorr(MMaTFmodel)
+ls_means(MMaTFmodel)
+mlsm<-ls_means(MMaTFmodel)
+#backtransform mortality estimates for reporting
+mlsm$backtran<-(sin(mlsm$Estimate))^2
+mlsm$backtran_se<-(sin(mlsm$`Std. Error`))^2
 
 #late rate of mortality
 #asn transformed
