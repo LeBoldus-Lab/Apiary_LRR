@@ -1667,11 +1667,21 @@ dbh_plot
 #could use just DF trees and just 1st and 2nd measurements. This would  This still wouldn't account for trees that died of LRR, unless we were able to do the age at death corrections from the datasheet notes.
 #keep ages 8,12,33,36 i.e. "Mid"
 growth_test_mid<-growth_test2 %>% filter(growth_test2$DF_age==8|growth_test2$DF_age==12|growth_test2$DF_age==33|growth_test2$DF_age==36)
+levels(growth_test_mid$TRT)<-c("CW 12Y", "CW 25Y","DF","RA 12","RA 25Y")
+growth_test_mid$TRT<- ordered(growth_test_mid$TRT, levels = c("RA 12","CW 12Y", "DF", "RA 25Y","CW 25Y"))
+growth_test_mid$Cond_flag<- factor(growth_test_mid$Cond_flag)
+levels(growth_test_mid$Cond_flag)<-c("LRR","None", "Suppression")
+growth_test_mid$Cond_flag<- ordered(growth_test_mid$Cond_flag, levels = c("None", "LRR","Suppression"))
 
-dbh_plot_mid<-ggplot(growth_test_mid,aes(DF_age,live_DBH_cm)) +geom_path(group=growth_test_mid$Tree_ID, alpha=0.15, aes(colour=Cond_flag)) +theme_bw() +geom_smooth(method = lm, aes( linetype=Cond_flag,fill=Cond_flag,colour=Cond_flag)) +facet_row(growth_test_mid$TRT) +scale_color_viridis_d() +labs(title="Midle Phase Growth", x="Douglas Fir Age",y="DBH (mm)") +scale_fill_viridis_d()
+dbh_plot_mid<-ggplot(growth_test_mid,aes(DF_age,live_DBH_cm)) +theme_bw() +geom_smooth(method = lm, aes( linetype=Cond_flag,fill=Cond_flag), colour="black") +facet_row(growth_test_mid$TRT) +labs(title="Middle Phase Growth", x="Douglas Fir Age (years)",y="DBH (mm)") +scale_fill_viridis_d(option = "C")+theme_bw()+
+  theme(panel.grid = element_blank(),panel.background = element_blank())
 dbh_plot_mid
 
 svg(here("Summary_Graphs_update","mid_growth_by_LRR_SUPP_NOT.svg"), height= 6, width = 6)
+dbh_plot_mid
+dev.off()
+
+pdf(here("Summary_Graphs_update","mid_growth_by_LRR_SUPP_NOT.pdf"), height= 6, width = 6)
 dbh_plot_mid
 dev.off()
 
