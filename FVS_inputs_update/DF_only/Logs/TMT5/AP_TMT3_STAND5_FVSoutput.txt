@@ -1,0 +1,342 @@
+
+
+         FOREST VEGETATION SIMULATOR     VERSION 3261 -- PACIFIC NW COAST PROGNOSIS             RV:20201010    09-21-2022  21:44:43
+
+----------------------------------------------------------------------------------------------------------------------------------
+
+                                                OPTIONS SELECTED BY INPUT
+
+KEYWORD FILE NAME: c0d369e4-d05a-474d-b1bc-4c9c112043a2
+----------------------------------------------------------------------------------------------------------------------------------
+KEYWORD    PARAMETERS:
+--------   -----------------------------------------------------------------------------------------------------------------------
+
+STDIDENT
+           STAND ID= 3055                                                    AP_TMT3_STAND5                                    
+
+STANDCN    DATA BASE CONTROL NUMBER=305
+
+MGMTID  
+           MANAGEMENT ID= A070
+
+INVYEAR    INVENTORY YEAR= 1987
+
+TIMEINT    ALL CYCLES;  PERIOD LENGTH=  9
+
+TIMEINT    CYCLE=  1; PERIOD LENGTH= 24
+
+NUMCYCLE   NUMBER OF CYCLES=  2
+
+
+            
+
+DATABASE   DATABASE KEYWORDS:
+
+DSNOUT     DSN FOR OUTPUT DATA BASE IS c0d369e4-d05a-474d-b1bc-4c9c112043a2.db
+
+
+           * FVS_Summary, FVS_Compute, Mistletoe
+
+SUMMARY    SUMMARY VERSION 2 STATISTICS SENT TO DATABASE.
+
+COMPUTE    COMPUTE VARIABLES SENT TO SPECIFIED DATABASE.
+           ADD NEW VARIABLES TO EXISTING TABLE: YES
+           INCLUDE VARIABLES STARTING WITH UNDERSCORE: NO 
+
+MISRPTS    MISTLETOE INFORMATION FROM OUTPUT SENT TO SPECIFIED DATABASE.
+           CREATE TEXT FILE REPORTS: NO 
+
+END        END OF DATA BASE OPTIONS.
+
+
+            
+           * FVS_TreeList, FVS_Cutlist
+
+TREELIST   DATE/CYCLE=    0; DATA SET REFERENCE NUMBER =  3.; HEADING SUPPRESSION CODE = 0.
+           (0=WITH HEADING, OTHER VALUES=SUPPRESS HEADING).
+
+CUTLIST    DATE/CYCLE=    0; DATA SET REFERENCE NUMBER =  3.; HEADING SUPPRESSION CODE = 0.
+           (0=WITH HEADING, OTHER VALUES=SUPPRESS HEADING).
+
+DATABASE   DATABASE KEYWORDS:
+
+TREELIST   TREE INFORMATION FROM OUTPUT SENT TO SPECIFIED DATABASE.
+           CREATE TEXT FILE REPORT: NO 
+           SPECIES CODE OUTPUT FORMAT: NORMAL  
+
+CUTLIST    CUTS INFORMATION FROM OUTPUT SENT TO SPECIFIED DATABASE.
+           SPECIES CODE OUTPUT FORMAT: NORMAL  
+           CREATE TEXT FILE REPORT: NO 
+
+END        END OF DATA BASE OPTIONS.
+
+
+            
+
+DATABASE   DATABASE KEYWORDS:
+
+RDSUM      ROOT DISEASE SUMMARY TABLE SENT TO SPECIFIED DATABASE.
+
+END        END OF DATA BASE OPTIONS.
+
+
+            
+
+DATABASE   DATABASE KEYWORDS:
+
+RDDETAIL   ROOT DISEASE DETAIL TABLE SENT TO SPECIFIED DATABASE.
+
+END        END OF DATA BASE OPTIONS.
+
+
+            
+
+DATABASE   DATABASE KEYWORDS:
+
+RDBBMORT   ROOT DISEASE BARK BEETLE MORTALITY TABLE SENT TO SPECIFIED DATABASE.
+
+END        END OF DATA BASE OPTIONS.
+
+
+            
+
+STATS      STATISTICAL DESCRIPTION OF INPUT DATA WILL BE PROVIDED; CONFIDENCE LIMITS AT 0.05 LEVEL.
+
+DATABASE   DATABASE KEYWORDS:
+
+INVSTATS   INVENTORY STATISTICS TABLES SENT TO SPECIFIED DATABASE.
+
+END        END OF DATA BASE OPTIONS.
+
+
+            
+
+DELOTAB    TABLE NUMBER   1  SPECIFIED.  STAND COMPOSITION TABLE WILL BE DELETED.
+
+DELOTAB    TABLE NUMBER   2  SPECIFIED.  SAMPLE TREE TABLE WILL BE DELETED.
+
+DELOTAB    TABLE NUMBER   4  SPECIFIED.  ACTIVITY SCHEDULE TABLE WILL BE DELETED.
+
+DATABASE   DATABASE KEYWORDS:
+
+DSNIN      INPUT DATA BASE IS C:/FVS/pnw/FVS_Data.db
+
+STANDSQL   STANDSQL COMMAND FOR INPUT DATA BASE: C:/FVS/pnw/FVS_Data.db
+           SELECT * FROM FVS_StandInit WHERE Stand_CN = '%Stand_CN%'
+
+           STAND-LEVEL DATA BASE READ:
+           INV_YEAR:               1987
+           REGION:                    7
+           FOREST:                    8
+            COMPOSITE LOC:          708
+           INV_PLOT_SIZE:           20.
+           BRK_DBH:               999.0
+           NUM_PLOTS:                 5
+           NONSTK_PLOTS:              0
+           END OF DATA BASE READ.
+
+TREESQL    TREESQL COMMAND FOR INPUT DATA BASE: C:/FVS/pnw/FVS_Data.db
+           SELECT * FROM FVS_TreeInit WHERE Stand_CN = '%Stand_CN%'
+           STAND_ID           WAS IGNORED
+           STAND_CN           WAS IGNORED
+           PLOT_CN            WAS IGNORED
+           PLOT_ID            WAS USED
+           STANDPLOT_CN       WAS IGNORED
+           STANDPLOT_ID       WAS IGNORED
+           TREE_CN            WAS IGNORED
+           TREE_ID            WAS USED
+           TAG_ID             WAS IGNORED
+           SITE_TREE_FLAG     WAS IGNORED
+           TREE_COUNT         WAS USED
+           HISTORY            WAS USED
+           SPECIES            WAS USED
+           DIAMETER           WAS USED
+           DIAMETER_HT        WAS IGNORED
+           DG                 WAS USED
+           HT                 WAS USED
+           HTG                WAS USED
+           HTTOPK             WAS USED
+           HT_TO_LIVE_CROWN   WAS IGNORED
+           CRCLASS            WAS IGNORED
+           CRRATIO            WAS USED
+           DAMAGE1            WAS USED
+           SEVERITY1          WAS USED
+           DAMAGE2            WAS USED
+           SEVERITY2          WAS USED
+           DAMAGE3            WAS USED
+           SEVERITY3          WAS USED
+           DEFECT_CUBIC       WAS IGNORED
+           DEFECT_BOARD       WAS IGNORED
+           TREEVALUE          WAS USED
+           PRESCRIPTION       WAS USED
+           AGE                WAS USED
+           SLOPE              WAS USED
+           ASPECT             WAS USED
+           PV_CODE            WAS USED
+           PV_REF_CODE        WAS IGNORED
+           TOPOCODE           WAS USED
+           SITEPREP           WAS USED
+           NUMBER ROWS PROCESSED:  179
+
+END        END OF DATA BASE OPTIONS.
+
+SPLABEL    STAND POLICY LABEL SET:
+           All_Stands
+
+PROCESS    PROCESS THE STAND.
+----------------------------------------------------------------------------------------------------------------------------------
+
+                                                OPTIONS SELECTED BY DEFAULT
+
+----------------------------------------------------------------------------------------------------------------------------------
+
+TREEFMT    (I4,T1,I7,F6.0,I1,A3,F4.1,F3.1,2F3.0,F4.1,I1,3(I2,I2),2I1,I2,2I3,2I1,F3.0)      
+                                                                                           
+
+DESIGN     BASAL AREA FACTOR=   40.0; INVERSE OF FIXED PLOT AREA=   20.0; BREAK DBH=  999.0
+           NUMBER OF PLOTS=     5; NON-STOCKABLE PLOTS=     0; STAND SAMPLING WEIGHT=     5.00000
+           PROPORTION OF STAND CONSIDERED STOCKABLE=  1.000
+
+********   FVS14 WARNING:  HABITAT/PLANT ASSOCIATION/ECOREGION CODE WAS NOT RECOGNIZED; HABITAT/PLANT ASSOCIATION/ECOREGION SET TO DEFAULT CODE.
+
+           PLANT ASSOCIATION CODE USED IN THIS PROJECTION IS CHS133  
+
+STDINFO    FOREST-LOCATION CODE=     708; HABITAT TYPE= 40; AGE=    0; ASPECT AZIMUTH IN DEGREES=   0.; SLOPE=   5.%
+           ELEVATION(100'S FEET)=  7.0;  REFERENCE CODE=     
+
+SPECIES      SF      WF      GF      AF      RF      SS      NF      YC      IC      ES
+SDI MAX     950.    950.    950.    950.    950.    950.    950.    950.    950.    950.
+
+SPECIES      LP      JP      SP      WP      PP      DF      RW      RC      WH      MH
+SDI MAX     950.    950.    950.    950.    950.    950.    950.    950.    950.    950.
+
+SPECIES      BM      RA      WA      PB      GC      AS      CW      WO      WJ      LL
+SDI MAX     950.    950.    950.    950.    950.    950.    950.    950.    950.    950.
+
+SPECIES      WB      KP      PY      DG      HT      CH      WI      __      OT
+SDI MAX     950.    950.    950.    950.    950.    950.    950.    950.    950.
+
+*NOTE -- AT LEAST ONE DEFAULT MAXIMUM SDI EXCEEDED THE FOREST DEFAULT MAXIMUM. FOREST DEFAULT MAXIMUM OF  950. USED.
+          YOU MAY NEED TO SPECIFICALLY RESET VALUES FOR THESE SPECIES USING THE SDIMAX KEYWORD.
+
+                                  NATIONAL VOLUME ESTIMATOR LIBRARY EQUATION NUMBERS
+SPECIES CUBIC FOOT BOARD FOOT SPECIES CUBIC FOOT BOARD FOOT SPECIES CUBIC FOOT BOARD FOOT SPECIES CUBIC FOOT BOARD FOOT 
+------- ---------- ---------- ------- ---------- ---------- ------- ---------- ---------- ------- ---------- ---------- 
+  SF    B00BEHW011 B00BEHW011   WF    B00BEHW015 B00BEHW015   GF    B00BEHW017 B00BEHW017   AF    B00BEHW015 B00BEHW015
+  RF    B00BEHW021 B00BEHW021   SS    B00BEHW098 B00BEHW098   NF    B00BEHW022 B00BEHW022   YC    B00BEHW042 B00BEHW042
+  IC    B00BEHW081 B00BEHW081   ES    B00BEHW093 B00BEHW093   LP    B00BEHW108 B00BEHW108   JP    B00BEHW116 B00BEHW116
+  SP    B00BEHW117 B00BEHW117   WP    B00BEHW119 B00BEHW119   PP    B00BEHW122 B00BEHW122   DF    B01BEHW202 B01BEHW202
+  RW    B00BEHW211 B00BEHW211   RC    B00BEHW242 B00BEHW242   WH    B00BEHW263 B00BEHW263   MH    B00BEHW260 B00BEHW260
+  BM    B00BEHW312 B00BEHW312   RA    B00BEHW351 B00BEHW351   WA    B00BEHW361 B00BEHW361   PB    B00BEHW999 B00BEHW999
+  GC    B00BEHW431 B00BEHW431   AS    B00BEHW999 B00BEHW999   CW    B00BEHW747 B00BEHW747   WO    B00BEHW800 B00BEHW800
+  WJ    B00BEHW242 B00BEHW242   LL    B00BEHW073 B00BEHW073   WB    B00BEHW119 B00BEHW119   KP    B00BEHW108 B00BEHW108
+  PY    B00BEHW231 B00BEHW231   DG    B00BEHW999 B00BEHW999   HT    B00BEHW999 B00BEHW999   CH    B00BEHW999 B00BEHW999
+  WI    B00BEHW999 B00BEHW999   __    B00BEHW999 B00BEHW999   OT    B00BEHW999 B00BEHW999
+
+SITECODE   SITE INDEX INFORMATION:
+            SF=  139.;  WF=   98.;  GF=   98.;  AF=  139.;  RF=   98.;  SS=   98.;  NF=  139.;  YC=  139.; IC=  139.
+            ES=  139.;  LP=   98.;  JP=  139.;  SP=  139.;  WP=  139.;  PP=  139.;  DF=   98.;  RW=  139.; RC=   98.
+            WH=   98.;  MH=   28.;  BM=  104.;  RA=   49.;  WA=   90.;  PB=  209.;  GC=   97.;  AS=  104.; CW=  118.
+            WO=   96.;  WJ=   32.;  LL=   98.;  WB=   97.;  KP=  139.;  PY=   35.;  DG=   83.;  HT=   35.; CH=   70.
+            WI=   70.;  __=  139.;  OT=  139.
+           SITE SPECIES=DF CODE=   16
+
+INVENTORY POINT CROSS REFERENCE (FVS SEQUENTIAL POINT NUMBER = POINT NUMBER AS ENTERED IN THE INPUT DATA):
+  1=       1;   2=       2;   3=       3;   4=       4;   5=       5
+----------------------------------------------------------------------------------------------------------------------------------
+
+
+CALIBRATION STATISTICS:
+
+
+                                                 DF
+                                                ----
+
+NUMBER OF RECORDS PER SPECIES                    179
+
+NUMBER OF RECORDS CODED AS RECENT MORTALITY       32
+
+NUMBER OF RECORDS WITH MISSING HEIGHTS           147
+
+NUMBER OF RECORDS WITH BROKEN OR DEAD TOPS         0
+
+NUMBER OF RECORDS WITH MISSING CROWN RATIOS      147
+
+NUMBER OF RECORDS AVAILABLE FOR SCALING
+THE DIAMETER INCREMENT MODEL                       0
+
+RATIO OF STANDARD ERRORS
+(INPUT DBH GROWTH DATA : MODEL)                 1.00
+
+WEIGHT GIVEN TO THE INPUT GROWTH DATA WHEN
+DBH GROWTH MODEL SCALE FACTORS WERE COMPUTED    0.00
+
+INITIAL SCALE FACTORS FOR THE
+DBH INCREMENT MODEL                             1.00
+
+NUMBER OF RECORDS AVAILABLE FOR SCALING
+THE SMALL TREE HEIGHT INCREMENT MODEL             0
+
+INITIAL SCALE FACTORS FOR THE SMALL TREE
+HEIGHT INCREMENT MODEL                          1.00
+
+NUMBER OF RECORDS WITH MISTLETOE                   0
+
+
+        GENERAL SPECIES SUMMARY FOR THE CRUISE (PER ACRE)
+
+  SPECIES        BOARD FEET   CUBIC FEET           TREES    BASAL AREA
+-------------------------------------------------------------------------
+ DF  =  DF              0.0        371.1           588.0          34.2
+
+
+                  DISTRIBUTION OF STAND ATTRIBUTES AMONG SAMPLE POINTS
+
+                              STANDARD  COEFF OF SAMPLE             95%           SAMPLING ERROR IN
+CHARACTERISTIC          MEAN DEVIATION VARIATION   SIZE     CONFIDENCE  LIMITS    PERCENT     UNITS
+----------------   --------- --------- --------- ------ ----------------------    -----------------
+TREES/ACRE            588.00    133.12      0.23      5    422.66       753.34      28.1      165.3
+CUBIC FEET/ACRE       371.07    101.22      0.27      5    245.35       496.80      33.9      125.7
+BOARD FEET/ACRE         0.00      0.00
+BASAL AREA/ACRE        34.19      7.26      0.21      5     25.17        43.21      26.4        9.0
+
+
+         FOREST VEGETATION SIMULATOR     VERSION 3261 -- PACIFIC NW COAST PROGNOSIS             RV:20201010    09-21-2022  21:44:43
+
+STAND POLICIES:   All_Stands
+
+STAND ID: 3055                          MGMT ID: A070                          AP_TMT3_STAND5
+
+
+
+                                SUMMARY STATISTICS (PER ACRE OR STAND BASED ON TOTAL STAND AREA)
+--------------------------------------------------------------------------------------------------------------------------------------
+               START OF SIMULATION PERIOD                     REMOVALS             AFTER TREATMENT    GROWTH THIS PERIOD
+         --------------------------------------------- ----------------------- ---------------------  ------------------   MAI  ------
+         NO OF              TOP      TOTAL MERCH MERCH NO OF TOTAL MERCH MERCH              TOP  RES  PERIOD ACCRE MORT   MERCH FOR SS
+YEAR AGE TREES  BA  SDI CCF HT  QMD  CU FT CU FT BD FT TREES CU FT CU FT BD FT  BA  SDI CCF HT   QMD  YEARS   PER  YEAR   CU FT TYP ZT
+---- --- ----- --- ---- --- --- ---- ----- ----- ----- ----- ----- ----- ----- --- ---- --- --- ----  ------ ---- -----   ----- ------
+1987   0   588  34   98 101  34  3.3   371     0     0     0     0     0     0  34   98 101  34  3.3      24  309     2     0.0 201 34
+2011  24   492 254  471 360  84  9.7  7749  6664 35097     0     0     0     0 254  471 360  84  9.7       9  531    39     0.0 201 11
+2020  33   450 354  604 460  96 12.0 12175 11303 60414     0     0     0     0 354  604 460  96 12.0       0    0     0     0.0 201 11
+
+
+
+
+                                                     ACTIVITY SUMMARY 
+
+STAND ID= 3055                          MGMT ID= A070                          AP_TMT3_STAND5                                    
+
+----------------------------------------------------------------------------------------------------------------------------------
+
+CYCLE  DATE  EXTENSION  KEYWORD   DATE  ACTIVITY DISPOSITION  PARAMETERS:
+-----  ----  ---------  --------  ----  --------------------  --------------------------------------------------------------------
+
+   1   1987
+               BASE     CUTLIST   1987  NOT DONE                   3.0000     0.0000
+               BASE     TREELIST  1987  DONE IN 2010               3.0000     0.0000
+
+   2   2011
+               BASE     CUTLIST   2011  NOT DONE                   3.0000     0.0000
+               BASE     TREELIST  2011  DONE IN 2019               3.0000     0.0000
+----------------------------------------------------------------------------------------------------------------------------------
