@@ -1700,11 +1700,63 @@ dev.off()
 ##keep ages 8,11,20,24 i.e. "Early"
 growth_test_early<-growth_test2 %>% filter(growth_test2$DF_age==8|growth_test2$DF_age==11|growth_test2$DF_age==20|growth_test2$DF_age==24)
 
-dbh_plot_early<-ggplot(growth_test_early,aes(DF_age,live_DBH_cm)) +geom_path(group=growth_test_early$Tree_ID, alpha=0.15, aes(colour=Cond_flag)) +theme_bw() +geom_smooth(method = lm, aes( linetype=Cond_flag,fill=Cond_flag,colour=Cond_flag)) +facet_row(growth_test_early$TRT) +scale_color_viridis_d() +labs(title="Early Phase Growth", x="Douglas-fir Age",y="DBH (mm)") +scale_fill_viridis_d()
+
+levels(growth_test_early$TRT)<-c("CW 12Y", "CW 25Y","DF","RA 12Y","RA 25Y")
+growth_test_early$TRT<- ordered(growth_test_early$TRT, levels = c("RA 12Y","CW 12Y", "DF", "RA 25Y","CW 25Y"))
+growth_test_early$Cond_flag<- factor(growth_test_early$Cond_flag)
+levels(growth_test_early$Cond_flag)<-c("LRR","None", "Suppression")
+growth_test_early$Cond_flag<- ordered(growth_test_early$Cond_flag, levels = c("None", "LRR","Suppression"))
+
+
+dbh_plot_early<-ggplot(growth_test_early,aes(DF_age,live_DBH_cm)) +theme_bw() +stat_smooth(method = lm, aes( linetype=Cond_flag,fill=Cond_flag), colour="black") +facet_row(growth_test_early$TRT) +labs(title="Early Period Growth", x="Douglas-fir Age (years)",y="DBH (cm)",fill="Damage Note",linetype="Damage Note") +scale_fill_viridis_d(option = "C")+theme_bw()+
+  theme(panel.grid = element_blank(),panel.background = element_blank())+stat_regline_equation(aes( linetype=Cond_flag,fill=Cond_flag))
 dbh_plot_early
+
+#attempting to calculate "n=" for each TRTxcause and maybe add to chart.
+TxcnE<-subset(growth_test_early, !is.na(live_DBH_cm)) %>% 
+  group_by(TRT, Cond_flag) %>% 
+  summarise(N=n())
+TxcnE
+
+svg(here("Summary_Graphs_update","early_growth_by_LRR_SUPP_NOT.svg"), height= 3, width = 12)
+dbh_plot_early
+dev.off()
+
+pdf(here("Summary_Graphs_update","early_growth_by_LRR_SUPP_NOT.pdf"), height= 3, width = 12)
+dbh_plot_early
+dev.off()
+
 
 ##keep ages 36,45 i.e. "Late"
 growth_test_late<-growth_test2 %>% filter(growth_test2$DF_age==36|growth_test2$DF_age==45)
+
+levels(growth_test_late$TRT)<-c("CW 12Y", "CW 25Y","DF","RA 12Y","RA 25Y")
+growth_test_late$TRT<- ordered(growth_test_late$TRT, levels = c("RA 12Y","CW 12Y", "DF", "RA 25Y","CW 25Y"))
+growth_test_late$Cond_flag<- factor(growth_test_late$Cond_flag)
+levels(growth_test_late$Cond_flag)<-c("LRR","None", "Suppression")
+growth_test_late$Cond_flag<- ordered(growth_test_late$Cond_flag, levels = c("None", "LRR","Suppression"))
+
+
+dbh_plot_late<-ggplot(growth_test_late,aes(DF_age,live_DBH_cm)) +theme_bw() +stat_smooth(method = lm, aes( linetype=Cond_flag,fill=Cond_flag), colour="black") +facet_row(growth_test_late$TRT) +labs(title="Late Period Growth", x="Douglas-fir Age (years)",y="DBH (cm)",fill="Damage Note",linetype="Damage Note") +scale_fill_viridis_d(option = "C")+theme_bw()+
+  theme(panel.grid = element_blank(),panel.background = element_blank())+stat_regline_equation(aes( linetype=Cond_flag,fill=Cond_flag))
+dbh_plot_late
+
+#attempting to calculate "n=" for each TRTxcause and maybe add to chart.
+TxcnL<-subset(growth_test_late, !is.na(live_DBH_cm)) %>% 
+  group_by(TRT, Cond_flag) %>% 
+  summarise(N=n())
+TxcnL
+
+svg(here("Summary_Graphs_update","late_growth_by_LRR_SUPP_NOT.svg"), height= 4, width = 4)
+dbh_plot_late
+dev.off()
+
+pdf(here("Summary_Graphs_update","late_growth_by_LRR_SUPP_NOT.pdf"), height= 4, width = 4)
+dbh_plot_late
+dev.off()
+
+
+
 
 dbh_plot_late<-ggplot(growth_test_late,aes(DF_age,live_DBH_cm)) +geom_path(group=growth_test_late$Tree_ID, alpha=0.15, aes(colour=Cond_flag)) +theme_bw() +geom_smooth(method = lm, aes( linetype=Cond_flag,fill=Cond_flag,colour=Cond_flag)) +facet_row(growth_test_late$TRT) +scale_color_viridis_d() +labs(title="Late Phase Growth", x="Douglas-fir Age",y="DBH (mm)") +scale_fill_viridis_d()
 dbh_plot_late
@@ -1730,30 +1782,10 @@ dbh_plot_late
 
 #does it make sense for the 95% CI to be so small given the range of the measured data? Am I generating them incorrectly and/or misunderstanding what they mean?
 
-#run a true anova / linear model to test the slopes, not just geom_smooth()
-
-#out of curiosity, group by REP
-growth_test_rep<-growth_test %>% filter(!is.na(growth_test$DF_age))
-dbh_plot_rep<-ggplot(growth_test_rep,aes(DF_age,live_DBH_cm,colour=factor(REP)))+geom_path(group=growth_test_rep$Tree_ID, alpha=0.1, na.rm = TRUE)+theme_bw()+geom_smooth(method = lm)+scale_color_viridis_d()
-dbh_plot_rep
-
-growth_test_mid<-growth_test2 %>% filter(growth_test2$DF_age==8|growth_test2$DF_age==12|growth_test2$DF_age==33|growth_test2$DF_age==36)
-dbh_plot_mid_rep<-ggplot(growth_test_mid,aes(DF_age,live_DBH_cm,colour=Cond_flag,fill=Cond_flag,linetype=Cond_flag))+geom_path(group=growth_test_mid$Tree_ID, alpha=0.3, show.legend = FALSE)+theme_bw()+geom_smooth(method = lm) +facet_grid(rows=vars(growth_test_mid$REP),cols=vars(growth_test_mid$TRT)) +scale_color_viridis_d()+scale_fill_viridis_d()
-dbh_plot_mid_rep
 ```
 
 
 # ANOVAs and ordinal logistic regression for rates of mortality and BA increment
-example provided by stats consult https://rpubs.com/tmcurley/twowayanova
-len.aov <- aov(len ~ supp + dose + supp:dose, data = ToothGrowth)
-summary(len.aov)
-
-find a way to accomodate an unbalanced model (i.e. proc mixed or proc glimmix in SAS)
-perhaps lmer can.
-Run block as a random effect and double check coding (1|Block)?
-If not possible to use unbalanced, then run full model (with interaction) on blocks 2,4,5 and run additive model on full dataset.
-use "wide_for_dam" dataset
-
 ## BA and rate of mortality
 ```{r}
 #http://animsci.agrenv.mcgill.ca/StatisticalMethodsII/R/RCBD/index.html
@@ -1811,8 +1843,12 @@ anova(BAFmodel)
 rand(BAFmodel)
 ranef(BAFmodel)
 VarCorr(BAFmodel)
-ls_means(BAFmodel)
-
+early_BA_means<-ls_means(BAFmodel)
+early_BA_means
+#doing posthoc tests
+BAFmodel.em<-emmeans(BAFmodel, "TMT")
+eba_posthoc<-pairs(BAFmodel.em, adjust="tukey")
+eba_posthoc
 
 #comparing with just a simple fixed effect model
 BATmodel<-lm(early_BA_slope ~ TMT, data = ANOVA_early)
@@ -1821,6 +1857,11 @@ summary(BATmodel)
 anova(BAFmodel, BATmodel)
 
 #using the apropriate trimmed dataset (ANOVA_early) I don't get the convergence error for the random effects model and it has a lower AIC and BIC and makes more sense according to the design of the experiment, so I'll use that.
+
+#run Tukeys tests?
+pairs(BAFmodel, adjust="Tukey")
+
+
 
 #mid BA slope
 mid_BA_model<-lmer(mid_BA_slope ~ TMT + (1|Block), data = ANOVA_mid, REML=FALSE, verbose = 2)
@@ -1832,7 +1873,8 @@ anova(mid_BA_model)
 rand(mid_BA_model)
 ranef(mid_BA_model)
 VarCorr(mid_BA_model)
-ls_means(mid_BA_model)
+mid_BA_means<-ls_means(mid_BA_model)
+mid_BA_means
 
 #cannot test effect of block on late measurement period because only one observation for each block (DF)
 #will just report measured means +/- SE for DF treatment
@@ -1847,7 +1889,8 @@ anova(EMTFmodel)
 rand(EMTFmodel)
 ranef(EMTFmodel)
 VarCorr(EMTFmodel)
-ls_means(EMTFmodel)
+early_mort<-ls_means(EMTFmodel)
+early_mort
 
 #arcsin early total mortality
 EMaTFmodel<-lmer(early_asn_prop_dead_slope ~ TMT + (1|Block), data = ANOVA_early, REML=FALSE, verbose = 2)
@@ -1928,10 +1971,10 @@ rand(MMaTFmodel)
 ranef(MMaTFmodel)
 VarCorr(MMaTFmodel)
 ls_means(MMaTFmodel)
-mlsm<-ls_means(MMaTFmodel)
+amlsm<-ls_means(MMaTFmodel)
 #backtransform mortality estimates for reporting
-mlsm$backtran<-(sin(mlsm$Estimate))^2
-mlsm$backtran_se<-(sin(mlsm$`Std. Error`))^2
+amlsm$backtran<-(sin(amlsm$Estimate))^2
+amlsm$backtran_se<-(sin(amlsm$`Std. Error`))^2
 
 #try simplified model without block, since the model with block won't converge and estimate is 0
 MMaF<-lm(mid_asn_prop_dead_slope ~ TMT , data = ANOVA_mid)
@@ -2052,6 +2095,45 @@ mslsm
 
 #note significant treatment effect in lmm and when modeled alone with KW 
 ```
+
+##Bar plots of BA and Mort
+
+```{r}
+#pulling means or lsmeans from models above
+#early BA
+early_BA_means$TRT<-rownames(early_BA_means)
+early_BA_means<-early_BA_means %>% 
+  mutate(TRT = str_replace(TRT, "TMT", "")) 
+early_BA_means$TRT<-as.factor(c("RA 12Y", "CW 12Y","RA 25Y","CW 25Y"))
+early_BA_means$TRT<- ordered(early_BA_means$TRT, levels = c("RA 12Y","CW 12Y","RA 25Y","CW 25Y"))
+#adding posthoc results
+early_BA_means$tukey<-c("ab","a","a","b")
+#plot
+EBA_bar<-ggplot(early_BA_means,aes(TRT,Estimate,))+
+  geom_col(aes(fill=TRT))+
+  geom_errorbar(aes(ymin=early_BA_means$lower,ymax=early_BA_means$upper),width=0.2)+
+  labs(title="Early" ,x="",y=bquote('Stand Mean (+/-SE) Live BA '(m^2~ha^-1~year^-1)))+
+  scale_fill_viridis_d()+
+  geom_text(aes(label=tukey,y= early_BA_means$upper+0.1),show.legend = FALSE)+
+  theme_bw()+
+  theme(panel.grid = element_blank(),panel.background = element_blank(),legend.position = "none")
+EBA_bar
+
+
+#mid BA
+
+#late BA
+
+#early mort
+
+#mid mort
+
+#late mort
+
+
+```
+
+
 
 ## Survival analysis
 based off of example here https://rviews.rstudio.com/2017/09/25/survival-analysis-with-r/ , with an explanation of "censoring" provided here https://shariq-mohammed.github.io/files/cbsa2019/1-intro-to-survival.html indicating that trees alive in 2020 would be censored at that age (death was not observed).
