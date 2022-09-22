@@ -25,6 +25,7 @@ library(lme4)
 library(car)
 library(lmerTest)
 library(emmeans)
+library(ggpubr)
 ```
 
 ## Tree inventory statistics
@@ -1079,7 +1080,7 @@ wide_for_dam$Treatment<-ifelse(wide_for_dam$TRT=="A",
                             ifelse(wide_for_dam$TRT=="B",
                                "Cottonwood\n12 years", 
                                ifelse(wide_for_dam$TRT=="C",
-                               "Douglas fir\nImmediately",
+                               "Douglas-fir\nImmediately",
                                ifelse(wide_for_dam$TRT=="D",
                                    "Red Alder\n25 years","Cottonwood\n25 years" ))))
 wide_for_dam$TMT<-ifelse(wide_for_dam$TRT=="A",
@@ -1091,7 +1092,7 @@ wide_for_dam$TMT<-ifelse(wide_for_dam$TRT=="A",
                                ifelse(wide_for_dam$TRT=="D",
                                    "RA 25","CW 25"))))
 
-wide_for_dam$Treatment<-factor(wide_for_dam$Treatment, levels= c("Douglas fir\nImmediately","Red Alder\n12 years","Cottonwood\n12 years","Red Alder\n25 years","Cottonwood\n25 years"))
+wide_for_dam$Treatment<-factor(wide_for_dam$Treatment, levels= c("Douglas-fir\nImmediately","Red Alder\n12 years","Cottonwood\n12 years","Red Alder\n25 years","Cottonwood\n25 years"))
 wide_for_dam$TMT<-factor(wide_for_dam$TMT, levels= c("DF","RA 12","CW 12","RA 25","CW 25"))
 #saveRDS(wide_for_dam, file= here("wide_stand_summaries_including_damage_codes_timepoint_update.Rds"))  
 ```
@@ -1144,7 +1145,7 @@ AOV_prop_Dead$Treatment<-ifelse(AOV_prop_Dead$TRT=="A",
                             ifelse(AOV_prop_Dead$TRT=="B",
                                "Cottonwood 12 years", 
                                ifelse(AOV_prop_Dead$TRT=="C",
-                               "Immediate Douglas fir",
+                               "Immediate Douglas-fir",
                                ifelse(AOV_prop_Dead$TRT=="D",
                                    "Red Alder 25 years", "Cottonwood 25 years"   
                                ))))
@@ -1157,7 +1158,7 @@ AOV_BA_stand_mean$Treatment<-ifelse(AOV_BA_stand_mean$TRT=="A",
                             ifelse(AOV_BA_stand_mean$TRT=="B",
                                "Cottonwood 12 years", 
                                ifelse(AOV_BA_stand_mean$TRT=="C",
-                               "Immediate Douglas fir",
+                               "Immediate Douglas-fir",
                                ifelse(AOV_BA_stand_mean$TRT=="D",
                                    "Red Alder 25 years", "Cottonwood 25 years"   
                                ))))
@@ -1172,7 +1173,7 @@ AOV_BA_minmax$Treatment<-ifelse(AOV_BA_minmax$TRT=="A",
                             ifelse(AOV_BA_minmax$TRT=="B",
                                "Cottonwood 12 years", 
                                ifelse(AOV_BA_minmax$TRT=="C",
-                               "Immediate Douglas fir",
+                               "Immediate Douglas-fir",
                                ifelse(AOV_BA_minmax$TRT=="D",
                                    "Red Alder 25 years", "Cottonwood 25 years"   
                                ))))
@@ -1192,7 +1193,7 @@ AOV_mort_stand_mean$Treatment<-ifelse(AOV_mort_stand_mean$TRT=="A",
                             ifelse(AOV_mort_stand_mean$TRT=="B",
                                "Cottonwood 12 years", 
                                ifelse(AOV_mort_stand_mean$TRT=="C",
-                               "Immediate Douglas fir",
+                               "Immediate Douglas-fir",
                                ifelse(AOV_mort_stand_mean$TRT=="D",
                                    "Red Alder 25 years", "Cottonwood 25 years"   
                                ))))
@@ -1207,7 +1208,7 @@ AOV_mort_minmax$Treatment<-ifelse(AOV_mort_minmax$TRT=="A",
                             ifelse(AOV_mort_minmax$TRT=="B",
                                "Cottonwood 12 years", 
                                ifelse(AOV_mort_minmax$TRT=="C",
-                               "Immediate Douglas fir",
+                               "Immediate Douglas-fir",
                                ifelse(AOV_mort_minmax$TRT=="D",
                                    "Red Alder 25 years", "Cottonwood 25 years"   
                                ))))
@@ -1228,8 +1229,8 @@ treatment_summary_stats[ ,c('YEAR_dbl.x', 'Treatment.x')] <- list(NULL)
 
 #saveRDS(treatment_summary_stats, here("treatment_summary_stats.Rds"))
 
-treatment_summary_stats$Treatment<-factor(treatment_summary_stats$Treatment,levels = c("Red Alder 12 years","Cottonwood 12 years","Immediate Douglas fir","Red Alder 25 years","Cottonwood 25 years"))
-stand_summary_stats$Treatment<-factor(stand_summary_stats$Treatment,levels = c("Red Alder 12 years","Cottonwood 12 years","Immediate Douglas fir","Red Alder 25 years","Cottonwood 25 years"))
+treatment_summary_stats$Treatment<-factor(treatment_summary_stats$Treatment,levels = c("Red Alder 12 years","Cottonwood 12 years","Immediate Douglas-fir","Red Alder 25 years","Cottonwood 25 years"))
+stand_summary_stats$Treatment<-factor(stand_summary_stats$Treatment,levels = c("Red Alder 12 years","Cottonwood 12 years","Immediate Douglas-fir","Red Alder 25 years","Cottonwood 25 years"))
 stand_summary_stats$Block<-factor(stand_summary_stats$Block,levels = c(1,2,3,4,5), ordered = TRUE)
 
 ##assuming even stocking and unobserved mortality prior to first measurement (probably not justified)
@@ -1241,7 +1242,7 @@ stand_summary_stats$Block<-factor(stand_summary_stats$Block,levels = c(1,2,3,4,5
 #                            ifelse(AOV_mort_miss_stand_mean$TRT=="B",
 #                               "Cottonwood 12 years", 
 #                               ifelse(AOV_mort_miss_stand_mean$TRT=="C",
-#                               "Immediate Douglas fir",
+#                               "Immediate Douglas-fir",
 #                               ifelse(AOV_mort_miss_stand_mean$TRT=="D",
 #                                   "Red Alder 25 years", "Cottonwood 25 years"   
 #                               ))))
@@ -1289,12 +1290,16 @@ stand_summary_stats$age<-as.numeric(stand_summary_stats$DF_age)
 #graphing
 
 #BA
+treatment_summary_stats<-readRDS(here("treatment_summary_stats.Rds"))
+treatment_summary_stats<-treatment_summary_stats %>% 
+  mutate(Treatment = str_replace(Treatment, "Immediate Douglas fir", "Immediate Douglas-fir"))
+#saveRDS(treatment_summary_stats, here("treatment_summary_stats.Rds"))
 BA_ribbon<-treatment_summary_stats %>% 
-  mutate(Treatment= factor(Treatment, levels = c("Red Alder 12 years","Cottonwood 12 years","Immediate Douglas fir","Red Alder 25 years","Cottonwood 25 years")))%>%
+  mutate(Treatment= factor(Treatment, levels = c("Red Alder 12 years","Cottonwood 12 years","Immediate Douglas-fir","Red Alder 25 years","Cottonwood 25 years")))%>%
   ggplot(aes(DF_age,mean_BA, fill=Treatment)) + 
   geom_ribbon(aes(ymin=lower_BA, ymax=upper_BA),alpha=0.5)+
-  ylab("Stand Mean (+/-SE) Live BA (sq m/ha)")+
-  xlab("Douglas Fir Age (years)")+
+  ylab(bquote('Stand Mean (+/-SE) Live BA '(m^2~ha^-1)))+
+  xlab("Douglas-fir Age (years)")+
   scale_fill_viridis_d() +
   theme_bw()+
   theme(panel.grid = element_blank(),panel.background = element_blank())+
@@ -1305,11 +1310,11 @@ BA_ribbon
 BA_comb<-BA_ribbon + theme(legend.position = "none")
 
 pd_ribbon<-treatment_summary_stats %>% 
-  mutate(Treatment= factor(Treatment, levels = c("Red Alder 12 years","Cottonwood 12 years","Immediate Douglas fir","Red Alder 25 years","Cottonwood 25 years")))%>%
+  mutate(Treatment= factor(Treatment, levels = c("Red Alder 12 years","Cottonwood 12 years","Immediate Douglas-fir","Red Alder 25 years","Cottonwood 25 years")))%>%
   ggplot(aes(DF_age,mort_mean, fill=Treatment)) + 
   geom_ribbon(aes(ymin=mort_lower, ymax=mort_upper),alpha=0.5)+
-  ylab("Stand Mean (+/-SE) Mortality")+
-  xlab("Douglas Fir Age (years)")+
+  ylab("Stand Mean (+/-SE) Cumulative Mortality")+
+  xlab("Douglas-fir Age (years)")+
   scale_fill_viridis_d() +
   ylim(0,1)+
   theme_bw()+
@@ -1380,7 +1385,7 @@ Use above version wide_for_dam which includes mortality broken down by damage co
 #                            ifelse(wide_stand_stats$TRT=="B",
 #                               "Cottonwood\n12 years", 
 #                               ifelse(wide_stand_stats$TRT=="C",
-#                               "Douglas fir\nImmediately",
+#                               "Douglas-fir\nImmediately",
 #                               ifelse(wide_stand_stats$TRT=="D",
 #                                   "Red Alder\n25 years","Cottonwood\n25 years" ))))
 #wide_stand_stats$TMT<-ifelse(wide_stand_stats$TRT=="A",
@@ -1398,7 +1403,7 @@ Use above version wide_for_dam which includes mortality broken down by damage co
 #wide_stand_stats$late_mort_slope<-(wide_stand_stats$prop_dead_T3-wide_stand_stats$prop_dead_T2)/(wide_stand_stats$DF_age_T3-wide_stand_stats$DF_age_T2#)
 #wide_stand_stats$early_asnmort_slope<-(wide_stand_stats$asn_mort_T2-wide_stand_stats$asn_mort_T1)/(wide_stand_stats$DF_age_T2-wide_stand_stats$DF_age_#T1)
 #wide_stand_stats$late_asnmort_slope<-(wide_stand_stats$asn_mort_T3-wide_stand_stats$asn_mort_T2)/(wide_stand_stats$DF_age_T3-wide_stand_stats$DF_age_T#2)
-#wide_stand_stats$Treatment<-factor(wide_stand_stats$Treatment, levels= c("Douglas fir\nImmediately","Red Alder\n12 years","Cottonwood\n12 years","Red #Alder\n25 years","Cottonwood\n25 years"))
+#wide_stand_stats$Treatment<-factor(wide_stand_stats$Treatment, levels= c("Douglas-fir\nImmediately","Red Alder\n12 years","Cottonwood\n12 years","Red #Alder\n25 years","Cottonwood\n25 years"))
 #wide_stand_stats$TMT<-factor(wide_stand_stats$TMT, levels= c("DF","RA 12","CW 12","RA 25","CW 25"))
 ##saveRDS(wide_stand_stats, file=here("wide_stand_stats.Rds"))
 
@@ -1667,34 +1672,41 @@ dbh_plot
 #could use just DF trees and just 1st and 2nd measurements. This would  This still wouldn't account for trees that died of LRR, unless we were able to do the age at death corrections from the datasheet notes.
 #keep ages 8,12,33,36 i.e. "Mid"
 growth_test_mid<-growth_test2 %>% filter(growth_test2$DF_age==8|growth_test2$DF_age==12|growth_test2$DF_age==33|growth_test2$DF_age==36)
-levels(growth_test_mid$TRT)<-c("CW 12Y", "CW 25Y","DF","RA 12","RA 25Y")
-growth_test_mid$TRT<- ordered(growth_test_mid$TRT, levels = c("RA 12","CW 12Y", "DF", "RA 25Y","CW 25Y"))
+levels(growth_test_mid$TRT)<-c("CW 12Y", "CW 25Y","DF","RA 12Y","RA 25Y")
+growth_test_mid$TRT<- ordered(growth_test_mid$TRT, levels = c("RA 12Y","CW 12Y", "DF", "RA 25Y","CW 25Y"))
 growth_test_mid$Cond_flag<- factor(growth_test_mid$Cond_flag)
 levels(growth_test_mid$Cond_flag)<-c("LRR","None", "Suppression")
 growth_test_mid$Cond_flag<- ordered(growth_test_mid$Cond_flag, levels = c("None", "LRR","Suppression"))
 
-dbh_plot_mid<-ggplot(growth_test_mid,aes(DF_age,live_DBH_cm)) +theme_bw() +geom_smooth(method = lm, aes( linetype=Cond_flag,fill=Cond_flag), colour="black") +facet_row(growth_test_mid$TRT) +labs(title="Middle Phase Growth", x="Douglas Fir Age (years)",y="DBH (mm)") +scale_fill_viridis_d(option = "C")+theme_bw()+
-  theme(panel.grid = element_blank(),panel.background = element_blank())
+
+dbh_plot_mid<-ggplot(growth_test_mid,aes(DF_age,live_DBH_cm)) +theme_bw() +stat_smooth(method = lm, aes( linetype=Cond_flag,fill=Cond_flag), colour="black") +facet_row(growth_test_mid$TRT) +labs(title="Middle Period Growth", x="Douglas-fir Age (years)",y="DBH (cm)",fill="Damage Note",linetype="Damage Note") +scale_fill_viridis_d(option = "C")+theme_bw()+
+  theme(panel.grid = element_blank(),panel.background = element_blank())+stat_regline_equation(aes( linetype=Cond_flag,fill=Cond_flag))
 dbh_plot_mid
 
-svg(here("Summary_Graphs_update","mid_growth_by_LRR_SUPP_NOT.svg"), height= 6, width = 6)
+#attempting to calculate "n=" for each TRTxcause and maybe add to chart.
+TxcnM<-subset(growth_test_mid, !is.na(live_DBH_cm)) %>% 
+  group_by(TRT, Cond_flag) %>% 
+  summarise(N=n())
+TxcnM
+
+svg(here("Summary_Graphs_update","mid_growth_by_LRR_SUPP_NOT.svg"), height= 4, width = 8)
 dbh_plot_mid
 dev.off()
 
-pdf(here("Summary_Graphs_update","mid_growth_by_LRR_SUPP_NOT.pdf"), height= 6, width = 6)
+pdf(here("Summary_Graphs_update","mid_growth_by_LRR_SUPP_NOT.pdf"), height= 4, width = 8)
 dbh_plot_mid
 dev.off()
 
 ##keep ages 8,11,20,24 i.e. "Early"
 growth_test_early<-growth_test2 %>% filter(growth_test2$DF_age==8|growth_test2$DF_age==11|growth_test2$DF_age==20|growth_test2$DF_age==24)
 
-dbh_plot_early<-ggplot(growth_test_early,aes(DF_age,live_DBH_cm)) +geom_path(group=growth_test_early$Tree_ID, alpha=0.15, aes(colour=Cond_flag)) +theme_bw() +geom_smooth(method = lm, aes( linetype=Cond_flag,fill=Cond_flag,colour=Cond_flag)) +facet_row(growth_test_early$TRT) +scale_color_viridis_d() +labs(title="Early Phase Growth", x="Douglas Fir Age",y="DBH (mm)") +scale_fill_viridis_d()
+dbh_plot_early<-ggplot(growth_test_early,aes(DF_age,live_DBH_cm)) +geom_path(group=growth_test_early$Tree_ID, alpha=0.15, aes(colour=Cond_flag)) +theme_bw() +geom_smooth(method = lm, aes( linetype=Cond_flag,fill=Cond_flag,colour=Cond_flag)) +facet_row(growth_test_early$TRT) +scale_color_viridis_d() +labs(title="Early Phase Growth", x="Douglas-fir Age",y="DBH (mm)") +scale_fill_viridis_d()
 dbh_plot_early
 
 ##keep ages 36,45 i.e. "Late"
 growth_test_late<-growth_test2 %>% filter(growth_test2$DF_age==36|growth_test2$DF_age==45)
 
-dbh_plot_late<-ggplot(growth_test_late,aes(DF_age,live_DBH_cm)) +geom_path(group=growth_test_late$Tree_ID, alpha=0.15, aes(colour=Cond_flag)) +theme_bw() +geom_smooth(method = lm, aes( linetype=Cond_flag,fill=Cond_flag,colour=Cond_flag)) +facet_row(growth_test_late$TRT) +scale_color_viridis_d() +labs(title="Late Phase Growth", x="Douglas Fir Age",y="DBH (mm)") +scale_fill_viridis_d()
+dbh_plot_late<-ggplot(growth_test_late,aes(DF_age,live_DBH_cm)) +geom_path(group=growth_test_late$Tree_ID, alpha=0.15, aes(colour=Cond_flag)) +theme_bw() +geom_smooth(method = lm, aes( linetype=Cond_flag,fill=Cond_flag,colour=Cond_flag)) +facet_row(growth_test_late$TRT) +scale_color_viridis_d() +labs(title="Late Phase Growth", x="Douglas-fir Age",y="DBH (mm)") +scale_fill_viridis_d()
 dbh_plot_late
 #print PDF
 
@@ -2094,21 +2106,21 @@ pkmc
 dfsurv<-survival_data[which(survival_data$TRT_code=="C"),]
 #split by condition flag
 df_fit <- survfit(Surv(time, status) ~ 1, data = dfsurv)
-p0<-autoplot(df_fit, xlim=c(0,50),xlab = "Years",ylab = "Survival of Douglas Fir in Continuous Rotation")
+p0<-autoplot(df_fit, xlim=c(0,50),xlab = "Years",ylab = "Survival of Douglas-fir in Continuous Rotation")
 df_cond_fit <- survfit(Surv(time, status) ~ Cond_flag, data = dfsurv)
 p0
 summary(df_cond_fit, times = c(5*(1:9)))
-p0c<-autoplot(df_cond_fit, xlim=c(0,50),xlab = "Years",ylab = "Survival of Douglas Fir in Continuous Rotation")
+p0c<-autoplot(df_cond_fit, xlim=c(0,50),xlab = "Years",ylab = "Survival of Douglas-fir in Continuous Rotation")
 p0c
 #could run for TRTs A and B together as well
 ABsurv<-survival_data[which(survival_data$TRT_code=="A"|survival_data$TRT_code=="B"),]
 #split by condition flag
 ABsurv_fit <- survfit(Surv(time, status) ~ 1, data = ABsurv)
-p12<-autoplot(ABsurv_fit, xlim=c(0,50),xlab = "Years",ylab = "Survival of Douglas Fir in 12y Rotation", ylim = c(0,1))
+p12<-autoplot(ABsurv_fit, xlim=c(0,50),xlab = "Years",ylab = "Survival of Douglas-fir in 12y Rotation", ylim = c(0,1))
 ABsurv_cond_fit <- survfit(Surv(time, status) ~ Cond_flag, data = ABsurv)
 p12
 summary(ABsurv_cond_fit, times = c(5*(1:9)))
-p12c<-autoplot(ABsurv_cond_fit, xlim=c(0,50),xlab = "Years",ylab = "Survival of Douglas Fir in 12y Rotation")
+p12c<-autoplot(ABsurv_cond_fit, xlim=c(0,50),xlab = "Years",ylab = "Survival of Douglas-fir in 12y Rotation")
 p12c
 p0+p12
 p0c+p12c
@@ -2129,11 +2141,11 @@ p0c+p12c
 #split by rep
 df_rep_fit <- survfit(Surv(time, status) ~ REP, data = dfsurv)
 summary(df_rep_fit, times = c(5*(1:9)))
-p0r<-autoplot(df_rep_fit, xlim=c(0,50),xlab = "Years",ylab = "Survival of Douglas Fir in Continuous Rotation")+scale_fill_viridis_d()+scale_color_viridis_d()
+p0r<-autoplot(df_rep_fit, xlim=c(0,50),xlab = "Years",ylab = "Survival of Douglas-fir in Continuous Rotation")+scale_fill_viridis_d()+scale_color_viridis_d()
 p0r
 ABsurv_rep_fit <- survfit(Surv(time, status) ~ REP, data = ABsurv)
 summary(ABsurv_rep_fit, times = c(5*(1:9)))
-p12r<-autoplot(ABsurv_rep_fit, xlim=c(0,50),xlab = "Years",ylab = "Survival of Douglas Fir in 12y Rotation")+scale_fill_viridis_d()+scale_color_viridis_d()
+p12r<-autoplot(ABsurv_rep_fit, xlim=c(0,50),xlab = "Years",ylab = "Survival of Douglas-fir in 12y Rotation")+scale_fill_viridis_d()+scale_color_viridis_d()
 p12r
 
 #trying a cox proportional hazard model to include covariates
