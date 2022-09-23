@@ -1787,7 +1787,7 @@ dbh_plot_late
 
 
 # ANOVAs and ordinal logistic regression for rates of mortality and BA increment
-## BA and rate of mortality
+## BA
 ```{r}
 #http://animsci.agrenv.mcgill.ca/StatisticalMethodsII/R/RCBD/index.html
 #https://cran.r-project.org/web/packages/lme4/vignettes/lmer.pdf
@@ -1859,9 +1859,6 @@ eba_posthoc
 
 ##using the apropriate trimmed dataset (ANOVA_early) I don't get the convergence error for the random effects model and it has a lower AIC and BIC and makes more sense according to the design of the experiment, so I'll use that.
 
-
-
-
 #mid BA slope
 mid_BA_model<-lmer(mid_BA_slope ~ TMT + (1|Block), data = ANOVA_mid, REML=FALSE, verbose = 2)
 plot(mid_BA_model, type = c("p", "smooth"))
@@ -1883,7 +1880,10 @@ mba_posthoc
 #cannot test effect of block on late measurement period because only one observation for each block (DF)
 #will just report measured means +/- SE for DF treatment
 late_BA_means<-ANOVA_late %>% group_by(TMT)%>% summarise(Estimate=mean(late_BA_slope),SE=(sd(late_BA_slope)/sqrt(n())), lower=Estimate-SE, upper=Estimate+SE)
+```
 
+##total mortality
+```{r}
 #early total mortality
 EMTFmodel<-lmer(early_prop_dead_slope ~ TMT + (1|Block), data = ANOVA_early, REML=FALSE, verbose = 2)
 plot(EMTFmodel, type = c("p", "smooth"))
@@ -1939,30 +1939,15 @@ anova(EMaF)
 EMaF.rg1<-ref_grid(EMaF)
 summary(EMaF.rg1)
 elsm<-summary(EMaF.rg1)
-#backtransform mortality estimates for reporting
+#backtransform mortality estimates for reporting but not SE (is meaningless backtransformed)
 elsm$backtran<-(sin(elsm$prediction))^2
-elsm$backtran_se<-(sin(elsm$SE))^2
 elsm
-
-#alternative would be to create a combined TMTxBlock variable and run a Kruskal Wallis test
-#wide_for_dam$TxB<-paste(wide_for_dam$TRT, wide_for_dam$Block, Sep="")
-#kwem<-kruskal.test(early_prop_dead_slope ~ TxB, data = wide_for_dam)
-#kwem
-#pwem<-pairwise.wilcox.test(wide_for_dam$early_prop_dead_slope, wide_for_dam$TxB,
-#                 p.adjust.method = "BH")
-#pwem
-##OR just test block or tmt alone
-#kwblock<-kruskal.test(early_prop_dead_slope~Block, data = wide_for_dam)
-#kwblock
-#pwblock<-pairwise.wilcox.test(wide_for_dam$early_prop_dead_slope, wide_for_dam$Block,
-#                 p.adjust.method = "BH")
-#pwblock
-#
-#kwtrt<-kruskal.test(early_prop_dead_slope~TMT, data = wide_for_dam)
-#kwtrt
-#pwtrt<-pairwise.wilcox.test(wide_for_dam$early_prop_dead_slope, wide_for_dam$TMT,
-#                 p.adjust.method = "BH")
-#pwtrt
+#doing post-hoc tests
+EMaF.em<-emmeans(EMaF, "TMT")
+EMaF_posthoc<-pairs(EMaF.em, adjust="tukey")
+EMaF_posthoc
+plot(EMaF.em,comparisons = TRUE)
+#posthoc result c("a","ab","b","ab")
 
 
 #arcsin mid total mortality
@@ -2060,7 +2045,8 @@ ls_means(EaSmodel)
 eslsm<-ls_means(EaSmodel)
 #backtransform mortality estimates for reporting
 eslsm$backtran<-(sin(eslsm$Estimate))^2
-eslsm$backtran_se<-(sin(eslsm$`Std. Error`))^2
+#backtransformed standard errors are meaningless
+#eslsm$backtran_se<-(sin(eslsm$`Std. Error`))^2
 eslsm
 
 
@@ -2101,7 +2087,7 @@ mslsm
 #note significant treatment effect in lmm and when modeled alone with KW 
 ```
 
-##Bar plots of BA and Mort
+##Bar plots of BA
 
 ```{r}
 #pulling means or lsmeans from models above
@@ -2132,7 +2118,6 @@ EBA_bar<-ggplot(early_BA_means,aes(TRT,Estimate,))+
   ylim(-0,2.5)
 EBA_bar
 
-
 #mid BA
 mid_BA_means$TRT<-rownames(mid_BA_means)
 mid_BA_means<-mid_BA_means %>% 
@@ -2154,7 +2139,6 @@ MBA_bar<-ggplot(mid_BA_means,aes(TRT,Estimate,))+
 MBA_bar
 EBA_bar|(MBA_bar+theme(axis.title.y=element_blank(),axis.text.y=element_blank()))
 
-
 #late BA
 #plot
 LBA_bar<-ggplot(late_BA_means,aes(TMT,Estimate,))+
@@ -2168,28 +2152,93 @@ LBA_bar<-ggplot(late_BA_means,aes(TMT,Estimate,))+
   ylim(-0,2.5)
 LBA_bar
 
-
-layout<-"AAAABBBC"
-EBA_bar+(MBA_bar+theme(axis.title.y=element_blank(),axis.text.y=element_blank()))+(LBA_bar+theme(axis.title.y=element_blank(),axis.text.y=element_blank()))+plot_layout(design=layout)
-#layout<-"AAAABBB"
-#EBA_bar+(MBA_bar+theme(axis.title.y=element_blank(),axis.text.y=element_blank()))+plot_layout(design=layout)
-
-pdf(here("Summary_Graphs_update","Early_Mid_Late_BA_slope_barplots.pdf"), height= 6, width = 10)
-EBA_bar+(MBA_bar+theme(axis.title.y=element_blank(),axis.text.y=element_blank()))+(LBA_bar+theme(axis.title.y=element_blank(),axis.text.y=element_blank()))+plot_layout(design=layout)
-dev.off()
+BA_layout<-"AAAABBBC"
+EBA_bar+(MBA_bar+theme(axis.title.y=element_blank(),axis.text.y=element_blank()))+(LBA_bar+theme(axis.title.y=element_blank(),axis.text.y=element_blank()))+plot_layout(design=BA_layout)
 
 
-svg(here("Summary_Graphs_update","Early_Mid_Late_BA_slope_barplots.svg"), height= 6, width = 10)
-EBA_bar+(MBA_bar+theme(axis.title.y=element_blank(),axis.text.y=element_blank()))+(LBA_bar+theme(axis.title.y=element_blank(),axis.text.y=element_blank()))+plot_layout(design=layout)
-dev.off()
+#pdf(here("Summary_Graphs_update","Early_Mid_Late_BA_slope_barplots.pdf"), height= 6, width = 10)
+#EBA_bar+(MBA_bar+theme(axis.title.y=element_blank(),axis.text.y=element_blank()))+(LBA_bar+theme(axis.title.y=element_blank(),axis.text.y=element_blank()))+plot_layout(design=layout)
+#dev.off()
 
 
+#svg(here("Summary_Graphs_update","Early_Mid_Late_BA_slope_barplots.svg"), height= 6, width = 10)
+#EBA_bar+(MBA_bar+theme(axis.title.y=element_blank(),axis.text.y=element_blank()))+(LBA_bar+theme(axis.title.y=element_blank(),axis.text.y=element_blank()))+plot_layout(design=layout)
+#dev.off()
+```
+
+##Bar plots of mortality
+```{r}
 #early mort
+EMaF.df<-as.data.frame(EMaF.em)
+EMaF.df$TMT<-as.factor(c("RA 12Y", "CW 12Y","RA 25Y","CW 25Y"))
+EMaF.df$TMT<- ordered(EMaF.df$TMT, levels = c("RA 12Y","CW 12Y","RA 25Y","CW 25Y"))
+#adding posthoc results
+EMaF.df$tukey<-c("a","ab","b","ab")
+EMaF.df$lower<-EMaF.df$emmean-EMaF.df$SE
+EMaF.df$upper<-EMaF.df$emmean+EMaF.df$SE
+EMaF.df$backtran<-(sin(EMaF.df$emmean))^2
+EMaF.df$backtran_upper.CL<-(sin(EMaF.df$upper.CL))^2
+EMaF.df$backtran_lower.CL<-(sin(EMaF.df$lower.CL))^2
+
+Emort_bar<-ggplot(EMaF.df,aes(TMT,backtran))+
+  geom_col(aes(fill=TMT))+
+  #geom_errorbar(aes(ymin=lower,ymax=upper),width=0.2)+
+  labs(title="Early" ,x="",y='Stand Mean Annual Mortality')+
+  scale_fill_manual(values=trt_colors[c(1,2,4,5)])+
+  geom_text(aes(label=tukey,y= elsm$backtran+0.001),show.legend = FALSE)+
+  theme_bw()+
+  theme(panel.grid = element_blank(),panel.background = element_blank(),legend.position = "none")#+
+  #ylim(-0,0.05)
+Emort_bar
+
+asnEmort_bar<-ggplot(EMaF.df,aes(TMT,emmean))+
+  geom_col(aes(fill=TMT))+
+  geom_errorbar(aes(ymin=lower,ymax=upper),width=0.2)+
+  labs(title="Early" ,x="",y='Transformed Stand Mean (+/-SE) Annual Mortality')+
+  scale_fill_manual(values=trt_colors[c(1,2,4,5)])+
+  geom_text(aes(label=tukey,y=upper+0.01),show.legend = FALSE)+
+  theme_bw()+
+  theme(panel.grid = element_blank(),panel.background = element_blank(),legend.position = "none")#+
+  #ylim(-0,0.05)
+asnEmort_bar
+
+xasnEmort_bar<-ggplot(EMaF.df,aes(TMT,backtran))+
+  geom_col(aes(fill=TMT))+
+  geom_errorbar(aes(ymin=backtran_lower.CL,ymax=backtran_upper.CL),width=0.2)+
+  labs(title="Early" ,x="",y='Stand Mean (+/- 95% CI) Annual Mortality')+
+  scale_fill_manual(values=trt_colors[c(1,2,4,5)])+
+  geom_text(aes(label=tukey,y=backtran_upper.CL+0.001),show.legend = FALSE)+
+  theme_bw()+
+  theme(panel.grid = element_blank(),panel.background = element_blank(),legend.position = "none")#+
+  #ylim(-0,0.05)
+xasnEmort_bar
+
+Emort_bar|xasnEmort_bar|asnEmort_bar
+
+#pdf(here("Summary_Graphs_update","Early_mort_slope_barplots_SE_CI_trans.pdf"), height= 6, width = 10)
+#Emort_bar|xasnEmort_bar|asnEmort_bar
+#dev.off()
+
+
+#svg(here("Summary_Graphs_update","Early_mort_slope_barplots_SE_CI_trans.svg"), height= 6, width = 10)
+#Emort_bar|xasnEmort_bar|asnEmort_bar
+#dev.off()
 
 #mid mort
 
 #late mort
 
+#LRR early
+
+#LRR mid
+
+#LRR late
+
+#Sup early
+
+#Sup mid
+
+#Sup late
 
 ```
 
