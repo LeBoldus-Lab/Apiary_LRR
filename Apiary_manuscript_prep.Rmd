@@ -26,6 +26,7 @@ library(car)
 library(lmerTest)
 library(emmeans)
 library(ggpubr)
+library(scales)
 ```
 
 ## Tree inventory statistics
@@ -1300,7 +1301,7 @@ BA_ribbon<-treatment_summary_stats %>%
   geom_ribbon(aes(ymin=lower_BA, ymax=upper_BA),alpha=0.5)+
   ylab(bquote('Stand Mean (+/-SE) Live BA '(m^2~ha^-1)))+
   xlab("Douglas-fir Age (years)")+
-  scale_fill_viridis_d() +
+  scale_fill_viridis_d(values=c(0,0.25,0.5,0.75,1)) +
   theme_bw()+
   theme(panel.grid = element_blank(),panel.background = element_blank())+
   geom_line(alpha=0.4)
@@ -1845,21 +1846,19 @@ ranef(BAFmodel)
 VarCorr(BAFmodel)
 early_BA_means<-ls_means(BAFmodel)
 early_BA_means
-#doing posthoc tests
+#doing post-hoc tests
 BAFmodel.em<-emmeans(BAFmodel, "TMT")
 eba_posthoc<-pairs(BAFmodel.em, adjust="tukey")
 eba_posthoc
 
-#comparing with just a simple fixed effect model
-BATmodel<-lm(early_BA_slope ~ TMT, data = ANOVA_early)
-summary(BATmodel)
-#comparing the two models
-anova(BAFmodel, BATmodel)
+##comparing with just a simple fixed effect model
+#BATmodel<-lm(early_BA_slope ~ TMT, data = ANOVA_early)
+#summary(BATmodel)
+##comparing the two models
+#anova(BAFmodel, BATmodel)
 
-#using the apropriate trimmed dataset (ANOVA_early) I don't get the convergence error for the random effects model and it has a lower AIC and BIC and makes more sense according to the design of the experiment, so I'll use that.
+##using the apropriate trimmed dataset (ANOVA_early) I don't get the convergence error for the random effects model and it has a lower AIC and BIC and makes more sense according to the design of the experiment, so I'll use that.
 
-#run Tukeys tests?
-pairs(BAFmodel, adjust="Tukey")
 
 
 
@@ -1875,9 +1874,15 @@ ranef(mid_BA_model)
 VarCorr(mid_BA_model)
 mid_BA_means<-ls_means(mid_BA_model)
 mid_BA_means
+#doing post-hoc tests
+mid_BA_model.em<-emmeans(mid_BA_model, "TMT")
+mba_posthoc<-pairs(mid_BA_model.em, adjust="tukey")
+mba_posthoc
 
+#late BA slope
 #cannot test effect of block on late measurement period because only one observation for each block (DF)
 #will just report measured means +/- SE for DF treatment
+late_BA_means<-ANOVA_late %>% group_by(TMT)%>% summarise(Estimate=mean(late_BA_slope),SE=(sd(late_BA_slope)/sqrt(n())), lower=Estimate-SE, upper=Estimate+SE)
 
 #early total mortality
 EMTFmodel<-lmer(early_prop_dead_slope ~ TMT + (1|Block), data = ANOVA_early, REML=FALSE, verbose = 2)
@@ -2108,21 +2113,76 @@ early_BA_means$TRT<-as.factor(c("RA 12Y", "CW 12Y","RA 25Y","CW 25Y"))
 early_BA_means$TRT<- ordered(early_BA_means$TRT, levels = c("RA 12Y","CW 12Y","RA 25Y","CW 25Y"))
 #adding posthoc results
 early_BA_means$tukey<-c("ab","a","a","b")
+
+#checking colors
+show_col(viridis_pal()(5))
+trt_colors<-viridis_pal()(5)
+trt_colors[c(1,2,4,5)]
+show_col(trt_colors[c(1,2,4,5)])
+
 #plot
 EBA_bar<-ggplot(early_BA_means,aes(TRT,Estimate,))+
   geom_col(aes(fill=TRT))+
   geom_errorbar(aes(ymin=early_BA_means$lower,ymax=early_BA_means$upper),width=0.2)+
-  labs(title="Early" ,x="",y=bquote('Stand Mean (+/-SE) Live BA '(m^2~ha^-1~year^-1)))+
-  scale_fill_viridis_d()+
+  labs(title="Early" ,x="",y=bquote('Stand Mean (+/-SE) Annual Live BA Increment  '(m^2~ha^-1~year^-1)))+
+  scale_fill_manual(values=trt_colors[c(1,2,4,5)])+
   geom_text(aes(label=tukey,y= early_BA_means$upper+0.1),show.legend = FALSE)+
   theme_bw()+
-  theme(panel.grid = element_blank(),panel.background = element_blank(),legend.position = "none")
+  theme(panel.grid = element_blank(),panel.background = element_blank(),legend.position = "none")+
+  ylim(-0,2.5)
 EBA_bar
 
 
 #mid BA
+mid_BA_means$TRT<-rownames(mid_BA_means)
+mid_BA_means<-mid_BA_means %>% 
+  mutate(TRT = str_replace(TRT, "TMT", "")) 
+mid_BA_means$TRT<-as.factor(c("DF", "RA 12Y","CW 12Y"))
+mid_BA_means$TRT<- ordered(mid_BA_means$TRT, levels = c("RA 12Y","CW 12Y","DF"))
+#no significant posthoc results
+mid_BA_means$tukey<-c("x","x","x")
+#plot
+MBA_bar<-ggplot(mid_BA_means,aes(TRT,Estimate,))+
+  geom_col(aes(fill=TRT))+
+  geom_errorbar(aes(ymin=mid_BA_means$lower,ymax=mid_BA_means$upper),width=0.2)+
+  labs(title="Mid" ,x="",y=bquote('Stand Mean (+/-SE) Annual Live BA Increment  '(m^2~ha^-1~year^-1)))+
+  scale_fill_manual(values=trt_colors[c(1,2,3)])+
+  geom_text(aes(label=tukey,y= mid_BA_means$upper+0.1),show.legend = FALSE)+
+  theme_bw()+
+  theme(panel.grid = element_blank(),panel.background = element_blank(),legend.position = "none")+
+  ylim(-0,2.5)
+MBA_bar
+EBA_bar|(MBA_bar+theme(axis.title.y=element_blank(),axis.text.y=element_blank()))
+
 
 #late BA
+#plot
+LBA_bar<-ggplot(late_BA_means,aes(TMT,Estimate,))+
+  geom_col(aes(fill=TMT))+
+  geom_errorbar(aes(ymin=late_BA_means$lower,ymax=late_BA_means$upper),width=0.2)+
+  labs(title="Late" ,x="",y=bquote('Stand Mean (+/-SE) Annual Live BA Increment  '(m^2~ha^-1~year^-1)))+
+  scale_fill_manual(values=trt_colors[3])+
+  #geom_text(aes(label=tukey,y= mid_BA_means$upper+0.1),show.legend = FALSE)+
+  theme_bw()+
+  theme(panel.grid = element_blank(),panel.background = element_blank(),legend.position = "none")+
+  ylim(-0,2.5)
+LBA_bar
+
+
+layout<-"AAAABBBC"
+EBA_bar+(MBA_bar+theme(axis.title.y=element_blank(),axis.text.y=element_blank()))+(LBA_bar+theme(axis.title.y=element_blank(),axis.text.y=element_blank()))+plot_layout(design=layout)
+#layout<-"AAAABBB"
+#EBA_bar+(MBA_bar+theme(axis.title.y=element_blank(),axis.text.y=element_blank()))+plot_layout(design=layout)
+
+pdf(here("Summary_Graphs_update","Early_Mid_Late_BA_slope_barplots.pdf"), height= 6, width = 10)
+EBA_bar+(MBA_bar+theme(axis.title.y=element_blank(),axis.text.y=element_blank()))+(LBA_bar+theme(axis.title.y=element_blank(),axis.text.y=element_blank()))+plot_layout(design=layout)
+dev.off()
+
+
+svg(here("Summary_Graphs_update","Early_Mid_Late_BA_slope_barplots.svg"), height= 6, width = 10)
+EBA_bar+(MBA_bar+theme(axis.title.y=element_blank(),axis.text.y=element_blank()))+(LBA_bar+theme(axis.title.y=element_blank(),axis.text.y=element_blank()))+plot_layout(design=layout)
+dev.off()
+
 
 #early mort
 
