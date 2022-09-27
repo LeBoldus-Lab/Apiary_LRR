@@ -2120,6 +2120,10 @@ trt_colors<-viridis_pal()(5)
 trt_colors[c(1,2,4,5)]
 show_col(trt_colors[c(1,2,4,5)])
 
+extended_colors<-viridis_pal(option = "H")(15)
+show_col(viridis_pal(option = "B")(15))
+show_col(extended_colors[c(1,3,5,11,13,15)])
+
 #plot
 EBA_bar<-ggplot(early_BA_means,aes(TRT,Estimate,))+
   geom_col(aes(fill=TRT))+
@@ -2579,6 +2583,73 @@ p0c+p12c
 #svg(here("Summary_Graphs_update","Surv_curve_by_condition_12y_vs_DF.svg"), height= 6, width = 10)
 #p0c+p12c
 #dev.off()
+
+#ABC
+ABCsurv<-survival_data[which(survival_data$TRT_code=="A"|survival_data$TRT_code=="B"|survival_data$TRT_code=="C"),]
+ABCsurv_fit <- survfit(Surv(time, status) ~ 1, data = ABCsurv)
+
+#make dummy variable combining TRT and Cond
+ABCsurv$TxC<-paste0(ABCsurv$TRT_code,"_",ABCsurv$Cond_flag)
+ABCsurv_TxC_fit <- survfit(Surv(time, status) ~ TxC, data = ABCsurv)
+summary(ABCsurv_TxC_fit, times = c(5*(1:9)))
+comb<-autoplot(ABCsurv_TxC_fit, xlim=c(0,50),xlab = "Years",ylab = "Survival of Douglas-fir")
+comb
+comb+ theme(panel.grid = element_blank(),panel.background = element_blank())+labs(fill="Treatment x Condition",color="Treatment x Condition")+scale_fill_viridis_d()+scale_color_viridis_d()
+
+ABCsurv_T_fit <- survfit(Surv(time, status) ~ TRT_code, data = ABCsurv)
+Treatment_surv<-autoplot(ABCsurv_T_fit, xlim=c(0,50),xlab = "Years",ylab = "Survival of Douglas-fir", surv.color="black",conf.int.colour = "black", surv.alpha=1, conf.int.alpha = 0.6)+labs(fill="Treatment",color="Treatment")+scale_fill_manual(values=trt_colors[c(1,2,3)])+scale_color_manual(values=trt_colors[c(1,2,3)])+theme(panel.grid = element_blank(),panel.background = element_blank())
+Treatment_surv_format<-Treatment_surv + geom_vline(xintercept=c(24,36), linetype=2, color = trt_colors[c(3,1)])+theme(legend.justification = c(0, 0), legend.position = c(0, 0))+scale_fill_manual(values=trt_colors[c(1,2,3)])+scale_color_manual(values=c("black","black","black"))
+Treatment_surv_format
+
+pdf(here("Summary_Graphs_update","Surv_curve_ABC.pdf"), height= 6, width = 6)
+Treatment_surv_format  
+dev.off()
+
+svg(here("Summary_Graphs_update","Surv_curve_ABC.svg"), height= 6, width = 6)
+Treatment_surv_format  
+dev.off()
+
+
+
+#make dummy variable for rotation duration
+ABCsurv$rotation_duration<-ifelse(ABCsurv$TRT_code== "A"|ABCsurv$TRT_code== "B",
+                                  "12y",
+                                  ifelse(ABCsurv$TRT_code== "D"|ABCsurv$TRT_code== "E",
+                                  "25y", "0y"))
+
+ABCsurv_rd_fit <- survfit(Surv(time, status) ~ rotation_duration, data = ABCsurv)
+rd_surv<-autoplot(ABCsurv_rd_fit, xlim=c(0,50),xlab = "Years",ylab = "Survival of Douglas-fir")+labs(fill="Hardwood Rotation Duration",color="Hardwood Rotation Duration")+scale_fill_manual(values=trt_colors[c(1,3)])+scale_color_manual(values=trt_colors[c(1,3)])+theme(panel.grid = element_blank(),panel.background = element_blank())
+rd_surv + geom_vline(xintercept=c(24,36), linetype=2, color = trt_colors[c(3,1)])
+
+#make dummy variable for rotation duration x Condition
+ABCsurv$DRxC<-paste0(ABCsurv$rotation_duration,"_",ABCsurv$Cond_flag)
+#calculate n for duration x condition treatments
+DRxCn<-ABCsurv %>% 
+  group_by(DRxC) %>% 
+  summarise(n=n())
+#add counts to names for plotting
+ABCsurv$DRxC_n = gsub("12y_LRR","12y LRR: 331",ABCsurv$DRxC)
+ABCsurv$DRxC_n = gsub("0y_LRR","0y LRR: 250",ABCsurv$DRxC_n)
+ABCsurv$DRxC_n = gsub("0y_NONE","0y NONE: 434",ABCsurv$DRxC_n)
+ABCsurv$DRxC_n = gsub("0y_SUP","0y SUP: 134",ABCsurv$DRxC_n)
+ABCsurv$DRxC_n = gsub("12y_NONE","12y NONE: 699",ABCsurv$DRxC_n)
+ABCsurv$DRxC_n = gsub("12y_SUP","12y SUP: 290",ABCsurv$DRxC_n)
+
+ABCsurv_DRxC_fit <- survfit(Surv(time, status) ~ DRxC_n, data = ABCsurv)
+DRxC_surv<-autoplot(ABCsurv_DRxC_fit, xlim=c(0,50),xlab = "Years",ylab = "Survival of Douglas-fir", surv.color="black",conf.int.colour = "black", surv.alpha=1, conf.int.alpha = 0.6)+labs(fill="Hardwood Rotation Duration\n",color="Hardwood Rotation Duration\n")+theme(panel.grid = element_blank(),panel.background = element_blank(),)
+DRxC_surv_format<-DRxC_surv + geom_vline(xintercept=c(24,36), linetype=2, color = trt_colors[c(3,1)])+theme(legend.justification = c(0, 0), legend.position = c(0, 0))+scale_fill_manual(values=extended_colors[c(1,3,6,10,13,15)])+scale_color_manual(values=c("black","black","black","black","black","black"))
+DRxC_surv_format
+
+pdf(here("Summary_Graphs_update","Surv_curve_RDxC.pdf"), height= 6, width = 6)
+DRxC_surv_format  
+dev.off()
+
+svg(here("Summary_Graphs_update","Surv_curve_RDxC.svg"), height= 6, width = 6)
+DRxC_surv_format  
+dev.off()
+
+
+#generate n values for each group
 
 #split by rep
 df_rep_fit <- survfit(Surv(time, status) ~ REP, data = dfsurv)
