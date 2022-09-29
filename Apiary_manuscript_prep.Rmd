@@ -1150,8 +1150,9 @@ AOV_prop_Dead$Treatment<-ifelse(AOV_prop_Dead$TRT=="A",
                                ifelse(AOV_prop_Dead$TRT=="D",
                                    "Red Alder 25 years", "Cottonwood 25 years"   
                                ))))
-#creating stand means and SE for BA and asin prop mort, and prop mort, prop Inferred mort
-AOV_BA_stand_mean<- stand_df_age %>% group_by(TRT, DF_age)%>%summarise( Stand_N_BA = sum(!is.na(Live_BA_mpha)),mean_BA=mean(Live_BA_mpha, na.rm=TRUE), sd_BA = sd(Live_BA_mpha, na.rm=TRUE),se_BA = sd_BA / sqrt(Stand_N_BA), YEAR_dbl=median(YEAR_dbl, na.rm = TRUE))
+#creating stand means,SE, CI for BA and asin prop mort, and prop mort, prop Inferred mort
+AOV_BA_stand_mean<- stand_df_age %>% group_by(TRT, DF_age)%>%summarise( Stand_N_BA = sum(!is.na(Live_BA_mpha)),mean_BA=mean(Live_BA_mpha, na.rm=TRUE), sd_BA = sd(Live_BA_mpha, na.rm=TRUE),se_BA = sd_BA / sqrt(Stand_N_BA), YEAR_dbl=median(YEAR_dbl, na.rm = TRUE),CI_BA=qt(0.975,df=(n()-1))*se_BA,lower.CI_BA=mean_BA-CI_BA,upper.CI_BA=mean_BA+CI_BA)
+
 #AOV_BA_stand_mean$age<-as.numeric(AOV_BA_stand_mean$DF_age)
 #adding descriptive treatment name
 AOV_BA_stand_mean$Treatment<-ifelse(AOV_BA_stand_mean$TRT=="A",
@@ -1180,7 +1181,7 @@ AOV_BA_minmax$Treatment<-ifelse(AOV_BA_minmax$TRT=="A",
                                ))))
 
 
-AOV_asnmort_stand_mean<- AOV_prop_Dead %>% group_by(TRT, DF_age)%>%summarise( asnmort_N = sum(!is.na(asn_mort)),asn_mort_mean=mean(asn_mort, na.rm=TRUE), asn_mort_sd = sd(asn_mort, na.rm=TRUE),asn_mort_se = sd(asn_mort, na.rm=TRUE) / sqrt(asnmort_N), YEAR_dbl=median(YEAR_dbl, na.rm = TRUE))
+AOV_asnmort_stand_mean<- AOV_prop_Dead %>% group_by(TRT, DF_age)%>%summarise( asnmort_N = sum(!is.na(asn_mort)),asn_mort_mean=mean(asn_mort, na.rm=TRUE), asn_mort_sd = sd(asn_mort, na.rm=TRUE),asn_mort_se = sd(asn_mort, na.rm=TRUE) / sqrt(asnmort_N), YEAR_dbl=median(YEAR_dbl, na.rm = TRUE),CI_asn_mort=qt(0.975,df=(n()-1))*asn_mort_se,lower.CI_asn_mort=asn_mort_mean-CI_asn_mort,upper.CI_asn_mort=asn_mort_mean+CI_asn_mort)
 #AOV_asnmort_stand_mean$age<-as.numeric(AOV_asnmort_stand_mean$DF_age)
 #adding descriptive treatment name
 AOV_asnmort_stand_mean$asn_mort_lower<-AOV_asnmort_stand_mean$asn_mort_mean-AOV_asnmort_stand_mean$asn_mort_se
