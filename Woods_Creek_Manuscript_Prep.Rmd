@@ -247,7 +247,9 @@ pall
 #ggsave(here("Summary_Graphs_update","All_TRT_DBH_histos_by_age_and_rep.pdf"), height= 20, width = 12, units="in")
 
 
-#######UPDATE WITH CUMULATIVE MORTALITY#####
+#######Probably not that useful since many of the dead trees didn't have diameters#####
+
+#instead calculate BA50 (diameter at which 50% of the basal area is in smaller trees and 50% is in larger trees)
 ```
 
 
