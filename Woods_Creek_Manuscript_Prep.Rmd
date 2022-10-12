@@ -20,15 +20,19 @@ library(ggfortify)
 ## Import Rds from results of above
 
 ```{r}
-#long_data <- readRDS("C:/Users/shawn/Desktop/LAST_TIME/R_final/long_data_clean (1).Rds")
-#data_clean <- readRDS("C:/Users/shawn/Desktop/data_clean.Rds")
+long_data <- readRDS(here("Woods_Creek_data","long_data_clean.Rds"))
+data_clean <- readRDS(here("Woods_Creek_data","data_clean_noNA.Rds"))
 ```
 
 ## descriptive statistics and plots
 
 ```{r}
+long_data$TRT<-long_data$TMT
+levels(long_data$TRT)<-c("Unthinned","Light Thin","Thin")
+
+
 #creating a histogram of diameter values across all years and plots
-ggplot(data = long_data, aes(x = live_DIA, fill= TMT)) + 
+ggplot(data = long_data, aes(x = live_DIA, fill= TRT)) + 
  geom_histogram()+ facet_grid(~YEAR, 
              scales = "fixed", # Let the x axis vary across facets.
              space = "free_x",  # Let the width of facets vary and force all bars to have the same width.
@@ -37,20 +41,20 @@ only_1990<-subset(long_data, long_data$YEAR==1990)
 glimpse(only_1990)
 only_1990_alive<-subset(only_1990, only_1990$alive=="Alive")
 glimpse(only_1990_alive)
-ggplot(data = only_1990, aes(x = live_DIA, fill= TMT)) + 
+ggplot(data = only_1990, aes(x = live_DIA, fill= TRT)) + 
  geom_histogram()+ scale_fill_viridis_d()+facet_grid(~species_gen, 
              scales = "fixed", # Let the x axis vary across facets.
              space = "free_x",  # Let the width of facets vary and force all bars to have the same width.
              switch = "x") + xlab("1990 Live Diameter (cm)")
-ggplot(data = only_1990, aes(x = live_DIA, fill= TMT)) + 
+ggplot(data = only_1990, aes(x = live_DIA, fill= TRT)) + 
  geom_histogram()+ scale_fill_viridis_d()+ xlab("1990 Live Diameter (cm)")
 ggplot(data = only_1990, aes(x = live_DIA)) + 
- geom_histogram()+ scale_fill_viridis_d()+facet_grid(~TMT, 
+ geom_histogram()+ scale_fill_viridis_d()+facet_grid(~TRT, 
              scales = "fixed", # Let the x axis vary across facets.
              space = "free_x",  # Let the width of facets vary and force all bars to have the same width.
              switch = "x") + xlab("1990 Live Diameter (cm)")
 ggplot(data = only_1990, aes(x = live_DIA)) + 
- geom_histogram()+ scale_fill_viridis_d()+facet_grid(vars(TMT), vars(species_gen), 
+ geom_histogram()+ scale_fill_viridis_d()+facet_grid(vars(TRT), vars(species_gen), 
              scales = "fixed", # Let the x axis vary across facets.
              space = "free_x",  # Let the width of facets vary and force all bars to have the same width.
              switch = "x") + xlab("1990 Live Diameter (cm)")
@@ -90,8 +94,8 @@ ggplot(data = only_1990, aes(x = live_DIA)) +
 ```{r}
 #summarizing mean live diameter over time by treatment
 mean_DIA_df <- long_data %>%   
-  group_by(TMT, YEAR_F, .drop = FALSE) %>%  
-  summarise(live_DIA_mean=mean(live_DIA, na.rm = TRUE), live_DIA_se=sd(live_DIA, na.rm = TRUE)/sqrt(n()), n_samples = n())%>% ungroup()
+  group_by(TRT, YEAR_F, .drop = FALSE) %>%  
+  summarise(live_DIA_median=median(live_DIA, na.rm = TRUE),live_DIA_mean=mean(live_DIA, na.rm = TRUE), live_DIA_se=sd(live_DIA, na.rm = TRUE)/sqrt(n()), n_samples = n())%>% ungroup()
 glimpse(mean_DIA_df)
 #converting factor year back to numeric and restoring values for plotting
 mean_DIA_df$YEAR<-as.numeric(mean_DIA_df$YEAR_F)
@@ -100,13 +104,28 @@ mean_DIA_df$YEAR[mean_DIA_df$YEAR==2]<-1995
 mean_DIA_df$YEAR[mean_DIA_df$YEAR==3]<-2000
 mean_DIA_df$YEAR[mean_DIA_df$YEAR==4]<-2009
 mean_DIA_df$YEAR[mean_DIA_df$YEAR==5]<-2020
+#add names to treatments
+
 #plotting mean live diameter
 ggplot(data = mean_DIA_df, # add the data
        aes(x = YEAR,  #set x, y coordinates
            y = live_DIA_mean,
-           color = TMT)) +    # color by treatment
+           color = TRT)) +    # color by treatment
   geom_point(size = 3) + # set size of the dots
   geom_errorbar(aes(ymin= (live_DIA_mean - live_DIA_se), ymax= (live_DIA_mean + live_DIA_se)))
+
+#plotting median live diameter
+ggplot(data = mean_DIA_df, # add the data
+       aes(x = YEAR,  #set x, y coordinates
+           y = live_DIA_median,
+           color = TRT)) +    # color by treatment
+  geom_point(size = 3) # set size of the dots
+
+ggplot(data = mean_DIA_df, # add the data
+       aes(x = live_DIA_mean,  #set x, y coordinates
+           y = live_DIA_median,
+           color = TRT)) +    # color by treatment
+  geom_point(size = 3) # set size of the dots  
 ```
 
 ```{r}
@@ -196,6 +215,41 @@ prop_living_SP_noNA
 #write.csv(prop_living_noNA, "~/LeBoldus_Lab/Laminated_Root_Rot/alive_and_dead_counts_by_TMT.csv")
 #write.csv(prop_living_SP_noNA, "~/LeBoldus_Lab/Laminated_Root_Rot/alive_and_dead_counts_by_TMT_SP.csv")
 ```
+
+```{r}
+#plot sum of BA binned by tree size at each time point (Similar to apiary, just calc BA from live DBH)
+
+
+#plot mortality binned by tree size at each time point (like in Apiary)
+#make variable containing total counts of trees with diameters
+median_dbh_Alive<-subset(long_data, alive=="Alive") %>% 
+  group_by(YEAR, TRT, alive) %>% 
+  summarise(Median=round(median(DIA, na.rm=TRUE)), N=n())
+median_dbh_Dead<-subset(long_data, alive=="Dead") %>% 
+  group_by(YEAR, TRT, alive) %>% 
+  summarise(Median=round(median(DIA, na.rm=TRUE)), N=n())
+#input<- subset(lessA1A3, (Tree_status=="Alive"|Tree_status=="Dead")& !is.na(DBH_mm_nom))
+pall<- subset(long_data, (alive=="Alive"|alive=="Dead")& !is.na(DIA)) %>% 
+  ggplot(aes(DIA,fill=alive))+
+  geom_histogram(position="identity", alpha=0.65, binwidth =5)+
+  scale_fill_viridis_d(begin = 0.33, end = 0.99)+
+  labs(title= "Size distrubtion of trees by Year and Treatment",x="DBH (cm)",y= "Trees") +
+  geom_label(data = median_dbh_Alive,aes(x=Median+50,y=100,label=paste0("Sum: \n",N,"\n Median: \n",Median,"cm"), alpha=0.05),  show.legend = FALSE, label.size = 0)+
+  geom_label(data = median_dbh_Dead,aes(x=25,y=100, label=paste0("Sum: \n",N,"\n Median: \n",Median,"cm"), fontface='italic', alpha=0.05), show.legend = FALSE, label.size = 0)+ 
+  geom_vline(data=median_dbh_Dead,aes(xintercept=Median), linetype=2, alpha=0.5)+
+  geom_vline(data=median_dbh_Alive,aes(xintercept=Median), alpha=0.5)+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  facet_grid(rows=vars(YEAR),vars(TRT), labeller = label_both)+
+  #scale_y_continuous(breaks = c(0,20,40,60,80,100),limits=c(0,100))+
+  xlim(0,200)+ylim(0,150)+
+  theme_bw()
+pall
+#ggsave(here("Summary_Graphs_update","All_TRT_DBH_histos_by_age_and_rep.pdf"), height= 20, width = 12, units="in")
+
+
+#######UPDATE WITH CUMULATIVE MORTALITY#####
+```
+
 
 ## Generating plot summary and stand summary datasets
 
