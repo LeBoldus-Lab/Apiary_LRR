@@ -15,6 +15,7 @@ library(here)
 library(tidyverse)
 library(ggplot2)
 library(ggfortify)
+library(ggrepel)
 ```
 
 ## Import Rds from results of above
@@ -249,9 +250,48 @@ pall
 
 #######Probably not that useful since many of the dead trees didn't have diameters#####
 
-#instead calculate BA50 (diameter at which 50% of the basal area is in smaller trees and 50% is in larger trees)
+
 ```
 
+```{r}
+# calculate BA50 (diameter at which 50% of the basal area is in smaller trees and 50% is in larger trees)
+#select relevant columns
+BA50.df<-long_data[,c("TRT","BLOCK","PLOT","Tree_ID_TBP","species_gen","YEAR", "live_DIA","live_BA")]
+
+#remove rows without live diameter measurements
+BA50.df<-subset(BA50.df, !is.na(BA50.df$live_BA))
+#subset to 1990 measurements
+BA50.df.90<-subset(BA50.df, BA50.df$YEAR==1990)
+
+#calculate cumulative sum of live basal areas by TRTxBlock starting with the smallest tree
+test.cumsum<- BA50.df.90 %>% group_by(TRT,BLOCK) %>% arrange(live_DIA, .by_group = TRUE) %>% summarise(live_DIA=live_DIA,live_BA=live_BA, cumsum_live_BA_TB=cumsum(live_BA),n=1:n(), BA50=(max(cumsum_live_BA_TB)/2), BA50flag=ifelse(BA50<=cumsum_live_BA_TB, TRUE, FALSE), BA50Dfirst=min(ifelse(BA50flag==TRUE,live_DIA,NA), na.rm = TRUE), BA50n=min(ifelse(BA50flag==TRUE,n,NA), na.rm = TRUE), median_n=median(n))
+
+
+
+BA50_plots<- ggplot(test.cumsum,aes(x=n,y=cumsum_live_BA_TB))+
+  geom_col(aes(fill=test.cumsum$TRT))+
+  geom_vline(xintercept = test.cumsum$BA50n)+
+  geom_hline(yintercept = test.cumsum$BA50, linetype=2)+
+  geom_vline(xintercept = test.cumsum$median_n, linetype=2)+
+  geom_label(aes(test.cumsum$BA50n, 12,label=paste( "50% BA DBH \n",test.cumsum$BA50Dfirst," cm"), label.size=0.25)) +
+  facet_grid(cols=vars(test.cumsum$TRT), rows=vars(test.cumsum$BLOCK))+
+  labs(x="Tree DBH Rank (small to large)", y= "Cumulative BA Sum")+
+  theme_bw()+
+  theme(legend.position="none", panel.grid = element_blank(),panel.background = element_blank())
+
+BA50_plots
+
+BA50_summary<-test.cumsum %>% group_by(TRT,BLOCK) %>% summarise(BA50D=median(BA50Dfirst), median_DIA=median(live_DIA))
+  
+BA50_summary_plot<-ggplot(BA50_summary,aes(median_DIA,BA50D, color=TRT))+
+  geom_text(label=BA50_summary$BLOCK, fontface="bold")+
+  geom_function(fun=function(x) x, linetype=2, color="black")+
+  theme_bw()+
+  theme( panel.grid = element_blank(),panel.background = element_blank())+
+  stat_smooth(method = lm,colour="black", aes(fill=TRT))+
+  labs(x="median tree diameter (cm)", y="BA50 tree diameter (cm)")
+BA50_summary_plot
+```
 
 ## Generating plot summary and stand summary datasets
 
