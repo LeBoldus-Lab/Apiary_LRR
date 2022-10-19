@@ -16,6 +16,7 @@ library(tidyverse)
 library(ggplot2)
 library(ggfortify)
 library(ggrepel)
+library(patchwork)
 ```
 
 ## Import Rds from results of above
@@ -264,34 +265,128 @@ BA50.df<-subset(BA50.df, !is.na(BA50.df$live_BA))
 BA50.df.90<-subset(BA50.df, BA50.df$YEAR==1990)
 
 #calculate cumulative sum of live basal areas by TRTxBlock starting with the smallest tree
-test.cumsum<- BA50.df.90 %>% group_by(TRT,BLOCK) %>% arrange(live_DIA, .by_group = TRUE) %>% summarise(live_DIA=live_DIA,live_BA=live_BA, cumsum_live_BA_TB=cumsum(live_BA),n=1:n(), BA50=(max(cumsum_live_BA_TB)/2), BA50flag=ifelse(BA50<=cumsum_live_BA_TB, TRUE, FALSE), BA50Dfirst=min(ifelse(BA50flag==TRUE,live_DIA,NA), na.rm = TRUE), BA50n=min(ifelse(BA50flag==TRUE,n,NA), na.rm = TRUE), median_n=median(n))
+test.cumsum_1990<- BA50.df.90 %>% group_by(TRT,BLOCK) %>% arrange(live_DIA, .by_group = TRUE) %>% summarise(live_DIA=live_DIA,live_BA=live_BA, cumsum_live_BA_TB=cumsum(live_BA),n=1:n(), BA50=(max(cumsum_live_BA_TB)/2), BA50flag=ifelse(BA50<=cumsum_live_BA_TB, TRUE, FALSE), BA50Dfirst=min(ifelse(BA50flag==TRUE,live_DIA,NA), na.rm = TRUE), BA50n=min(ifelse(BA50flag==TRUE,n,NA), na.rm = TRUE), median_n=median(n), QMD=sqrt(sum(live_BA)/(n()*0.00007854)))
 
 
 
-BA50_plots<- ggplot(test.cumsum,aes(x=n,y=cumsum_live_BA_TB))+
-  geom_col(aes(fill=test.cumsum$TRT))+
-  geom_vline(xintercept = test.cumsum$BA50n)+
-  geom_hline(yintercept = test.cumsum$BA50, linetype=2)+
-  geom_vline(xintercept = test.cumsum$median_n, linetype=2)+
-  geom_label(aes(test.cumsum$BA50n, 12,label=paste( "50% BA DBH \n",test.cumsum$BA50Dfirst," cm"), label.size=0.25)) +
-  facet_grid(cols=vars(test.cumsum$TRT), rows=vars(test.cumsum$BLOCK))+
-  labs(x="Tree DBH Rank (small to large)", y= "Cumulative BA Sum")+
+BA50_plots_1990<- ggplot(test.cumsum_1990,aes(x=n,y=cumsum_live_BA_TB))+
+  geom_col(aes(fill=test.cumsum_1990$TRT))+
+  geom_vline(xintercept = test.cumsum_1990$BA50n)+
+  geom_hline(yintercept = test.cumsum_1990$BA50, linetype=2)+
+  geom_vline(xintercept = test.cumsum_1990$median_n, linetype=2)+
+  geom_label(aes(test.cumsum_1990$BA50n, 12,label=paste( "50% BA DBH \n",test.cumsum_1990$BA50Dfirst," cm"), label.size=0.25)) +
+  facet_grid(cols=vars(test.cumsum_1990$TRT), rows=vars(test.cumsum_1990$BLOCK))+
+  labs(x="1990 Tree DBH Rank (small to large)", y= "1990 Cumulative BA Sum")+
   theme_bw()+
   theme(legend.position="none", panel.grid = element_blank(),panel.background = element_blank())
 
-BA50_plots
+BA50_plots_1990
 
-BA50_summary<-test.cumsum %>% group_by(TRT,BLOCK) %>% summarise(BA50D=median(BA50Dfirst), median_DIA=median(live_DIA))
+BA50_summary_1990<-test.cumsum_1990 %>% group_by(TRT,BLOCK) %>% summarise(BA50D=median(BA50Dfirst), median_DIA=median(live_DIA), QMD=median(QMD))
   
-BA50_summary_plot<-ggplot(BA50_summary,aes(median_DIA,BA50D, color=TRT))+
-  geom_text(label=BA50_summary$BLOCK, fontface="bold")+
+BA50_summary_1990_plot<-ggplot(BA50_summary_1990,aes(median_DIA,BA50D, color=TRT))+
+  geom_text(label=BA50_summary_1990$BLOCK, fontface="bold")+
   geom_function(fun=function(x) x, linetype=2, color="black")+
   theme_bw()+
   theme( panel.grid = element_blank(),panel.background = element_blank())+
   stat_smooth(method = lm,colour="black", aes(fill=TRT))+
-  labs(x="median tree diameter (cm)", y="BA50 tree diameter (cm)")
-BA50_summary_plot
+  labs(x="1990 median tree diameter (cm)", y="1990 BA50 tree diameter (cm)")
+BA50_summary_1990_plot
+BA50_QMD_1990_plot<-ggplot(BA50_summary_1990,aes(QMD,BA50D, color=TRT))+
+  geom_text(label=BA50_summary_1990$BLOCK, fontface="bold")+
+  geom_function(fun=function(x) x, linetype=2, color="black")+
+  theme_bw()+
+  theme( panel.grid = element_blank(),panel.background = element_blank())+
+  stat_smooth(method = lm,colour="black", aes(fill=TRT))+
+  labs(x="1990 quadratic mean tree diameter (cm)", y="1990 BA50 tree diameter (cm)")
+BA50_QMD_1990_plot
+
+
+#subset to 2020 measurements
+BA50.df.20<-subset(BA50.df, BA50.df$YEAR==2020)
+
+#calculate cumulative sum of live basal areas by TRTxBlock starting with the smallest tree
+test.cumsum_2020<- BA50.df.20 %>% group_by(TRT,BLOCK) %>% arrange(live_DIA, .by_group = TRUE) %>% summarise(live_DIA=live_DIA,live_BA=live_BA, cumsum_live_BA_TB=cumsum(live_BA),n=1:n(), BA50=(max(cumsum_live_BA_TB)/2), BA50flag=ifelse(BA50<=cumsum_live_BA_TB, TRUE, FALSE), BA50Dfirst=min(ifelse(BA50flag==TRUE,live_DIA,NA), na.rm = TRUE), BA50n=min(ifelse(BA50flag==TRUE,n,NA), na.rm = TRUE), median_n=median(n), QMD=sqrt(sum(live_BA)/(n()*0.00007854)))
+
+BA50_plots_2020<- ggplot(test.cumsum_2020,aes(x=n,y=cumsum_live_BA_TB))+
+  geom_col(aes(fill=test.cumsum_2020$TRT))+
+  geom_vline(xintercept = test.cumsum_2020$BA50n)+
+  geom_hline(yintercept = test.cumsum_2020$BA50, linetype=2)+
+  geom_vline(xintercept = test.cumsum_2020$median_n, linetype=2)+
+  geom_label(aes(test.cumsum_2020$BA50n, 12,label=paste( "50% BA DBH \n",test.cumsum_2020$BA50Dfirst," cm"), label.size=0.25)) +
+  facet_grid(cols=vars(test.cumsum_2020$TRT), rows=vars(test.cumsum_2020$BLOCK))+
+  labs(x="2020 Tree DBH Rank (small to large)", y= "2020 Cumulative BA Sum ")+
+  theme_bw()+
+  theme(legend.position="none", panel.grid = element_blank(),panel.background = element_blank())
+
+BA50_plots_2020
+
+BA50_summary_2020<-test.cumsum_2020 %>% group_by(TRT,BLOCK) %>% summarise(BA50D=median(BA50Dfirst), median_DIA=median(live_DIA), QMD=median(QMD))
+  
+BA50_summary_2020_plot<-ggplot(BA50_summary_2020,aes(median_DIA,BA50D, color=TRT))+
+  geom_text(label=BA50_summary_2020$BLOCK, fontface="bold")+
+  geom_function(fun=function(x) x, linetype=2, color="black")+
+  theme_bw()+
+  theme( panel.grid = element_blank(),panel.background = element_blank())+
+  stat_smooth(method = lm,colour="black", aes(fill=TRT))+
+  labs(x="2020 median tree diameter (cm)", y="2020 BA50 tree diameter (cm)")
+BA50_summary_2020_plot
+
+BA50_QMD_2020_plot<-ggplot(BA50_summary_2020,aes(QMD,BA50D, color=TRT))+
+  geom_text(label=BA50_summary_2020$BLOCK, fontface="bold")+
+  geom_function(fun=function(x) x, linetype=2, color="black")+
+  theme_bw()+
+  theme( panel.grid = element_blank(),panel.background = element_blank())+
+  stat_smooth(method = lm,colour="black", aes(fill=TRT))+
+  labs(x="2020 quadratic mean tree diameter (cm)", y="2020 BA50 tree diameter (cm)")
+BA50_QMD_2020_plot
+
+BA50_plots_1990+BA50_plots_2020
+
+QMD_1990_95CI<-BA50_summary_1990%>%group_by(TRT) %>% summarise(QMD_mean=mean(QMD),SE=(sd(QMD)/sqrt(n())), lower=QMD_mean-SE, upper=QMD_mean+SE,CI=qt(0.975,df=(n()-1))*SE,lower.CI=QMD_mean-CI,upper.CI=QMD_mean+CI)
+
+QMD_2020_95CI<-BA50_summary_2020%>%group_by(TRT) %>% summarise(QMD_mean=mean(QMD),SE=(sd(QMD)/sqrt(n())), lower=QMD_mean-SE, upper=QMD_mean+SE,CI=qt(0.975,df=(n()-1))*SE,lower.CI=QMD_mean-CI,upper.CI=QMD_mean+CI)
+
+QMD_1990_95CI$year<-"1990"
+QMD_2020_95CI$year<-"2020"
+QMD_combined<-rbind(QMD_1990_95CI,QMD_2020_95CI)
+
+
+QMD_1990_plot<-ggplot(QMD_1990_95CI,aes(TRT,QMD_mean))+
+  geom_point(aes(color=TRT))+
+  geom_errorbar(aes(ymin=lower.CI,ymax=upper.CI, color=TRT),width=0.2)+
+  labs(y='1990 Stand Quadratic Mean (+/- 95% CI) Diameter (cm)')+
+  theme_bw()+
+  theme(panel.grid = element_blank(),panel.background = element_blank(),legend.position = "none")
+QMD_1990_plot
+
+QMD_2020_plot<-ggplot(QMD_2020_95CI,aes(TRT,QMD_mean))+
+  geom_point(aes(color=TRT))+
+  geom_errorbar(aes(ymin=lower.CI,ymax=upper.CI, color=TRT),width=0.2)+
+  labs(y='2020 Stand Quadratic Mean (+/- 95% CI) Diameter (cm)')+
+  theme_bw()+
+  theme(panel.grid = element_blank(),panel.background = element_blank(),legend.position = "none")
+QMD_2020_plot
+
+QMD_combined_plot<-ggplot(QMD_combined,aes(year,QMD_mean))+
+  geom_point(aes(color=TRT), position=position_dodge(width=0.5))+
+  geom_errorbar(aes(ymin=lower.CI,ymax=upper.CI, color=TRT),width=0.2, position=position_dodge(width=0.5))+
+  labs(y='Stand Mean (+/- 95% CI) Quadratic Mean Diameter (cm)')+
+  theme_bw()+
+  theme(panel.grid = element_blank(),panel.background = element_blank(),legend.position = "none")
+QMD_combined_plot
+
+#it probably makes sense to report the stand mean QMD numbers as a table?
+QMD_combined
+
+
+#calculate stand mean QMD for each year and run stats?
+
+#calculate BA increment for each time interval and run stats?
 ```
+## Calculating quadratic mean diameter for plots in 1990 and 2020
+
+
 
 ## Generating plot summary and stand summary datasets
 
