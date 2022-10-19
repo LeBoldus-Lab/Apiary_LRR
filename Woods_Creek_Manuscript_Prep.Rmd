@@ -384,38 +384,46 @@ QMD_combined
 
 #calculate BA increment for each time interval and run stats?
 ```
-## Calculating quadratic mean diameter for plots in 1990 and 2020
-
-
-
-## Generating plot summary and stand summary datasets
+## Calculating quadratic mean diameter (QMD) for plots in 1990 and 2020
 
 ```{r}
-#creating plot level DF for all species
-plot_level_df<-long_data %>% group_by(Plot_ID_TBP, YEAR_F, species_gen, COND_CUM) %>% summarise(count = n(), live_BA = sum(live_BA, na.rm=TRUE), mean_live_DIA= mean(live_DIA, na.rm=TRUE))
-#adding the separate TMT, BLOCK, and PLOT columns
-plot_level_df<-plot_level_df %>% separate(Plot_ID_TBP, c("TMT","BLOCK","PLOT"),"_",remove = FALSE)
-plot_level_df$TMT<-as.factor(plot_level_df$TMT)
-plot_level_df$BLOCK<-as.factor(plot_level_df$BLOCK)
-plot_level_df$PLOT<-as.factor(plot_level_df$PLOT)
-glimpse(plot_level_df)
-#creating unique stand ID factor varaible of format TRT_BLOCK
-plot_level_df$Stand_ID_TB<-as.factor(paste(plot_level_df$TMT,plot_level_df$BLOCK, sep = "_"))
-```
+#QMD seems to be a standardized metric that give information very similar to my BA50 concept
 
-```{r}
-stand_level_df<- plot_level_df %>% group_by(Stand_ID_TB, YEAR_F, species_gen, COND_CUM, .drop = FALSE)%>% summarise(count = sum(count, na.rm=TRUE), live_BA = sum(live_BA, na.rm=TRUE))
-glimpse(stand_level_df)
-#adding the separate TMT, and BLOCK columns
-stand_level_df<-stand_level_df %>% separate(Stand_ID_TB, c("TMT","BLOCK"),"_",remove = FALSE)
-stand_level_df$TMT<-as.factor(stand_level_df$TMT)
-stand_level_df$BLOCK<-as.factor(stand_level_df$BLOCK)
-glimpse(stand_level_df)
-#write_rds(data_clean, "C:/Users/shawn/Desktop/data_clean.Rds")
-#write_rds(long_data,"~/LeBoldus_Lab/Laminated_Root_Rot/long_data_clean.Rds")
-write_rds(plot_level_df,"plot_level_df.Rds")
-write_rds(stand_level_df,"stand_level_df.Rds")
-#write_csv(long_data,"~/LeBoldus_Lab/Laminated_Root_Rot/long_data_clean.csv")
-#write_csv(plot_level_df, "~/LeBoldus_Lab/Laminated_Root_Rot/plot_level_df.csv")
-#write_csv(stand_level_df, "~/LeBoldus_Lab/Laminated_Root_Rot/stand_level_df.csv")
+# calculate QMD by Year TRT Block
+#select relevant columns
+QMD.df<-long_data[,c("TRT","BLOCK","PLOT","Tree_ID_TBP","species_gen","YEAR", "live_DIA","live_BA")]
+
+#remove rows without live diameter measurements
+QMD.df<-subset(QMD.df, !is.na(QMD.df$live_BA))
+
+#calculate cumulative sum of live basal areas by TRTxBlock starting with the smallest tree
+QMD_stand<- QMD.df %>% group_by(YEAR,TRT,BLOCK) %>% summarise(QMD=sqrt(sum(live_BA)/(n()*0.00007854)))
+
+QMD_TRT_YEAR<-QMD_stand%>%group_by(TRT, YEAR) %>% summarise(QMD_mean=mean(QMD),SE=(sd(QMD)/sqrt(n())), lower=QMD_mean-SE, upper=QMD_mean+SE,CI=qt(0.975,df=(n()-1))*SE,lower.CI=QMD_mean-CI,upper.CI=QMD_mean+CI)
+
+QMD_TRT_YEAR
+
+QMD_TRT_YEAR_plot<-ggplot(QMD_TRT_YEAR,aes(YEAR,QMD_mean))+
+  geom_point(aes(color=TRT), position=position_dodge(width=0.75))+
+  geom_errorbar(aes(ymin=lower.CI,ymax=upper.CI, color=TRT),width=0.25, position=position_dodge(width=0.75))+
+  labs(y='Stand Mean (+/- 95% CI) Quadratic Mean Diameter (cm)')+
+  theme_bw()+
+  theme(panel.grid = element_blank(),panel.background = element_blank())
+QMD_TRT_YEAR_plot
+
+QMD_TRT_YEAR_ribbon<-ggplot(QMD_TRT_YEAR,aes(YEAR,QMD_mean, fill=TRT))+
+  geom_ribbon(aes(ymin=lower.CI, ymax=upper.CI),alpha=0.35)+
+  labs(y='Stand Mean (+/- 95% CI) Quadratic Mean Diameter (cm)')+
+    theme_bw()+
+  theme(panel.grid = element_blank(),panel.background = element_blank())+
+  geom_line(alpha=0.6)
+QMD_TRT_YEAR_ribbon
+
+
+#pdf(here("Summary_Graphs_update","QMD_plot.pdf"), height= 6, width = 10)
+#QMD_TRT_YEAR_ribbon
+#dev.off()
+#svg(here("Summary_Graphs_update","QMD_plot.svg"), height= 6, width = 10)
+#QMD_TRT_YEAR_ribbon
+#dev.off()
 ```
