@@ -1,0 +1,220 @@
+---
+title: "Woods_creek_ANOVA"
+author: "David Showalter"
+date: "9/15/2021"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+library(here)
+library(tidyverse)
+library(ggplot2)
+library(ggfortify)
+library(ggrepel)
+library(patchwork)
+```
+
+
+```{r}
+long_data <- readRDS(here("Woods_Creek_data","long_data_clean.Rds"))
+data_clean <- readRDS(here("Woods_Creek_data","data_clean_noNA.Rds"))
+```
+
+
+
+```{r}
+#descriptive treatment variable
+long_data$TRT<-long_data$TMT
+levels(long_data$TRT)<-c("Unthinned","Light Thin","Thin")
+
+#generate data subset for ANOVA
+AOV_in<-subset(long_data, long_data$YEAR_F==2020)
+#AOV_in<-subset(stand_level_df, stand_level_df$YEAR_F==2020 & is.na(stand_level_df$COND_CUM)==FALSE)
+
+#sum all species
+
+AOV_in_spec_comb<-AOV_in 
+#stand_level_df<- plot_level_df %>% group_by(Stand_ID_TB, YEAR_F, species_gen, COND_CUM, .drop = FALSE)%>% summarise(count = n(), live_count = sum(count))
+
+#calculate number dead and number alive including ".drop = FALSE"
+AOV_alive2<-subset(AOV_in, AOV_in$COND_CUM==1|AOV_in$COND_CUM==2)
+AOV_alive2_count<- AOV_alive2 %>% group_by(TMT,BLOCK,PLOT,.drop = FALSE)%>%summarise(Live_count=n(), live_BA=sum(live_BA,na.rm=TRUE))
+
+AOV_dead<-subset(AOV_in, AOV_in$COND_CUM==0|AOV_in$COND_CUM==3|AOV_in$COND_CUM==4)
+AOV_dead_count<- AOV_dead %>% group_by(TMT,BLOCK,PLOT,.drop = FALSE)%>%summarise(Dead_count=n())  
+
+AOV_prop_dead<-cbind(AOV_alive2_count, AOV_dead_count["Dead_count"])
+AOV_prop_dead$total<-(AOV_prop_dead$Live_count+AOV_prop_dead$Dead_count)
+AOV_prop_dead$prop_dead<-(AOV_prop_dead$Dead_count/AOV_prop_dead$total)
+
+#remove plots with both 0 alive and 0 dead
+AOV_prop_dead<-subset(AOV_prop_dead, AOV_prop_dead$total !=0)
+
+#arcsine transforrmation of proportion dead
+AOV_prop_dead$asn<-asin(sqrt(AOV_prop_dead$prop_dead))
+#adding combined treatment varialbe to comgine thinning treatments
+AOV_prop_dead$TMT2<-as.factor(ifelse(AOV_prop_dead$TMT=="1","1","2"))
+glimpse(AOV_prop_dead)
+
+#convert from plot-level to stand-level summaries
+AOV_prop_dead_stand<- AOV_prop_dead %>% group_by(TMT,BLOCK,.drop = FALSE)%>%summarise(Live_count=sum(Live_count),live_BA=sum(live_BA), Dead_count=sum(Dead_count), total=sum(total),TMT2=first(TMT2))
+
+#recalculate prop dead and arcsin prop dead
+AOV_prop_dead_stand$prop_dead<-(AOV_prop_dead_stand$Dead_count/AOV_prop_dead_stand$total)
+AOV_prop_dead_stand$asn_prop_dead<-asin(sqrt(AOV_prop_dead_stand$prop_dead))
+
+#adding initial and final proportions of plots with LRR detected
+AOV_prop_dead_stand$init_LRR<-as.double(c(0.8,0.8,0.8,0.6,0.8,1.0,0.4,1.0,0.4,0.6,0.4,0.4,0.8,0.6,0.4))
+AOV_prop_dead_stand$fin_LRR<-as.double(c(0.8,0.8,0.8,0.6,1.0,1.0,0.4,1.0,0.4,0.4,0.4,0.4,0.2,0.4,0.6))
+
+write_rds(AOV_prop_dead_stand,here("Woods_Creek_data","WC_anova_inputs.Rds"))
+
+
+```
+
+```{r}
+#Linear model, assumption testing and ANOVA
+#example provided by stats consult https://rpubs.com/tmcurley/twowayanova
+
+#len.aov <- aov(len ~ supp + dose + supp:dose, data = ToothGrowth)
+#summary(len.aov)
+
+#assumption testing via:
+#https://arc.lib.montana.edu/book/statistics-with-r-textbook/item/57
+
+#Proportion dead
+mort.aov <- lm(prop_dead ~ TMT+BLOCK, data= AOV_prop_dead_stand)
+summary(mort.aov)
+anova(mort.aov)
+
+#diagnostic plots
+par(mfrow=c(2,2))
+plot(mort.aov)
+eij=residuals(mort.aov)
+hist(eij,main="Histogram of residuals")
+plot(density(eij),main="Density plot of residuals",ylab="Density",xlab="Residuals")
+
+#arcin transformed Proportion dead
+asn_mort.aov <- lm(asn_prop_dead ~ TMT+BLOCK, data= AOV_prop_dead_stand)
+summary(asn_mort.aov)
+anova(asn_mort.aov)
+
+
+#diagnostic plots
+par(mfrow=c(2,2))
+plot(asn_mort.aov)
+eij=residuals(asn_mort.aov)
+hist(eij,main="Histogram of residuals")
+plot(density(eij),main="Density plot of residuals",ylab="Density",xlab="Residuals")
+
+
+#including initial incidence
+asn_mort_incidence.aov <- lm(asn_prop_dead ~ TMT+BLOCK+init_LRR, data= AOV_prop_dead_stand)
+summary(asn_mort_incidence.aov)
+anova(asn_mort_incidence.aov)
+
+#including initial incidence and interaction
+asn_mort_incidence_interact.aov <- lm(asn_prop_dead ~ BLOCK+TMT*init_LRR, data= AOV_prop_dead_stand)
+summary(asn_mort_incidence_interact.aov)
+anova(asn_mort_incidence_interact.aov)
+
+#comparing model with and without LRR_init
+anova(asn_mort_incidence.aov, asn_mort.aov)
+anova(asn_mort_incidence_interact.aov, asn_mort.aov)
+
+##combining thinning treatments
+
+#arcin transformed Proportion dead
+asn_mort_TMT2.aov <- lm(asn_prop_dead ~ TMT2+BLOCK, data= AOV_prop_dead_stand)
+summary(asn_mort_TMT2.aov)
+anova(asn_mort_TMT2.aov)
+
+
+#diagnostic plots
+par(mfrow=c(2,2))
+plot(asn_mort_TMT2.aov)
+eij=residuals(asn_mort_TMT2.aov)
+hist(eij,main="Histogram of residuals")
+plot(density(eij),main="Density plot of residuals",ylab="Density",xlab="Residuals")
+```
+```{r}
+#Live basal area
+BA.aov <- aov(live_BA ~ TMT, data= AOV_prop_dead)
+summary(BA.aov)
+#TukeyHSD(len.aov, which = "dose")
+TukeyHSD(BA.aov, which = "TMT")
+plot(BA.aov,1)
+plot(BA.aov,2)
+
+plot(AOV_prop_dead$TMT,AOV_prop_dead$live_BA)
+
+##combining thinning treatments
+
+BA.aov2 <- aov(asn ~ TMT2, data= AOV_prop_dead)
+summary(BA.aov2)
+plot(BA.aov2,1)
+plot(BA.aov2,2)
+
+plot(AOV_prop_dead$TMT2,AOV_prop_dead$live_BA)
+```
+
+
+
+```{r}
+#ANCOVA using final proportion of plots with LRR detected as a covariate
+mort.aocv <- aov(asn ~ TMT+fin_LRR, data= AOV_prop_dead)
+summary(mort.aocv)
+#TukeyHSD(len.aov, which = "dose")
+TukeyHSD(mort.aocv, which = "TMT")
+plot(mort.aocv,1)
+plot(mort.aocv,2)
+plot(AOV_prop_dead$fin_LRR,AOV_prop_dead$prop_dead)
+
+mort.aocv2 <- aov(asn ~ TMT2+fin_LRR, data= AOV_prop_dead)
+summary(mort.aocv2)
+plot(mort.aocv2,1)
+plot(mort.aocv2,2)
+```
+
+```{r}
+#ANCOVA using initial proportion of plots with LRR detected as a covariate
+mort.aocv <- aov(asn ~ TMT+init_LRR, data= AOV_prop_dead)
+summary(mort.aocv)
+#TukeyHSD(len.aov, which = "dose")
+TukeyHSD(mort.aocv, which = "TMT")
+plot(mort.aocv,1)
+plot(mort.aocv,2)
+plot(AOV_prop_dead$fin_LRR,AOV_prop_dead$prop_dead)
+
+mort.aocv2 <- aov(asn ~ TMT2+init_LRR, data= AOV_prop_dead)
+summary(mort.aocv2)
+plot(mort.aocv2,1)
+plot(mort.aocv2,2)
+```
+## Methods
+### Plot establishment and measurement
+Replication (5 stands), five 1/10 acre circular plots within each stand were established and measured at teach timepoint for a total of 1/2 acre surveyed within each plot. intial incidence, thinning treatments definition and timing, forest type/species composition, location, condition codes. Trees recruited into the plots following initial thinning treatment we're only analyzed if they were larger than 15.25 cm DBH.
+
+### Forest Vegetation Simulator
+Used proportion of plots within a stand in which LRR was detected as area of root disease parameter. Version of program. Any non-default parameters including interations.  
+
+### Statistical analysis
+Basal area?
+Proportion mortality
+
+## Results/Discussion
+
+No significant effects were found in any of the statistical models for proportion of mortality (arcsine transformed).  
+
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
