@@ -17,6 +17,7 @@ library(ggplot2)
 library(ggfortify)
 library(ggrepel)
 library(patchwork)
+library(cowplot)
 ```
 
 ## Import Rds from results of above
@@ -30,7 +31,7 @@ data_clean <- readRDS(here("Woods_Creek_data","data_clean_noNA.Rds"))
 
 ```{r}
 long_data$TRT<-long_data$TMT
-levels(long_data$TRT)<-c("Unthinned","Light Thin","Thin")
+levels(long_data$TRT)<-c("Unthinned","Thin","Light Thin")
 
 
 #creating a histogram of diameter values across all years and plots
@@ -373,7 +374,7 @@ QMD_combined_plot<-ggplot(QMD_combined,aes(year,QMD_mean))+
   geom_errorbar(aes(ymin=lower.CI,ymax=upper.CI, color=TRT),width=0.2, position=position_dodge(width=0.5))+
   labs(y='Stand Mean (+/- 95% CI) Quadratic Mean Diameter (cm)')+
   theme_bw()+
-  theme(panel.grid = element_blank(),panel.background = element_blank(),legend.position = "none")
+  theme(panel.grid = element_blank(),panel.background = element_blank())
 QMD_combined_plot
 
 #it probably makes sense to report the stand mean QMD numbers as a table?
@@ -391,39 +392,63 @@ QMD_combined
 
 # calculate QMD by Year TRT Block
 #select relevant columns
-QMD.df<-long_data[,c("TRT","BLOCK","PLOT","Tree_ID_TBP","species_gen","YEAR", "live_DIA","live_BA")]
+QMD.df<-long_data[,c("TMT","TRT","BLOCK","PLOT","Tree_ID_TBP","species_gen","YEAR", "live_DIA","live_BA")]
 
 #remove rows without live diameter measurements
 QMD.df<-subset(QMD.df, !is.na(QMD.df$live_BA))
 
 #calculate cumulative sum of live basal areas by TRTxBlock starting with the smallest tree
-QMD_stand<- QMD.df %>% group_by(YEAR,TRT,BLOCK) %>% summarise(QMD=sqrt(sum(live_BA)/(n()*0.00007854)))
+QMD_stand<- QMD.df %>% group_by(YEAR,TRT,BLOCK) %>% summarise(QMD=sqrt(sum(live_BA)/(n()*0.00007854)),live_BA=sum(live_BA)/0.200574985)
 
-QMD_TRT_YEAR<-QMD_stand%>%group_by(TRT, YEAR) %>% summarise(QMD_mean=mean(QMD),SE=(sd(QMD)/sqrt(n())), lower=QMD_mean-SE, upper=QMD_mean+SE,CI=qt(0.975,df=(n()-1))*SE,lower.CI=QMD_mean-CI,upper.CI=QMD_mean+CI)
+QMD_TRT_YEAR<-QMD_stand%>%group_by(TRT, YEAR) %>% summarise(QMD_mean=mean(QMD),SE=(sd(QMD)/sqrt(n())), lower=QMD_mean-SE, upper=QMD_mean+SE,CI=qt(0.975,df=(n()-1))*SE,lower.CI=QMD_mean-CI,upper.CI=QMD_mean+CI,BA_mean=mean(live_BA),BA_SE=(sd(live_BA)/sqrt(n())), lower=BA_mean-BA_SE, upper=BA_mean+BA_SE,BA_CI=qt(0.975,df=(n()-1))*BA_SE,BA_lower.CI=BA_mean-BA_CI,BA_upper.CI=BA_mean+BA_CI)
 
-QMD_TRT_YEAR
+WC_palette<-c("#1B9E77","#D95F02","#7570B3")
 
 QMD_TRT_YEAR_plot<-ggplot(QMD_TRT_YEAR,aes(YEAR,QMD_mean))+
   geom_point(aes(color=TRT), position=position_dodge(width=0.75))+
   geom_errorbar(aes(ymin=lower.CI,ymax=upper.CI, color=TRT),width=0.25, position=position_dodge(width=0.75))+
   labs(y='Stand Mean (+/- 95% CI) Quadratic Mean Diameter (cm)')+
+  geom_line(aes(color=TRT))+
+  scale_color_manual(values = WC_palette)+
+  scale_x_continuous(breaks=c(1990,1995,2000,2009,2020))+
   theme_bw()+
-  theme(panel.grid = element_blank(),panel.background = element_blank())
+  theme(panel.grid = element_blank(),panel.background = element_blank(), legend.position = "left")
 QMD_TRT_YEAR_plot
 
-QMD_TRT_YEAR_ribbon<-ggplot(QMD_TRT_YEAR,aes(YEAR,QMD_mean, fill=TRT))+
-  geom_ribbon(aes(ymin=lower.CI, ymax=upper.CI),alpha=0.35)+
-  labs(y='Stand Mean (+/- 95% CI) Quadratic Mean Diameter (cm)')+
-    theme_bw()+
-  theme(panel.grid = element_blank(),panel.background = element_blank())+
-  geom_line(alpha=0.6)
-QMD_TRT_YEAR_ribbon
+BA_TRT_YEAR_plot<-ggplot(QMD_TRT_YEAR,aes(YEAR,BA_mean))+
+  geom_point(aes(color=TRT), position=position_dodge(width=0.75))+
+  geom_errorbar(aes(ymin=BA_lower.CI,ymax=BA_upper.CI, color=TRT),width=0.25, position=position_dodge(width=0.75))+
+  labs(y=bquote('Stand Mean (+/- 95% CI) Basal Area '(m^2~ha^-1)))+
+  geom_line(aes(color=TRT))+
+  scale_color_manual(values = WC_palette)+
+  scale_x_continuous(breaks=c(1990,1995,2000,2009,2020))+
+  theme_bw()+
+  theme(panel.grid = element_blank(),panel.background = element_blank(), legend.position = "left")
+BA_TRT_YEAR_plot
 
 
-#pdf(here("Summary_Graphs_update","QMD_plot.pdf"), height= 6, width = 10)
+output <- plot_grid (BA_TRT_YEAR_plot + theme(legend.position = c(0.20, .85)),QMD_TRT_YEAR_plot+ theme(legend.position = "none"), labels = c('A','B'),  hjust = -3.5, label_size = 20, ncol = 2)
+print(output)
+
+#ggsave("COMBINED.png", width = 7.29, height = 4.16)
+
+#QMD_TRT_YEAR_ribbon<-ggplot(QMD_TRT_YEAR,aes(YEAR,QMD_mean, fill=TRT))+
+#  geom_ribbon(aes(ymin=lower.CI, ymax=upper.CI),alpha=0.35)+
+#  labs(y='Stand Mean (+/- 95% CI) Quadratic Mean Diameter (cm)')+
+#    theme_bw()+
+#  theme(panel.grid = element_blank(),panel.background = element_blank())+
+#  geom_line(alpha=0.6)
 #QMD_TRT_YEAR_ribbon
-#dev.off()
-#svg(here("Summary_Graphs_update","QMD_plot.svg"), height= 6, width = 10)
-#QMD_TRT_YEAR_ribbon
-#dev.off()
+
+
+pdf(here("Summary_Graphs_update","WC_BA_QMD_plot.pdf"), height= 5, width = 12)
+print(output)
+dev.off()
+svg(here("Summary_Graphs_update","WC_BA_QMD_plot.svg"), height= 5, width = 12)
+print(output)
+dev.off()
+
+
+#ggsave("COMBINED.png", width = 7.29, height = 4.16)
+
 ```
