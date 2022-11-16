@@ -251,6 +251,36 @@ inc_TB<-ggplot(BA_aov_in_stand,aes(BLOCK,increment))+
   theme(panel.grid = element_blank(),panel.background = element_blank(), legend.position = "left")
 inc_TB
 
+#ggsave(here("Summary_Graphs_update","BAinc_TB.pdf"), width = 12, height = 6)
+
+BA90_TB<-ggplot(BA_aov_in_stand,aes(BLOCK,live_BA_90))+
+  geom_col(aes(fill=TRT),position = position_dodge(width = 0.9))+
+  scale_fill_manual(values = WC_palette)+
+    theme_bw()+
+  theme(panel.grid = element_blank(),panel.background = element_blank(), legend.position = "left")
+BA90_TB
+
+#ggsave(here("Summary_Graphs_update","BA90_TB.pdf"), width = 12, height = 6)
+
+BA20_TB<-ggplot(BA_aov_in_stand,aes(BLOCK,live_BA_20))+
+  geom_col(aes(fill=TRT),position = position_dodge(width = 0.9))+
+  scale_fill_manual(values = WC_palette)+
+    theme_bw()+
+  theme(panel.grid = element_blank(),panel.background = element_blank(), legend.position = "left")
+BA20_TB
+
+#ggsave(here("Summary_Graphs_update","BA20_TB.pdf"), width = 12, height = 6)
+
+dead_TB<-ggplot(AOV_prop_dead_stand,aes(BLOCK,prop_dead))+
+  geom_col(aes(fill=TMT),position = position_dodge(width = 0.9))+
+  scale_fill_manual(values = WC_palette)+
+    theme_bw()+
+  theme(panel.grid = element_blank(),panel.background = element_blank(), legend.position = "left")
+dead_TB
+
+#ggsave(here("Summary_Graphs_update","dead_TB.pdf"), width = 12, height = 6)
+
+
 #pdf(here("Summary_Graphs_update","BA_increment_by_TRT_BLOCK.pdf"), height= 3, width = 5)
 #inc_TB
 #dev.off()
@@ -308,7 +338,16 @@ inc_T2_noB5<-ggplot(BA_inc_TMT2,aes(TRT2,inc_mean))+
   theme(panel.grid = element_blank(),panel.background = element_blank(), legend.position = "left")
 inc_T2_noB5
 
+#regression of BA 1990 and BA increment
 
+incX90<-ggplot(BA_aov_in_stand, aes(live_BA_90, increment))+
+  geom_point(aes(color=BA_aov_in_stand$TMT))+
+  stat_smooth(method = "lm")+
+      theme_bw()+
+  theme(panel.grid = element_blank(),panel.background = element_blank(), legend.position = "left")
+incX90
+
+#ggsave(here("Summary_Graphs_update","BA90_x_Bainc.pdf"), width = 6, height = 6)
 ```
 
 # OLD
