@@ -1824,10 +1824,13 @@ ranef(BAFmodel)
 VarCorr(BAFmodel)
 early_BA_means<-ls_means(BAFmodel)
 early_BA_means
+
 #doing post-hoc tests
 BAFmodel.em<-emmeans(BAFmodel, "TMT")
 eba_posthoc<-pairs(BAFmodel.em, adjust="tukey")
 eba_posthoc
+#confidence intervals
+early_BA_means_CI<-confint(BAFmodel.em)
 
 ##comparing with just a simple fixed effect model
 #BATmodel<-lm(early_BA_slope ~ TMT, data = ANOVA_early)
@@ -2092,6 +2095,15 @@ early_BA_means$TRT<- ordered(early_BA_means$TRT, levels = c("RA 12Y","CW 12Y","R
 #adding posthoc results
 early_BA_means$tukey<-c("ab","a","a","b")
 
+#early BA
+early_BA_means_CI$TRT<-rownames(early_BA_means_CI)
+early_BA_means_CI<-early_BA_means_CI %>% 
+  mutate(TRT = str_replace(TRT, "TMT", "")) 
+early_BA_means_CI$TRT<-as.factor(c("RA 12Y", "CW 12Y","RA 25Y","CW 25Y"))
+early_BA_means_CI$TRT<- ordered(early_BA_means$TRT, levels = c("RA 12Y","CW 12Y","RA 25Y","CW 25Y"))
+#adding posthoc results
+early_BA_means_CI$tukey<-c("ab","a","a","b")
+
 #checking colors
 show_col(viridis_pal()(5))
 trt_colors<-viridis_pal()(5)
@@ -2103,12 +2115,12 @@ show_col(viridis_pal(option = "B")(15))
 show_col(extended_colors[c(1,3,5,11,13,15)])
 
 #plot
-EBA_bar<-ggplot(early_BA_means,aes(TRT,Estimate,))+
+EBA_bar<-ggplot(early_BA_means_CI,aes(TRT,emmean))+
   geom_col(aes(fill=TRT))+
-  geom_errorbar(aes(ymin=early_BA_means$lower,ymax=early_BA_means$upper),width=0.2)+
-  labs(title="Early" ,x="",y=bquote('Stand Mean (+/-SE) Annual Live BA Increment  '(m^2~ha^-1~year^-1)))+
+  geom_errorbar(aes(ymin=early_BA_means_CI$lower.CL,ymax=early_BA_means_CI$upper.CL),width=0.2)+
+  labs(title="Early" ,x="",y=bquote('Stand Mean (+/-95%CI) Annual Live BA Increment  '(m^2~ha^-1~year^-1)))+
   scale_fill_manual(values=trt_colors[c(1,2,4,5)])+
-  geom_text(aes(label=tukey,y= early_BA_means$upper+0.1),show.legend = FALSE)+
+  geom_text(aes(label=tukey,y= early_BA_means_CI$upper+0.1),show.legend = FALSE)+
   theme_bw()+
   theme(panel.grid = element_blank(),panel.background = element_blank(),legend.position = "none")+
   ylim(-0,2.5)
@@ -2123,7 +2135,7 @@ mid_BA_means$TRT<- ordered(mid_BA_means$TRT, levels = c("RA 12Y","CW 12Y","DF"))
 #no significant posthoc results
 mid_BA_means$tukey<-c("x","x","x")
 #plot
-MBA_bar<-ggplot(mid_BA_means,aes(TRT,Estimate,))+
+MBA_bar<-ggplot(mid_BA_means,aes(TRT,Estimate))+
   geom_col(aes(fill=TRT))+
   geom_errorbar(aes(ymin=mid_BA_means$lower,ymax=mid_BA_means$upper),width=0.2)+
   labs(title="Mid" ,x="",y=bquote('Stand Mean (+/-SE) Annual Live BA Increment  '(m^2~ha^-1~year^-1)))+
@@ -2137,7 +2149,7 @@ EBA_bar|(MBA_bar+theme(axis.title.y=element_blank(),axis.text.y=element_blank())
 
 #late BA
 #plot
-LBA_bar<-ggplot(late_BA_means,aes(TMT,Estimate,))+
+LBA_bar<-ggplot(late_BA_means,aes(TMT,Estimate))+
   geom_col(aes(fill=TMT))+
   geom_errorbar(aes(ymin=late_BA_means$lower,ymax=late_BA_means$upper),width=0.2)+
   labs(title="Late" ,x="",y=bquote('Stand Mean (+/-SE) Annual Live BA Increment  '(m^2~ha^-1~year^-1)))+
@@ -2484,12 +2496,12 @@ SUPP_panel<-ES_bar+(MS_bar+theme(axis.title.y=element_blank(),axis.text.y=elemen
 
 (BA_panel |mort_panel)/(LRR_panel|SUPP_panel)
 
-pdf(here("Summary_Graphs_update","Multipanel_barplots.pdf"), height= 9, width = 12)
+pdf(here("Summary_Graphs_update","Multipanel_barplots.pdf"), height= 10, width = 12)
 (BA_panel |mort_panel)/(LRR_panel|SUPP_panel)
 dev.off()
 
 
-svg(here("Summary_Graphs_update","Multipanel_barplots.svg"), height= 9, width = 12)
+svg(here("Summary_Graphs_update","Multipanel_barplots.svg"), height= 10, width = 12)
 (BA_panel |mort_panel)/(LRR_panel|SUPP_panel)
 dev.off()
 
