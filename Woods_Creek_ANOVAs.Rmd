@@ -171,14 +171,7 @@ BA_aov_in_plot$increment<-(BA_aov_in_plot$live_BA_20-BA_aov_in_plot$live_BA_90)/
 #this will be the anova input
 BA_aov_in_stand<- BA_aov_in_plot %>% group_by(TMT,BLOCK,.drop = FALSE)%>%summarise(live_BA_90=sum(live_BA_90)/0.200574985,live_BA_20=sum(live_BA_20)/0.200574985,increment=sum(increment)/0.200574985, TRT=first(TRT))
 
-#summary statistics for plotting
-BA_9020inc_TMT<-BA_aov_in_stand%>%group_by(TRT) %>% summarise()
-
-#QMD_TRT_YEAR<-QMD_stand%>%group_by(TRT, YEAR) %>% summarise(QMD_mean=mean(QMD),SE=(sd(QMD)/sqrt(n())), lower=QMD_mean-SE, #upper=QMD_mean+SE,CI=qt(0.975,df=(n()-1))*SE,lower.CI=QMD_mean-CI,upper.CI=QMD_mean+CI,BA_mean=mean(live_BA),BA_SE=(sd(live_BA)/sqrt(n())#), lower=BA_mean-BA_SE, upper=BA_mean+BA_SE,BA_CI=qt(0.975,df=(n()-1))*BA_SE,BA_lower.CI=BA_mean-BA_CI,BA_upper.CI=BA_mean+BA_CI)
-
-
-
-
+#ANOVAs
 #1990 BA
 BA_90.aov <- lm(live_BA_90 ~ TRT+BLOCK, data= BA_aov_in_stand)
 summary(BA_90.aov)
@@ -192,25 +185,131 @@ eij=residuals(BA_90.aov)
 hist(eij,main="Histogram of residuals")
 plot(density(eij),main="Density plot of residuals",ylab="Density",xlab="Residuals")
 
+#2020 BA
+BA_20.aov <- lm(live_BA_20 ~ TRT+BLOCK, data= BA_aov_in_stand)
+summary(BA_20.aov)
+anova(BA_20.aov)
 
-#including initial incidence
-asn_mort_incidence.aov <- lm(asn_prop_dead ~ TMT+BLOCK+init_LRR, data= AOV_prop_dead_stand)
-summary(asn_mort_incidence.aov)
-anova(asn_mort_incidence.aov)
 
-#comparing model with and without LRR_init
-anova(asn_mort_incidence.aov, asn_mort.aov)
-anova(asn_mort_incidence_interact.aov, asn_mort.aov)
+#diagnostic plots
+par(mfrow=c(2,2))
+plot(asn_mort.aov)
+eij=residuals(BA_20.aov)
+hist(eij,main="Histogram of residuals")
+plot(density(eij),main="Density plot of residuals",ylab="Density",xlab="Residuals")
 
-##combining thinning treatments
+#BA increment
+BA_inc.aov <- lm(increment ~ TRT+BLOCK, data= BA_aov_in_stand)
+summary(BA_inc.aov)
+anova(BA_inc.aov)
 
-#arcin transformed Proportion dead
-asn_mort_TMT2.aov <- lm(asn_prop_dead ~ TMT2+BLOCK, data= AOV_prop_dead_stand)
-summary(asn_mort_TMT2.aov)
-anova(asn_mort_TMT2.aov)
+
+#diagnostic plots
+par(mfrow=c(2,2))
+plot(asn_mort.aov)
+eij=residuals(BA_inc.aov)
+hist(eij,main="Histogram of residuals")
+plot(density(eij),main="Density plot of residuals",ylab="Density",xlab="Residuals")
+
+#exclude block 5 and re-run increment ANOVA
+#BA increment
+BA_inc_noB5<-subset(BA_aov_in_stand,BA_aov_in_stand$BLOCK!="5")
+BA_inc_noB5.aov <- lm(increment ~ TRT+BLOCK, data= BA_inc_noB5)
+summary(BA_inc_noB5.aov)
+anova(BA_inc_noB5.aov)
+
+
+#diagnostic plots
+par(mfrow=c(2,2))
+plot(asn_mort.aov)
+eij=residuals(BA_inc_noB5.aov)
+hist(eij,main="Histogram of residuals")
+plot(density(eij),main="Density plot of residuals",ylab="Density",xlab="Residuals")
+
+#BA increment with 2 treatments
+BA_aov_in_stand$TRT2<-ifelse(BA_aov_in_stand$TRT=="Unthinned","Unthinned","Thinned")
+BA_inc2.aov <- lm(increment ~ TRT2+BLOCK, data= BA_aov_in_stand)
+summary(BA_inc2.aov)
+anova(BA_inc2.aov)
+
+#BA increment with 2 treatments and removing block 5
+BA_inc_noB5<-subset(BA_aov_in_stand,BA_aov_in_stand$BLOCK!="5")
+BA_inc_noB5$TRT2<-ifelse(BA_inc_noB5$TRT=="Unthinned","Unthinned","Thinned")
+BA_inc_noB52.aov <- lm(increment ~ TRT2+BLOCK, data= BA_inc_noB5)
+summary(BA_inc_noB52.aov)
+anova(BA_inc_noB52.aov)
 ```
 
+```{r}
+#plotting
+WC_palette<-c("#1B9E77","#D95F02","#7570B3")
 
+inc_TB<-ggplot(BA_aov_in_stand,aes(BLOCK,increment))+
+  geom_col(aes(fill=TRT),position = position_dodge(width = 0.9))+
+  scale_fill_manual(values = WC_palette)+
+    theme_bw()+
+  theme(panel.grid = element_blank(),panel.background = element_blank(), legend.position = "left")
+inc_TB
+
+#pdf(here("Summary_Graphs_update","BA_increment_by_TRT_BLOCK.pdf"), height= 3, width = 5)
+#inc_TB
+#dev.off()
+#svg(here("Summary_Graphs_update","BA_increment_by_TRT_BLOCK.svg"), height= 3, width = 5)
+#inc_TB
+#dev.off()
+
+#increment summary statistics for plotting
+BA_inc_TMT<-BA_aov_in_stand%>%group_by(TRT) %>% summarise(inc_mean=mean(increment),SE=(sd(increment)/sqrt(n())), lower=inc_mean-SE, upper=inc_mean+SE,CI=qt(0.975,df=(n()-1))*SE,lower.CI=inc_mean-CI,upper.CI=inc_mean+CI)
+
+inc_T<-ggplot(BA_inc_TMT,aes(TRT,inc_mean))+
+  #geom_point(aes(color=TRT))+
+  geom_point()+
+  #geom_errorbar(aes(ymin=lower.CI,ymax=upper.CI, color=TRT),width=0.25)+
+  geom_errorbar(aes(ymin=lower.CI,ymax=upper.CI),width=0.25)+
+  labs(y='Stand Mean (+/- 95% CI) Annual Basal Area Increment')+
+  #scale_color_manual(values = WC_palette)+
+    theme_bw()+
+  theme(panel.grid = element_blank(),panel.background = element_blank(), legend.position = "left")
+inc_T
+
+pdf(here("Summary_Graphs_update","BA_increment_by_TRT.pdf"), height= 5, width = 5)
+inc_T
+dev.off()
+svg(here("Summary_Graphs_update","BA_increment_by_TRT.svg"), height= 5, width = 5)
+inc_T
+dev.off()
+
+#without block 5
+BA_inc_TMT<-BA_inc_noB5%>%group_by(TRT) %>% summarise(inc_mean=mean(increment),SE=(sd(increment)/sqrt(n())), lower=inc_mean-SE, upper=inc_mean+SE,CI=qt(0.975,df=(n()-1))*SE,lower.CI=inc_mean-CI,upper.CI=inc_mean+CI)
+
+inc_T_noB5<-ggplot(BA_inc_TMT,aes(TRT,inc_mean))+
+  #geom_point(aes(color=TRT))+
+  geom_point()+
+  #geom_errorbar(aes(ymin=lower.CI,ymax=upper.CI, color=TRT),width=0.25)+
+  geom_errorbar(aes(ymin=lower.CI,ymax=upper.CI),width=0.25)+
+  labs(y='Stand Mean (+/- 95% CI) Annual Basal Area Increment')+
+  #scale_color_manual(values = WC_palette)+
+    theme_bw()+
+  theme(panel.grid = element_blank(),panel.background = element_blank(), legend.position = "left")
+inc_T_noB5
+
+#with thinning treatments combined and no block 5
+BA_inc_noB5$TRT2<-ifelse(BA_inc_noB5$TRT=="Unthinned","Unthinned","Thinned")
+BA_inc_TMT2<-BA_inc_noB5%>%group_by(TRT2) %>% summarise(inc_mean=mean(increment),SE=(sd(increment)/sqrt(n())), lower=inc_mean-SE, upper=inc_mean+SE,CI=qt(0.975,df=(n()-1))*SE,lower.CI=inc_mean-CI,upper.CI=inc_mean+CI)
+
+inc_T2_noB5<-ggplot(BA_inc_TMT2,aes(TRT2,inc_mean))+
+  #geom_point(aes(color=TRT))+
+  geom_point()+
+  #geom_errorbar(aes(ymin=lower.CI,ymax=upper.CI, color=TRT),width=0.25)+
+  geom_errorbar(aes(ymin=lower.CI,ymax=upper.CI),width=0.25)+
+  labs(y='Stand Mean (+/- 95% CI) Annual Basal Area Increment')+
+  #scale_color_manual(values = WC_palette)+
+    theme_bw()+
+  theme(panel.grid = element_blank(),panel.background = element_blank(), legend.position = "left")
+inc_T2_noB5
+
+
+```
 
 # OLD
 
