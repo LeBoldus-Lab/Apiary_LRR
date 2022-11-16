@@ -146,7 +146,25 @@ plot(asn_mort_TMT2.aov)
 eij=residuals(asn_mort_TMT2.aov)
 hist(eij,main="Histogram of residuals")
 plot(density(eij),main="Density plot of residuals",ylab="Density",xlab="Residuals")
+
+#Using initial basal area as a covariate instead of treatment
+AOV_prop_dead_stand<-cbind(AOV_prop_dead_stand, BA_aov_in_stand[c("live_BA_90","live_BA_20")])
+asn_mort_BA90.lm <- lm(asn_prop_dead ~ BLOCK+live_BA_90, data= AOV_prop_dead_stand)
+summary(asn_mort_BA90.lm)
+
+#regression of BA 1990 and prop mortality
+
+propX90<-ggplot(AOV_prop_dead_stand, aes(live_BA_90, prop_dead))+
+  geom_point(aes(color=AOV_prop_dead_stand$TMT))+
+  stat_smooth(method = "lm")+
+      theme_bw()+
+  theme(panel.grid = element_blank(),panel.background = element_blank(), legend.position = "left")
+propX90
+
+#ggsave(here("Summary_Graphs_update","BA90_x_prop_dead.pdf"), width = 6, height = 6)
 ```
+
+
 ```{r}
 #Live basal area
 #1990 and 2020

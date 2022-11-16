@@ -2648,3 +2648,13 @@ pc
 pkm|pc
 #may need to specify reference levels for all of the variables (TRT_code C, Cond_flag= NONE, REP=1)
 ```
+
+# Calculating stand summary statisitics including CI
+
+```{r}
+stand_df_age<-read_rds(here("stand_level_df_age.Rds"))
+
+live_summary_stats<-subset(stand_df_age, stand_df_age$STATUS=="1")%>%group_by(TRT) %>% summarise(inc_mean=mean(increment),SE=(sd(increment)/sqrt(n())), lower=inc_mean-SE, upper=inc_mean+SE,CI=qt(0.975,df=(n()-1))*SE,lower.CI=inc_mean-CI,upper.CI=inc_mean+CI)
+
+
+```
