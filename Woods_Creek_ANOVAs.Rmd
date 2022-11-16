@@ -149,26 +149,70 @@ plot(density(eij),main="Density plot of residuals",ylab="Density",xlab="Residual
 ```
 ```{r}
 #Live basal area
-BA.aov <- aov(live_BA ~ TMT, data= AOV_prop_dead)
-summary(BA.aov)
-#TukeyHSD(len.aov, which = "dose")
-TukeyHSD(BA.aov, which = "TMT")
-plot(BA.aov,1)
-plot(BA.aov,2)
+#1990 and 2020
+BA_aov_in_90<-subset(long_data,long_data$YEAR_F==1990)
+BA_aov_in_20<-subset(long_data,long_data$YEAR_F==2020)
+#unique column names
+names(BA_aov_in_20)[names(BA_aov_in_20) == 'live_BA'] <- 'live_BA_20'
+names(BA_aov_in_90)[names(BA_aov_in_90) == 'live_BA'] <- 'live_BA_90'
 
-plot(AOV_prop_dead$TMT,AOV_prop_dead$live_BA)
+#convert from tree-level to plot-level summaries and remove NA plots
+BA_aov_in_90_plot<- BA_aov_in_90 %>% group_by(TMT,BLOCK,PLOT,.drop = FALSE)%>%summarise(live_BA_90=sum(live_BA_90, na.rm = TRUE), TRT=first(TRT))
+BA_aov_in_90_plot<-subset(BA_aov_in_90_plot,is.na(BA_aov_in_90_plot$TRT)==FALSE)
+BA_aov_in_20_plot<- BA_aov_in_20 %>% group_by(TMT,BLOCK,PLOT,.drop = FALSE)%>%summarise(live_BA_20=sum(live_BA_20, na.rm = TRUE), TRT=first(TRT))
+BA_aov_in_20_plot<-subset(BA_aov_in_20_plot,is.na(BA_aov_in_20_plot$TRT)==FALSE)
+
+#adding 2020 to 1990 dataset
+BA_aov_in_plot<-cbind(BA_aov_in_90_plot, BA_aov_in_20_plot["live_BA_20"])
+#calculating plot-level BA-increment over 30 years
+BA_aov_in_plot$increment<-(BA_aov_in_plot$live_BA_20-BA_aov_in_plot$live_BA_90)/30
+
+#convert from plot-level to stand-level summaries including area correction for BA
+#this will be the anova input
+BA_aov_in_stand<- BA_aov_in_plot %>% group_by(TMT,BLOCK,.drop = FALSE)%>%summarise(live_BA_90=sum(live_BA_90)/0.200574985,live_BA_20=sum(live_BA_20)/0.200574985,increment=sum(increment)/0.200574985, TRT=first(TRT))
+
+#summary statistics for plotting
+BA_9020inc_TMT<-BA_aov_in_stand%>%group_by(TRT) %>% summarise()
+
+#QMD_TRT_YEAR<-QMD_stand%>%group_by(TRT, YEAR) %>% summarise(QMD_mean=mean(QMD),SE=(sd(QMD)/sqrt(n())), lower=QMD_mean-SE, #upper=QMD_mean+SE,CI=qt(0.975,df=(n()-1))*SE,lower.CI=QMD_mean-CI,upper.CI=QMD_mean+CI,BA_mean=mean(live_BA),BA_SE=(sd(live_BA)/sqrt(n())#), lower=BA_mean-BA_SE, upper=BA_mean+BA_SE,BA_CI=qt(0.975,df=(n()-1))*BA_SE,BA_lower.CI=BA_mean-BA_CI,BA_upper.CI=BA_mean+BA_CI)
+
+
+
+
+#1990 BA
+BA_90.aov <- lm(live_BA_90 ~ TRT+BLOCK, data= BA_aov_in_stand)
+summary(BA_90.aov)
+anova(BA_90.aov)
+
+
+#diagnostic plots
+par(mfrow=c(2,2))
+plot(asn_mort.aov)
+eij=residuals(BA_90.aov)
+hist(eij,main="Histogram of residuals")
+plot(density(eij),main="Density plot of residuals",ylab="Density",xlab="Residuals")
+
+
+#including initial incidence
+asn_mort_incidence.aov <- lm(asn_prop_dead ~ TMT+BLOCK+init_LRR, data= AOV_prop_dead_stand)
+summary(asn_mort_incidence.aov)
+anova(asn_mort_incidence.aov)
+
+#comparing model with and without LRR_init
+anova(asn_mort_incidence.aov, asn_mort.aov)
+anova(asn_mort_incidence_interact.aov, asn_mort.aov)
 
 ##combining thinning treatments
 
-BA.aov2 <- aov(asn ~ TMT2, data= AOV_prop_dead)
-summary(BA.aov2)
-plot(BA.aov2,1)
-plot(BA.aov2,2)
-
-plot(AOV_prop_dead$TMT2,AOV_prop_dead$live_BA)
+#arcin transformed Proportion dead
+asn_mort_TMT2.aov <- lm(asn_prop_dead ~ TMT2+BLOCK, data= AOV_prop_dead_stand)
+summary(asn_mort_TMT2.aov)
+anova(asn_mort_TMT2.aov)
 ```
 
 
+
+# OLD
 
 ```{r}
 #ANCOVA using final proportion of plots with LRR detected as a covariate

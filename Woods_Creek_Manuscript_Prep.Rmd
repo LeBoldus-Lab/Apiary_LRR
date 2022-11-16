@@ -397,7 +397,7 @@ QMD.df<-long_data[,c("TMT","TRT","BLOCK","PLOT","Tree_ID_TBP","species_gen","YEA
 #remove rows without live diameter measurements
 QMD.df<-subset(QMD.df, !is.na(QMD.df$live_BA))
 
-#calculate cumulative sum of live basal areas by TRTxBlock starting with the smallest tree
+#calculate stand QMD and summary stats
 QMD_stand<- QMD.df %>% group_by(YEAR,TRT,BLOCK) %>% summarise(QMD=sqrt(sum(live_BA)/(n()*0.00007854)),live_BA=sum(live_BA)/0.200574985)
 
 QMD_TRT_YEAR<-QMD_stand%>%group_by(TRT, YEAR) %>% summarise(QMD_mean=mean(QMD),SE=(sd(QMD)/sqrt(n())), lower=QMD_mean-SE, upper=QMD_mean+SE,CI=qt(0.975,df=(n()-1))*SE,lower.CI=QMD_mean-CI,upper.CI=QMD_mean+CI,BA_mean=mean(live_BA),BA_SE=(sd(live_BA)/sqrt(n())), lower=BA_mean-BA_SE, upper=BA_mean+BA_SE,BA_CI=qt(0.975,df=(n()-1))*BA_SE,BA_lower.CI=BA_mean-BA_CI,BA_upper.CI=BA_mean+BA_CI)
