@@ -40,6 +40,7 @@ see "Apiary_mapping.Rmd" for map construction.  Will use Illustrator or similar 
 these will likely be supplemental figures if included at all
 ```{r}
 #looking at strange summary values for tree diameters
+lessA1A3<-read_rds(here("raw_data","long_data_keep_lessA1A3.Rds"))
 RA10_8y_DBH<-lessA1A3[which(lessA1A3$TRT=="RA10Y" & lessA1A3$DF_age==8),c("Tree_ID","Tree_status","DBH_mm")]
 RA10_8y_DBH_Alive<-subset(RA10_8y_DBH, RA10_8y_DBH$Tree_status=="Alive")
 RA10_8y_DBH_Dead<-subset(RA10_8y_DBH, RA10_8y_DBH$Tree_status=="Dead")
@@ -2150,6 +2151,7 @@ LBA_bar
 BA_layout<-"AAAABBBC"
 EBA_bar+(MBA_bar+theme(axis.title.y=element_blank(),axis.text.y=element_blank()))+(LBA_bar+theme(axis.title.y=element_blank(),axis.text.y=element_blank()))+plot_layout(design=BA_layout)
 
+BA_panel<-EBA_bar+(MBA_bar+theme(axis.title.y=element_blank(),axis.text.y=element_blank()))+(LBA_bar+theme(axis.title.y=element_blank(),axis.text.y=element_blank()))+plot_layout(design=BA_layout)
 
 #pdf(here("Summary_Graphs_update","Early_Mid_Late_BA_slope_barplots.pdf"), height= 6, width = 10)
 #EBA_bar+(MBA_bar+theme(axis.title.y=element_blank(),axis.text.y=element_blank()))+(LBA_bar+theme(axis.title.y=element_blank(),axis.text.y=element_blank()))+plot_layout(design=layout)
@@ -2295,6 +2297,7 @@ Lmort_bar
 mort_layout<-"AAAABBBC"
 xasnEmort_bar+(xasnMmort_bar+theme(axis.title.y=element_blank(),axis.text.y=element_blank()))+(Lmort_bar+theme(axis.title.y=element_blank(),axis.text.y=element_blank()))+plot_layout(design=mort_layout)
 
+mort_panel<-xasnEmort_bar+(xasnMmort_bar+theme(axis.title.y=element_blank(),axis.text.y=element_blank()))+(Lmort_bar+theme(axis.title.y=element_blank(),axis.text.y=element_blank()))+plot_layout(design=mort_layout)
 
 #pdf(here("Summary_Graphs_update","Early_Mid_Late_mort_slope_barplots.pdf"), height= 6, width = 10)
 #mort_layout<-"AAAABBBC"
@@ -2382,6 +2385,7 @@ LLRR_bar
 LRR_layout<-"AAAABBBC"
 ELRR_bar+(MLRR_bar+theme(axis.title.y=element_blank(),axis.text.y=element_blank()))+(LLRR_bar+theme(axis.title.y=element_blank(),axis.text.y=element_blank()))+plot_layout(design=LRR_layout)
 
+LRR_panel<-ELRR_bar+(MLRR_bar+theme(axis.title.y=element_blank(),axis.text.y=element_blank()))+(LLRR_bar+theme(axis.title.y=element_blank(),axis.text.y=element_blank()))+plot_layout(design=LRR_layout)
 
 #pdf(here("Summary_Graphs_update","Early_Mid_Late_LRR_mort_slope_barplots.pdf"), height= 6, width = 10)
 #LRR_layout<-"AAAABBBC"
@@ -2461,6 +2465,7 @@ LS_bar
 SUP_layout<-"AAAABBBC"
 ES_bar+(MS_bar+theme(axis.title.y=element_blank(),axis.text.y=element_blank()))+(LS_bar+theme(axis.title.y=element_blank(),axis.text.y=element_blank()))+plot_layout(design=LRR_layout)
 
+SUPP_panel<-ES_bar+(MS_bar+theme(axis.title.y=element_blank(),axis.text.y=element_blank()))+(LS_bar+theme(axis.title.y=element_blank(),axis.text.y=element_blank()))+plot_layout(design=LRR_layout)
 
 #pdf(here("Summary_Graphs_update","Early_Mid_Late_SUP_mort_slope_barplots.pdf"), height= 6, width = 10)
 #SUP_layout<-"AAAABBBC"
@@ -2473,7 +2478,22 @@ ES_bar+(MS_bar+theme(axis.title.y=element_blank(),axis.text.y=element_blank()))+
 #ES_bar+(MS_bar+theme(axis.title.y=element_blank(),axis.text.y=element_blank()))+(LS_bar+theme(axis.title.y=element_blank(),axis.text.y=element_blank()))+plot_layout(design=SUP_layout)
 #dev.off()
 ```
+# Combining bar plots into large multi-panel figure
 
+```{r}
+
+(BA_panel |mort_panel)/(LRR_panel|SUPP_panel)
+
+pdf(here("Summary_Graphs_update","Multipanel_barplots.pdf"), height= 9, width = 12)
+(BA_panel |mort_panel)/(LRR_panel|SUPP_panel)
+dev.off()
+
+
+svg(here("Summary_Graphs_update","Multipanel_barplots.svg"), height= 9, width = 12)
+(BA_panel |mort_panel)/(LRR_panel|SUPP_panel)
+dev.off()
+
+```
 
 
 ## Survival analysis
@@ -2654,7 +2674,8 @@ pkm|pc
 ```{r}
 stand_df_age<-read_rds(here("stand_level_df_age.Rds"))
 
-live_summary_stats<-subset(stand_df_age, stand_df_age$STATUS=="1")%>%group_by(TRT) %>% summarise(inc_mean=mean(increment),SE=(sd(increment)/sqrt(n())), lower=inc_mean-SE, upper=inc_mean+SE,CI=qt(0.975,df=(n()-1))*SE,lower.CI=inc_mean-CI,upper.CI=inc_mean+CI)
+live_summary_stats<-subset(stand_df_age, stand_df_age$STATUS=="1")%>%group_by(TRT,DF_age) %>% summarise(mean_live_stems=mean(count),SE_live_stems=(sd(count)/sqrt(n())), live_stem_lower=mean_live_stems-SE_live_stems, live_stem_upper=mean_live_stems+SE_live_stems,CI_live_stems=qt(0.975,df=(n()-1))*SE_live_stems,live_stem_lower.CI=mean_live_stems-CI_live_stems,live_stem_upper.CI=mean_live_stems+CI_live_stems,
+                                                                                                        mean_BA=mean(Live_BA_mpha),SE_BA=(sd(Live_BA_mpha)/sqrt(n())), BA_lower=mean_BA-SE_BA, BA_upper=mean_BA+SE_BA,CI_BA=qt(0.975,df=(n()-1))*SE_BA,BA_lower.CI=mean_BA-CI_BA,BA_upper.CI=mean_BA+CI_BA,)
 
 
 ```
