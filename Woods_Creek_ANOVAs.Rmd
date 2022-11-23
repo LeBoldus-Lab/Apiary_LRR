@@ -221,6 +221,8 @@ BA_inc.aov <- lm(increment ~ TRT+BLOCK, data= BA_aov_in_stand)
 summary(BA_inc.aov)
 anova(BA_inc.aov)
 
+#extract grand mean for BA-inc
+mean(BA_inc.aov$model[,1])
 
 #diagnostic plots
 par(mfrow=c(2,2))
